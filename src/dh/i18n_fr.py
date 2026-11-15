@@ -144,7 +144,7 @@ EXACT = {
     "Assistant: Offline: limited answers": "Assistant : hors ligne, réponses limitées",
     "Assistant: Live: Claude on Amazon Bedrock": "Assistant : en direct, Claude sur Amazon Bedrock",
     "Simulation only, for a fictional persona. Not financial advice; no real transactions.":
-        "Simulation seulement, pour un profil fictif. Pas un conseil financier; aucune transaction réelle.",
+        "Simulation seulement, pour un profil fictif. Pas un conseil financier ; aucune transaction réelle.",
     # ---- assistant ----------------------------------------------------------------------------------------
     "Explain my results": "Expliquez mes résultats",
     "What is volatility?": "Qu'est-ce que la volatilité ?",

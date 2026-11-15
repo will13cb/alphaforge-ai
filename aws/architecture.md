@@ -113,7 +113,7 @@ jamais une limite ni un nombre).
 | Hébergement | Où s'exécute le pipeline | **Streamlit Community Cloud** (applications hébergées) et **en local** (`make app`, `make ui`, ligne de commande). Données tirées de `s3://$S3_BUCKET/raw/` au premier démarrage. Bedrock AgentCore Runtime : **non déployé** |
 | Traces et données | Où sont conservées les exécutions et les données | **Amazon S3** : `traces/` chaque exécution des deux applications et de la ligne de commande (copie locale si S3 est inaccessible); `raw/` les données de l'application hébergée; `voice/` l'audio à transcrire, supprimé ensuite |
 | Voix (facultative) | Parler au lieu de taper | **Amazon Transcribe** (parole → texte, français ou anglais du Canada) et **Amazon Polly** (réponse lue à voix haute), dans l'interface guidée, désactivée sauf si `AF_VOICE_ENABLED=1` |
-| Langue | Français ou anglais | Bouton Français ⇄ English dans les deux applications, français par défaut (`AF_LANG`); les textes produits par le moteur et les agents restent en anglais, car le Gardien vérifie ce texte-là (#49) |
+| Langue | Français ou anglais | Bouton Français ⇄ English dans les deux applications, français par défaut (`AF_LANG`) : interface, textes du moteur (traduits à l'affichage, nombres intacts) et textes de Claude (rédigés directement en français), #49 |
 
 | Composant | LLM ? | Résultat |
 |---|---|---|

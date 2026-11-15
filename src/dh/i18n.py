@@ -19,12 +19,20 @@ import os
 import re
 import types
 
+from .i18n_engine_fr import SENTENCES, WORDS
 from .i18n_fr import EXACT, PHRASES
 
 LANGS = {"fr": "Français", "en": "English"}
 STATE_KEY = "af_lang"
 _PHRASE_RE = re.compile("|".join(re.escape(k) for k in sorted(PHRASES, key=len, reverse=True))) if PHRASES else None
 _EXACT_STRIPPED = {k.strip(): v for k, v in EXACT.items()}
+_SENTENCES = [(re.compile(p), r) for p, r in SENTENCES]
+_ALL_WORDS = {**WORDS, **PHRASES}
+_WORDS_RE = re.compile("|".join(
+    (r"\b" if k[:1].isalnum() else "") + re.escape(k) + (r"\b" if k[-1:].isalnum() else "")
+    for k in sorted(_ALL_WORDS, key=len, reverse=True)))
+_TAG = re.compile(r"(<[^>]+>)")
+_SKIP = ("<style", "<script", "<svg", "@import")
 _WRAPPED = re.compile(r"^(<(?:p|div|span)[^>]*>)([^<]+)(</(?:p|div|span)>)$", re.S)
 
 
@@ -54,7 +62,35 @@ def tr(s, to: str | None = None):
     m = _WRAPPED.match(core)  # '<p class="af-muted">Known sentence</p>': translate the sentence inside
     if m and m.group(2).strip() in _EXACT_STRIPPED:
         return s.replace(m.group(2), _EXACT_STRIPPED[m.group(2).strip()])
-    return _PHRASE_RE.sub(lambda m: PHRASES[m.group(0)], s) if _PHRASE_RE else s
+    if any(k in s for k in _SKIP):
+        return s
+    return "".join(part if part.startswith("<") else _fr_text(part) for part in _TAG.split(s))
+
+
+def _fr_text(t: str) -> str:
+    """French for text outside HTML tags: engine sentences, then known phrases and words, then French number style."""
+    if not t.strip():
+        return t
+    for rx, rep in _SENTENCES:
+        t = rx.sub(rep, t)
+    t = _WORDS_RE.sub(lambda m: _ALL_WORDS[m.group(0)], t)
+    return french_numbers(t)
+
+
+def tr_words(t: str) -> str:
+    """French wording for engine text, numbers left exactly as written (for texts the Guardian checks, G12)."""
+    if not isinstance(t, str) or not t.strip():
+        return t
+    for rx, rep in _SENTENCES:
+        t = rx.sub(rep, t)
+    return _WORDS_RE.sub(lambda m: _ALL_WORDS[m.group(0)], t)
+
+
+def french_numbers(t: str) -> str:
+    """60,000 → 60 000; 15.7 → 15,7; 15% → 15 % (narrow no-break spaces). Text only, never inside HTML tags."""
+    t = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "\u202f", t)
+    t = re.sub(r"(?<=\d)\.(?=\d)", ",", t)
+    return re.sub(r"(?<=\d)%", "\u202f%", t)
 
 
 # ---- wrapping Streamlit ------------------------------------------------------------------------------------
@@ -152,7 +188,4 @@ def language_selector(where=None) -> str:
     if STATE_KEY not in st.session_state:
         st.session_state[STATE_KEY] = default_lang()
     box.radio("Langue · Language", list(LANGS), format_func=LANGS.get, key=STATE_KEY, horizontal=True)
-    if lang() == "fr":
-        box.caption("Interface en français. Les textes produits par le moteur et les agents (raisons, contrôles, "
-                    "explications enregistrées de Claude) restent en anglais.")
     return lang()

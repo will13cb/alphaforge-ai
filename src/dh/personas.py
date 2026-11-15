@@ -56,6 +56,7 @@ PERSONAS = {
 DISCLAIMER = (
     "Simulation only, for a fictional persona. Not financial advice; no real transactions."
 )
+DISCLAIMER_FR = "Simulation seulement, pour un profil fictif. Pas un conseil financier ; aucune transaction réelle."
 
 
 def describe(key: str, simulated: bool = True) -> str:

@@ -81,9 +81,11 @@ identifiants et le code insère les valeurs, de sorte qu'un nombre qu'il aurait 
 fois avant de répondre. Le code revérifie ensuite le texte final : s'il échoue, ou en cas d'erreur AWS, un gabarit
 déterministe (qui réussit par construction) le remplace et la trace dit pourquoi (#23).
 
-**Langue.** Les deux applications ont un bouton Français ⇄ English (français par défaut). Les textes de l'interface
-sont traduits; les textes produits par le moteur et les agents restent en anglais, car le Gardien vérifie ce
-texte-là (G11–G13) et le traduire mélangerait les langues ou modifierait les faits vérifiés (#49).
+**Langue.** Les deux applications ont un bouton Français ⇄ English (français par défaut), et tout est traduit :
+l'interface, les textes du moteur (raisons, contrôles, répartitions, trace) au moment de l'affichage, avec les nombres
+recopiés tels quels puis mis au format français, et les textes de Claude, qui rédige directement en français quand
+l'application est en français (Explicateur, Critique, Analyste). Le Gardien accepte l'avertissement français (G11) et
+vérifie les nombres sur le texte avant leur mise en forme (G12). Le gabarit de secours existe dans les deux langues (#49).
 
 ## 2. Méthodes, modèles et technologies, et pourquoi
 
@@ -229,7 +231,6 @@ Chaque exécution est enregistrée dans S3.
   à côté de chaque substitut.
 - Les frais des fonds sont montrés en $, mais pas déduits des rendements historiques; pas d'impôts ni de types de
   comptes (CELI/REER); un seul objectif par exécution.
-- Les textes produits par le moteur et les agents restent en anglais dans l'interface française (#49).
 
 **Testé et écarté.** Une stratégie protégée (CPPI, #21) et deux optimiseurs moyenne-variance (#37) : sur une seule
 période de 5 ans, leurs pondérations changeaient avec la période et n'ont pas battu l'équipondération hors

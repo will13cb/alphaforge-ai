@@ -12,7 +12,7 @@ import re
 
 from ..holdings import holdings as load_holdings
 from ..metrics import look_through
-from ..personas import DISCLAIMER
+from ..personas import DISCLAIMER, DISCLAIMER_FR
 from .rules import LOSS_SHARE_ONE_COMPANY, MIN_COMPANIES, CRYPTO, DEFENSIVE, ETFS, STOCKS, excluded_tickers
 
 RULES = {
@@ -210,7 +210,8 @@ def check_explanation(text: str, s: dict, limits: dict, profile: dict, tol_pp: f
             unknown.append(m.group(1))
     missing_req = [tk for tk in _refused(limits) if tk not in text]
     return [
-        _c("G11", DISCLAIMER in text, "present" if DISCLAIMER in text else "disclaimer missing"),
+        _c("G11", DISCLAIMER in text or DISCLAIMER_FR in text,
+           "present" if DISCLAIMER in text or DISCLAIMER_FR in text else "disclaimer missing"),
         _c("G12", not unknown, "all numbers traced" if not unknown else
            f"untraced: {', '.join(u.replace(' (', '% (', 1) if ' (' in u else u + '%' for u in unknown)}"),
         _c("G13", not missing_req, "ok" if not missing_req else f"not explained: {', '.join(missing_req)}"),

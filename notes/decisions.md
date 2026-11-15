@@ -1018,3 +1018,10 @@ change the facts the Guardian checks (G11–G13 run on the English text).
 
 **Tests:** `tests/test_i18n.py` (the table, engine text untouched, both apps in French then switched to English); the
 other app tests run in English (`AF_LANG=en` in `tests/conftest.py`).
+
+**Update (Sun night, #49 extended):** the whole app is French in French mode. Engine text (Profiler reasons, checks,
+splits, strategy names, trace) is translated at display time (`dh.i18n_engine_fr`: sentence patterns that copy every
+number unchanged, then a phrase table; French number style only outside HTML tags). Claude writes in French when the
+app is French (Explainer and Critic get a `language` field and a French instruction; the Analyst gets the French
+question); French answers have their own cache keys, English keys are unchanged; `make warm` fills both. G11 accepts
+the French disclaimer; G12 still checks the numbers before display formatting. The fallback template exists in French.

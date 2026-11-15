@@ -391,7 +391,7 @@ with tab_a:
         pick = st.columns(len(FOLLOW_UPS))
         for i, (c, ex_q) in enumerate(zip(pick, FOLLOW_UPS)):
             if c.button(ex_q, key=f"fu_ex_{i}"):
-                st.session_state.fu_question = ex_q
+                st.session_state.fu_question = i18n.tr(ex_q)  # French question in French mode (#49)
         with st.form("follow_up_question"):
             q = st.text_input("Your question", key="fu_question", placeholder="e.g. What if I put 10% in Tesla?")
             if st.form_submit_button("Ask the Analyst", type="primary") and q.strip():

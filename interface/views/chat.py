@@ -13,6 +13,8 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
+from dh.i18n import tr
+
 from interface.core import services
 from interface.ui import components as ui
 from interface.ui.answer_format import readable_markdown
@@ -124,7 +126,7 @@ def render() -> None:
         sugs = SUGGESTIONS + (EXISTING_QUESTIONS if (S.get("profile") or {}).get("existing_positions") else [])
         for i, sug in enumerate(sugs):
             if cols[i % 2].button(sug, key=f"sug_{i}", width="stretch"):
-                chat.append({"question": sug, "status": "pending"})
+                chat.append({"question": tr(sug), "status": "pending"})  # French question in French mode (#49)
                 st.rerun()
     for i, t in enumerate(chat):
         with st.chat_message("user"):

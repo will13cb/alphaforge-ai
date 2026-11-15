@@ -1,0 +1,263 @@
+"""French for the text the engine writes (limits, checks, splits, strategies, trace), decision #49.
+
+Applied at display time only: the engine, `results.csv` and the Guardian's checks keep working on the English text.
+SENTENCES: whole patterns, numbers captured and put back unchanged (client-facing text reads naturally).
+WORDS: phrases replaced anywhere else (technical text and the trace), longest first.
+"""
+
+N = r"([−+-]?\d[\d,]*(?:\.\d+)?(?:%|/\d+)?)"           # a number as the engine writes it (15%, -15.7%, 60,000, 0.958)
+T = r"([A-Z][A-Z0-9.\-]*)"                     # a ticker (TSLA, XIU.TO, BTC-USD)
+
+LEVELS = r"(Preserve|Cautious|Balanced|Growth|Aggressive)"
+LEVEL_FR = {"Preserve": "Préservation", "Cautious": "Prudent", "Balanced": "Équilibré", "Growth": "Croissance",
+            "Aggressive": "Audacieux"}
+
+SENTENCES = [
+    # ---- the client's limits, in their words (profiler reasons)
+    (rf"The largest drop you would accept is {N}: risk tolerance {N} \({LEVELS}\)\.",
+     r"La plus forte baisse que vous accepteriez est de \1 : tolérance au risque \2 (\3)."),
+    (rf"If your investments fell 20%, you would (hold on|buy more|sell part of them|sell everything): risk tolerance {N} \({LEVELS}\)\.",
+     lambda m: "Si vos placements baissaient de 20 %, vous " + {"hold on": "les garderiez", "buy more": "en achèteriez davantage",
+               "sell part of them": "en vendriez une partie", "sell everything": "vendriez tout"}[m.group(1)]
+               + f" : tolérance au risque {m.group(2)} ({LEVEL_FR[m.group(3)]})."),
+    (r"We keep the more cautious of these two answers: your risk tolerance is " + N + r" \(" + LEVELS + r"\)\.",
+     r"Nous retenons la plus prudente de ces deux réponses : votre tolérance au risque est de \1 (\2)."),
+    (rf"Your money stays invested about {N} years?: capacity to take risk {N} \({LEVELS}\)\.",
+     r"Votre argent reste investi environ \1 ans : capacité à prendre du risque \2 (\3)."),
+    (rf"Your risk level is the lower of your tolerance \({N}\) and your capacity \({N}\): {N} \({LEVELS}\)\.",
+     r"Votre niveau de risque est le plus bas entre votre tolérance (\1) et votre capacité (\2) : \3 (\4)."),
+    (rf"You describe your investing knowledge as (\w+): knowledge {N} \((\w+)\)\.",
+     r"Vous décrivez vos connaissances en placement comme « \1 » : connaissances \2 (\3)."),
+    (rf"You have invested in stocks or ETFs for 5 years or more: knowledge raised to {N} \((\w+)\)\.",
+     r"Vous investissez en actions ou en FNB depuis 5 ans ou plus : connaissances portées à \1 (\2)."),
+    (rf"Your loss limit is {N} \({N} \$ of {N} \$\): the smaller of the drop you would accept \({N}\) and what a capacity of {N} can absorb \({N}\)\.",
+     r"Votre limite de perte est de \1 (\2 $ sur \3 $) : la plus petite entre la baisse que vous accepteriez (\4) et ce qu'une capacité de \5 peut absorber (\6)."),
+    (rf"At least {N} stays in safer investments \(bonds and cash\): we never put 100% in stocks\.",
+     r"Au moins \1 reste dans des placements plus sûrs (obligations et encaisse) : nous ne mettons jamais 100 % en actions."),
+    (rf"At least {N} stays in safer investments \(bonds and cash\): with {N} years ahead, at most {N} goes in stocks\.",
+     r"Au moins \1 reste dans des placements plus sûrs (obligations et encaisse) : avec \2 ans devant vous, au plus \3 va en actions."),
+    (rf"At least {N} stays in safer investments \(bonds and cash\): {N} may be withdrawn within 3 years\.",
+     r"Au moins \1 reste dans des placements plus sûrs (obligations et encaisse) : \2 pourrait être retiré d'ici 3 ans."),
+    (rf"One company: if it fell again as much as at its worst \(([^)]*)\), that alone may use at most {N} of your loss limit \({N} of the portfolio\)\. And no company gets more than 1/5 of the {N} you can hold in stocks \({N}\)\.",
+     r"Une société : si elle rechutait autant qu'à son pire moment (\1), cela seul pourrait utiliser au plus \2 de votre limite de perte (\3 du portefeuille). Et aucune société ne reçoit plus du cinquième des \4 que vous pouvez détenir en actions (\5)."),
+    (rf"Crypto \(Bitcoin and Ether counted as one bet\): the same rule allows at most {N}\.",
+     r"Crypto (bitcoin et ether comptés comme un seul pari) : la même règle permet au plus \1."),
+    # ---- requests
+    (rf"{T}'s worst drop in ([\d\-–]+) was {N}; at {N} that alone would be {N} of the portfolio, more than your whole {N} loss limit",
+     r"La pire baisse de \1 en \2 a été de \3; à \4, cela seul représenterait \5 du portefeuille, plus que toute votre limite de perte de \6"),
+    (rf"{T}'s worst drop in ([\d\-–]+) was {N}; at {N} that alone would be {N} of the portfolio, more than the {N} of your {N} loss limit one asset may use",
+     r"La pire baisse de \1 en \2 a été de \3; à \4, cela seul représenterait \5 du portefeuille, plus que les \6 de votre limite de perte de \7 qu'un seul actif peut utiliser"),
+    (rf"you can hold about {N} in stocks, and one company is kept to 1/5 of that", r"vous pouvez détenir environ \1 en actions, et une société est limitée au cinquième de cela"),
+    (rf"it fits up to {N}", r"il entre dans vos limites jusqu'à \1"),
+    (rf"request {T} {N}:", r"demande \1 \2 :"),
+    # ---- splits and options
+    (rf"split {N} growth, set by ", r"répartition \1 en croissance, fixée par "),
+    (rf"the horizon rule, a judgment rule not a data result \(decision #22\): {N} years? → at most {N} in stocks",
+     r"la règle d'horizon, un jugement et non un résultat des données (décision #22) : \1 ans → au plus \2 en actions"),
+    (rf"the loss test \(at most a 10% chance of a drop deeper than your {N} limit over {N} years, in simulations built from ([\d\-–]+) days\)",
+     r"le test de perte (au plus 10 % de probabilité d'une baisse plus forte que votre limite de \1 sur \2 ans, dans des simulations bâties sur les jours de \3)"),
+    (rf"option {N} of {N} \((less|least) in stocks\): {N} growth, {N} points below the top strategy, a choice offered to the client, not a limit",
+     lambda m: f"option {m.group(1)} sur {m.group(2)} ({'moins' if m.group(3) == 'less' else 'le moins'} en actions) : {m.group(4)} en croissance, {m.group(5)} points sous la stratégie principale, un choix offert au client, pas une limite"),
+    (rf"the loss test alone would allow {N}", r"le test de perte seul permettrait \1"),
+    (rf"on 3-year sub-windows the loss test gives {N} to {N}", r"sur des sous-périodes de 3 ans, le test de perte donne de \1 à \2"),
+    (rf"level {N} of {N} \((less|least) in stocks\): growth capped at {N}, {N} points below the top strategy's {N}, same defensive basket",
+     lambda m: f"niveau {m.group(1)} sur {m.group(2)} ({'moins' if m.group(3) == 'less' else 'le moins'} en actions) : croissance plafonnée à {m.group(4)}, {m.group(5)} points sous les {m.group(6)} de la stratégie principale, même panier défensif"),
+    # ---- checks
+    (rf"observed worst drop {N} \(([\d\-–]+)\) vs your {N} loss limit: what happened, not a guarantee",
+     r"pire baisse observée \1 (\2) par rapport à votre limite de perte de \3 : ce qui s'est passé, pas une garantie"),
+    (rf"Observed worst drop {N} \(([\d\-–]+)\) vs your {N} loss limit: what happened, not a guarantee",
+     r"Pire baisse observée \1 (\2) par rapport à votre limite de perte de \3 : ce qui s'est passé, pas une garantie"),
+    (rf"{N} chance of a drop deeper than your {N} loss limit \({N} \$ on {N} \$\) over {N} years? \(simulated, allowed {N}\); 1 in 10 paths drops {N} or more",
+     r"\1 de probabilité d'une baisse plus forte que votre limite de perte de \2 (\3 $ sur \4 $) sur \5 ans (simulé, permis : \6); 1 trajectoire sur 10 baisse de \7 ou plus"),
+    (rf"{N} chance of ending below what you put in \(without assuming past returns repeat\)",
+     r"\1 de probabilité de finir sous votre mise de départ (sans supposer que les rendements passés se répètent)"),
+    (rf"no target given; {N} chance of ending below what was put in \(risk-only view\)",
+     r"aucun objectif fixé; \1 de probabilité de finir sous la mise de départ (vue « risque seulement »)"),
+    (rf"worst drop {N}, close to your {N} loss limit", r"pire baisse \1, près de votre limite de perte de \2"),
+    (rf"worst drop {N} \(about {N} \$\) vs your {N} loss limit: over your limit",
+     r"pire baisse \1 (environ \2 $) par rapport à votre limite de perte de \3 : au-delà de votre limite"),
+    (rf"growth {N} vs {N} allowed for a {N}-year horizon", r"croissance \1 contre \2 permis pour un horizon de \3 ans"),
+    (rf"defensive {N} vs {N} needed within 3 years", r"défensif \1 contre \2 requis d'ici 3 ans"),
+    (rf"(\w[\w .]*) {N} of the equities \(country of listing\); currency ", r"\1 : \2 des actions (pays d'inscription); devise "),
+    (rf"closest to its cap: {T} {N} vs {N}", r"le plus près de son plafond : \1 \2 contre \3"),
+    (rf"largest position {T}: {N} of what we could measure", r"plus grande position \1 : \2 de ce que nous avons pu mesurer"),
+    (rf"fund fees: about {N} \$ a year \({N} of what we measured\)", r"frais des fonds : environ \1 $ par année (\2 de ce que nous avons mesuré)"),
+    (rf"2022 sell-off drop {N}, worst 12 months {N}, CVaR 95% {N} a day",
+     r"baisse lors de la crise de 2022 \1, pires 12 mois \2, CVaR 95 % \3 par jour"),
+    (rf"held up best in 2022: {N}", r"a le mieux résisté en 2022 : \1"),
+    (rf"(smallest|largest) worst drop of the {N}: {N}", lambda m: f"{'plus petite' if m.group(1) == 'smallest' else 'plus grande'} pire baisse des {m.group(2)} : {m.group(3)}"),
+    (rf"{N} asset classes: ", r"\1 catégories d'actifs : "),
+    (rf"same bet twice {T}/{T} {N}", r"le même pari deux fois \1/\2 \3"),
+    (rf"C6: {T} merged into {T} \(correlation {N}, same bet twice\)", r"C6 : \1 fusionné dans \2 (corrélation \3, le même pari deux fois)"),
+    (rf"crypto left out: with it your loss limit {N} allows only {N} in growth assets, without it {N}",
+     r"crypto écartée : avec elle, votre limite de perte de \1 ne permet que \2 en actifs de croissance, sans elle \3"),
+    # ---- strategies and summaries
+    (r"approved with disclosures\.", r"approuvé, avec points à divulguer."),
+    (rf"(\d+) ✔, (\d+) ⚠, (\d+) ✘ → ", r"\1 ✔, \2 ⚠, \3 ✘ → "),
+]
+
+WORDS = {
+    # strategy names and levels
+    "Broad core": "Cœur diversifié", "Income / dividends": "Revenu / dividendes", "Growth tilt": "Orientation croissance",
+    "most growth your limits allow": "le plus de croissance que vos limites permettent",
+    "least in stocks": "le moins en actions", "less in stocks": "moins en actions",
+    "your portfolio today": "votre portefeuille actuel", "fits your limits": "respecte vos limites",
+    "rebuilt: ": "reconstruit : ", "Existing portfolio": "Portefeuille existant",
+    # holds / why
+    "holds: broad Canadian and U.S. stock ETFs, short and aggregate bonds":
+        "détient : de grands FNB d'actions canadiennes et américaines, des obligations à court terme et globales",
+    "holds: dividend-paying established companies plus the TSX 60, aggregate bonds":
+        "détient : des sociétés établies qui versent des dividendes plus le TSX 60, des obligations globales",
+    "holds: U.S. growth/tech ETFs and a few large tech names (+ crypto only if asked, allowed and it earns its place), short bonds and gold":
+        "détient : des FNB américains de croissance et de technologie et quelques grandes sociétés technologiques (+ crypto seulement si demandée, permise et justifiée), des obligations à court terme et de l'or",
+    "offered: always offered: broad and simple": "proposée : toujours proposée, large et simple",
+    "offered: single names allowed (knowledge ≥ 3)": "proposée : actions individuelles permises (connaissances ≥ 3)",
+    "offered: interest in ": "proposée : intérêt pour ",
+    "SPY replaced by the ESG-screened ESGV (ESG preference)": "SPY remplacé par ESGV, filtré ESG (préférence ESG)",
+    "ESG interest: no fossil-fuel names, ESGV used": "intérêt ESG : aucune société de combustibles fossiles, ESGV utilisé",
+    "no ESG preference": "aucune préférence ESG",
+    "you excluded fossil fuels": "vous avez exclu les combustibles fossiles",
+    "left out: ": "exclu : ",
+    "Crypto: left out, as you asked.": "Crypto : exclue, comme vous l'avez demandé.",
+    "crypto: you excluded it": "crypto : vous l'avez exclue",
+    "crypto isn't proposed for this profile (knowledge ≤ 2)": "la crypto n'est pas proposée pour ce profil (connaissances ≤ 2)",
+    "you asked to exclude crypto": "vous avez demandé d'exclure la crypto",
+    "it is in a category you excluded": "il fait partie d'une catégorie que vous avez exclue",
+    "not in the 31 assets we have data for, so we can't assess it": "absent des 31 actifs pour lesquels nous avons des données : nous ne pouvons pas l'évaluer",
+    # check names (Guardian / C-F)
+    "KYC complete: essential facts known before any proposal (NI 31-103 s.13.2)":
+        "Connaissance du client complète : faits essentiels connus avant toute proposition (Règlement 31-103, art. 13.2)",
+    "Weights are valid: no negatives, sum to 100%": "Pondérations valides : aucune négative, total de 100 %",
+    "Only allowed assets (in the universe, not excluded by the client or the profile)":
+        "Actifs permis seulement (dans l'univers, non exclus par le client ou le profil)",
+    "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs":
+        "Chaque société ≤ son propre plafond (selon sa pire baisse et les limites du client, #24), comptée à travers les FNB",
+    "Crypto ≤ crypto cap": "Crypto ≤ plafond crypto",
+    "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)":
+        "Part défensive ≥ plancher défensif (argent requis d'ici 3 ans, jamais 100 % en croissance)",
+    "Loss rule: chance of a drop deeper than the loss limit over the horizon ≤ 10% (simulated, final weights; in % and $)":
+        "Règle de perte : probabilité d'une baisse plus forte que la limite de perte sur l'horizon ≤ 10 % (simulée, pondérations finales; en % et en $)",
+    "Volatility within target (warning only)": "Volatilité dans la cible (avertissement seulement)",
+    "Requests that break a limit are refused, not quietly applied": "Une demande qui enfreint une limite est refusée, jamais appliquée en douce",
+    "Exclusions respected through ETFs too (warning: disclose)": "Exclusions respectées aussi à travers les FNB (avertissement : à divulguer)",
+    "Geography: no country above 70% of the equities (warning: disclose)": "Géographie : aucun pays au-delà de 70 % des actions (avertissement : à divulguer)",
+    "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)":
+        "Secteur ≤ 30 % (avertissement) et ≤ 40 % (bloque); secteur d'emploi du client ≤ 15 % (bloque)",
+    "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)":
+        "Concentration : au moins 8 placements effectifs à travers les FNB (avertissement : à divulguer)",
+    "Consistency: every number shown describes the final weights and data (dh.risk.sync)":
+        "Cohérence : chaque nombre affiché décrit les pondérations et les données finales (dh.risk.sync)",
+    "No two holdings correlated above 0.95 (same bet twice)": "Aucune paire de placements corrélée au-delà de 0,95 (le même pari deux fois)",
+    "At least 2 asset classes (equity, bonds, gold, crypto)": "Au moins 2 catégories d'actifs (actions, obligations, or, crypto)",
+    "No sector above 40% of the portfolio (⚠ above 30%), counted through the ETFs":
+        "Aucun secteur au-delà de 40 % du portefeuille (⚠ au-delà de 30 %), compté à travers les FNB",
+    # check details
+    "all essentials known": "tous les éléments essentiels sont connus",
+    "every section describes the final weights": "chaque section décrit les pondérations finales",
+    "no near-duplicate holdings": "aucun placement en double",
+    "no single company held directly": "aucune société détenue directement",
+    "no single company held": "aucune société détenue",
+    "none held": "aucun détenu",
+    "job sector not given": "secteur d'emploi non indiqué",
+    "no capital given: no goal simulation": "aucun capital indiqué : pas de simulation d'objectif",
+    "objective growth: no extra constraint": "objectif croissance : aucune contrainte supplémentaire",
+    "objective retirement: no extra constraint": "objectif retraite : aucune contrainte supplémentaire",
+    "refused request applied anyway: ": "demande refusée appliquée quand même : ",
+    "(direct only: no ETF holdings data)": "(détention directe seulement : pas de données sur les avoirs des FNB)",
+    "(each company has its own cap, from its worst drop) — counted through the ETFs":
+        "(chaque société a son propre plafond, selon sa pire baisse) — comptée à travers les FNB",
+    "— counted through the ETFs": "— comptée à travers les FNB",
+    "over their own cap: ": "au-delà de leur propre plafond : ",
+    "over their cap: ": "au-delà de leur plafond : ",
+    " vs ": " contre ",
+    "(close to it or above)": "(près de la limite ou au-delà)",
+    "no sector known (broad ETFs without holdings data)": "aucun secteur connu (FNB larges sans données d'avoirs)",
+    "lower bound, ": "borne inférieure, ",
+    " of equity ETFs looked through": " des FNB d'actions examinés en transparence",
+    "effective holdings not fully assessed: issuer holdings missing or incomplete for ":
+        "placements effectifs non entièrement évalués : avoirs de l'émetteur manquants ou incomplets pour ",
+    "Effective holdings not fully assessed: issuer holdings missing or incomplete for ":
+        "Placements effectifs non entièrement évalués : avoirs de l'émetteur manquants ou incomplets pour ",
+    "; no assumed holding count is treated as verified": "; aucun nombre de placements supposé n'est considéré comme vérifié",
+    " not opened (no issuer holdings file): overlaps through these funds are a lower bound":
+        " non ouverts (aucun fichier d'avoirs de l'émetteur) : les chevauchements à travers ces fonds sont une borne inférieure",
+    "companies inside ": "sociétés dans ",
+    "where the stocks are: ": "où sont les actions : ",
+    "(above the 70% we flag)": "(au-delà des 70 % que nous signalons)",
+    "risk measures disagree with the level above: max_drawdown lower, prob_loss higher (shown as an alternative)":
+        "les mesures de risque divergent du niveau précédent : pire baisse plus faible, probabilité de perte plus élevée (présentée comme une solution de rechange)",
+    "knowledge 3/5: single names allowed": "connaissances 3/5 : actions individuelles permises",
+    "Each company's cap is the lower of the two.": "Le plafond de chaque société est le plus bas des deux.",
+    "'replay' assumes 2021-2026 average returns repeat, 'risk_only' assumes no premium over cash, 'central' a 3% premium on the growth part (an assumption, not an estimate)":
+        "« reprise » suppose que les rendements moyens de 2021-2026 se répètent, « risque seulement » ne suppose aucune prime sur l'encaisse, « central » une prime de 3 % sur la partie croissance (une hypothèse, pas une estimation)",
+    "most cautious option on every bet: A is at least": "option la plus prudente à chaque choix : A est d'au moins",
+    "(the top of the scale), consistent": "(le haut de l'échelle), cohérent",
+    "of the equities": "des actions", "1/5 of the": "1/5 des",
+    "Bank of Canada Valet API (FRED DEXCAUS for USD/CAD before the Bank of Canada series starts, if the long build was used)":
+        "API Valet de la Banque du Canada (FRED DEXCAUS pour USD/CAD avant le début de la série de la Banque du Canada, si l'historique long est utilisé)",
+    "Yahoo Finance netExpenseRatio (copy of the issuer's figure)": "Yahoo Finance netExpenseRatio (copie du chiffre de l'émetteur)",
+    "bet with mean": "pari de moyenne", "guaranteed": "garanti", "chosen": "choisi",
+    "and": "et", "ai": "IA", "tech": "techno",
+    # trace and terse lines
+    "risk level": "niveau de risque", "tolerance": "tolérance", "capacity": "capacité", "knowledge": "connaissances",
+    "Limits:": "Limites :", "max drawdown": "baisse maximale", "defensive floor": "plancher défensif",
+    "defensive": "défensif", "one company": "une société", "at most": "au plus", "in stocks": "en actions",
+    "same for all: the stock room binds": "le même pour toutes : la place en actions limite",
+    "depending on its worst drop": "selon sa pire baisse", "e.g.": "p. ex.", "Flags:": "Signalements :",
+    "loss test": "test de perte", "data": "données", "horizon": "horizon", "growth": "croissance",
+    "Cautious": "Prudent", "Balanced": "Équilibré", "Aggressive": "Audacieux", "Preserve": "Préservation",
+    "safety net, never 100% growth": "filet de sécurité, jamais 100 % en croissance",
+    "may be withdrawn within 3 years": "pourrait être retiré d'ici 3 ans",
+    "loss limit = smaller of the drop you'd accept": "limite de perte = la plus petite entre la baisse que vous accepteriez",
+    "and what your situation allows": "et ce que votre situation permet", "i.e.": "soit",
+    "declared knowledge": "connaissances déclarées", "reaction to a 20% drop": "réaction à une baisse de 20 %",
+    "max acceptable loss": "perte maximale acceptable", "tolerance = the more cautious of the two": "tolérance = la plus prudente des deux",
+    "risk level = lower of tolerance": "niveau de risque = le plus bas de la tolérance",
+    "and capacity": "et de la capacité", "5+ years investing in stocks/ETFs": "5 ans et plus en actions ou FNB",
+    "quiz": "questionnaire", "caps knowledge at": "plafonne les connaissances à",
+    "one company: its own worst drop in the data": "une société : sa propre pire baisse dans les données",
+    "may cost at most": "peut coûter au plus", "of your loss limit": "de votre limite de perte", "of the portfolio": "du portefeuille",
+    "and no company above": "et aucune société au-delà de", "you can hold in stocks": "que vous pouvez détenir en actions",
+    "crypto (BTC + ETH as one bet): same rule → at most": "crypto (BTC + ETH comme un seul pari) : même règle → au plus",
+    "approved": "approuvé", "sent back": "renvoyé", "dropped": "retirée", "with disclosures": "avec points à divulguer",
+    "Request": "Demande", "as asked": "telle que demandée", "real": "réel", "failing": "en échec", "none": "aucun",
+    "changes": "changements", "rebuilt as": "reconstruit en", "holdings": "placements",
+    "chance of a drop deeper than": "probabilité d'une baisse plus forte que",
+    "set by horizon": "fixée par l'horizon", "set by worst_drop": "fixée par le test de perte", "set by level": "fixée par le niveau",
+    "set by liquidity": "fixée par la liquidité", "set by safety": "fixée par le filet de sécurité",
+    "stationary block bootstrap of": "bootstrap par blocs stationnaire de", "daily returns": "rendements quotidiens",
+    "average = cash + 3% a year on the growth part": "moyenne = encaisse + 3 % par année sur la partie croissance",
+    "fixed seed": "graine fixe", "the strategy's": "de la stratégie",
+    "Replays past days only: no crisis worse than": "Rejoue seulement des jours passés : aucune crise pire que",
+    "no fees or taxes": "ni frais ni impôts", "Not a forecast": "Pas une prévision",
+    "assets, ": "actifs, ", "Per asset:": "Par actif :", "return": "rendement", "volatility": "volatilité",
+    "worst 12 months": "pires 12 mois", "Deepest drawdown:": "Plus forte baisse :", "Most correlated pair:": "Paire la plus corrélée :",
+    "existing portfolio:": "portefeuille existant :", "existing:": "existant :", "core:": "cœur :", "income:": "revenu :",
+    # asset classes, countries, currencies
+    "equity": "actions", "bonds": "obligations", "gold": "or",
+    "United States": "États-Unis", "currency ": "devise ",
+    # KYC
+    "average investor": "investisseur moyen", "above-average risk tolerance": "tolérance au risque supérieure à la moyenne",
+    "cautious (below-average risk tolerance)": "prudent (tolérance au risque inférieure à la moyenne)",
+    "KYC bets: ": "Choix KYC : ", "they agree with tolerance": "ils concordent avec la tolérance",
+    "expected-value question right": "question d'espérance réussie", "expected-value question wrong": "question d'espérance ratée",
+    "cross-check only, limits unchanged": "contre-vérification seulement, limites inchangées",
+    "A used = median of the three bets = ": "A retenu = médiane des trois choix = ",
+    # levels and misc labels
+    "(Cautious)": "(Prudent)", "(Balanced)": "(Équilibré)", "(Growth)": "(Croissance)", "(Aggressive)": "(Audacieux)",
+    "(Preserve)": "(Préservation)", "(advanced)": "(avancé)", "(intermediate)": "(intermédiaire)",
+    "(experienced)": "(expérimenté)", "(basic)": "(de base)", "(beginner)": "(débutant)",
+    "the safety net: never 100% growth": "le filet de sécurité : jamais 100 % en croissance",
+    "the safety net": "le filet de sécurité",
+    " set by ": " fixée par ",
+    "observed worst drop": "pire baisse observée", "worst drop": "pire baisse",
+    "loss limit": "limite de perte", "simulated chance of a drop deeper than": "probabilité simulée d'une baisse plus forte que",
+    "(allowed 10%)": "(permis : 10 %)",
+    " strategies: ": " stratégies : ", " years": " ans",
+    "Market data": "Données de marché", "mock": "hors ligne",
+    "objection(s) kept": "objection(s) retenue(s)", "objection(s) disclosed": "objection(s) divulguée(s)",
+    "tool call(s)": "appel(s) d'outil", "warning(s)": "avertissement(s)",
+    "daily prices, corporate actions": "prix quotidiens, opérations sur titres",
+    "USD/CAD, Canadian rates and CPI": "USD/CAD, taux canadiens et IPC",
+    "(organizers' build script)": "(script de construction des organisateurs)",
+}

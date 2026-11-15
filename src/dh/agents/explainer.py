@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 
 from ..data import ROOT
 from ..data import DEFAULT_LABEL, period, period_label, proxies_used
-from ..personas import DISCLAIMER
+from ..personas import DISCLAIMER, DISCLAIMER_FR
 from . import guardian
 
 PROMPT_VERSION = "explainer-v5"  # v4: {nK} ids for every number (strict G12); v5: data window from the data (#31),
@@ -158,8 +158,26 @@ def _existing_facts(r: dict | None) -> dict | None:
     }
 
 
-def facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
-    """Everything the Explainer may say, numbers pre-formatted as the text should show them."""
+def facts(strategies: list[dict], limits: dict, profile: dict, lang: str | None = None) -> dict:
+    """Everything the Explainer may say, numbers pre-formatted as the text should show them. lang="fr" adds
+    `language` (so French answers get their own cache entries; English keys are unchanged) and the French
+    disclaimer (#49)."""
+    f = _facts(strategies, limits, profile)
+    if (lang or _lang()) == "fr":
+        f["language"] = "fr"
+        f["disclaimer"] = DISCLAIMER_FR
+    return f
+
+
+def _lang() -> str:
+    try:
+        from ..i18n import lang
+        return lang()
+    except Exception:  # noqa: BLE001
+        return "en"
+
+
+def _facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
     p, label = period(), period_label()
     strats = []
     for s in strategies:
@@ -333,6 +351,8 @@ def check(text: str, strategies: list[dict], limits: dict, profile: dict, f: dic
 # ---- deterministic template (mock mode, and the fallback when the agent's text fails a check) ----------
 
 def template(f: dict) -> str:
+    if f.get("language") == "fr":
+        return template_fr(f)
     c, lim = f["client"], f["limits"]
     out = [f"**{c['name'] or 'Client'}, here is what this simulation found.**", "",
            f"**What we looked at.** {f['data']}", "",
@@ -376,6 +396,59 @@ def template(f: dict) -> str:
     out += ["", f"**Limits of this analysis.** These numbers describe {f['period']} only; they are not predictions. "
                 "A longer horizon, a different loss limit or new money needed soon would change the answer.",
             "", f["disclaimer"]]
+    return "\n".join(out)
+
+
+def template_fr(f: dict) -> str:
+    """The same deterministic text in French (#49). Numbers are copied exactly as in the facts (G12 checks them);
+    engine wording inside the facts goes through the French table without touching a number."""
+    from ..i18n import tr_words as w
+    c, lim = f["client"], f["limits"]
+    out = [f"**{c['name'] or 'Client'}, voici ce que cette simulation a trouvé.**", "",
+           "**Ce que nous avons examiné.** Prix quotidiens (Yahoo Finance, par le jeu de départ des organisateurs), "
+           "USD/CAD de la Banque du Canada; tous les rendements en CAD.", "",
+           f"**Ce que nous avons appris sur vous.** Votre limite de perte est de {lim['loss_limit']}"
+           + (f" ({lim['loss_limit_cad']})" if lim.get("loss_limit_cad") else "")
+           + f" : niveau de risque {lim['risk_level']} ({w(lim['risk_name'] or '')}). Au moins {lim['defensive_floor']} "
+             f"reste dans des placements défensifs et la crypto est plafonnée à {lim['crypto_cap']}. Le plafond d'une "
+             "société est calculé pour vous et pour chaque actif : la pire baisse passée d'une société ne peut utiliser "
+             "qu'une petite part de votre limite de perte, et aucune société ne prend une grande part de ce que vous "
+             "pouvez détenir en actions."]
+    if f["requests_not_included"]:
+        out += ["", "**Votre demande.**"]
+        for r in f["requests_not_included"]:
+            reason = w(r["reason"])
+            out.append(f"Vous avez demandé {r['asked'] or ''} dans {r['ticker']}. {reason[:1].upper()}{reason[1:]}. "
+                       "Les stratégies ci-dessous restent dans ces limites; le choix vous appartient.")
+    ex = f.get("existing_portfolio")
+    if ex:
+        out += ["", "**Le portefeuille que vous avez déjà.** Nous avons mesuré " + ex["measured_cad"]
+                + f". Sa pire baisse passée a été de {ex['today']['worst_drop']}"
+                + (f"; limites qu'il enfreint : {', '.join(ex['today']['limits_broken'])}." if ex["today"]["limits_broken"]
+                   else "; il reste dans vos limites.")]
+        out += [f"- {w(line)}" for line in ex["what_we_see"]]
+        if ex.get("rebuilt"):
+            out.append(f"Reconstruit en **{w(ex['rebuilt_as'])}** avec le même argent, sa pire baisse aurait été de "
+                       f"{ex['rebuilt']['worst_drop']}.")
+    out += ["", "**Les stratégies.** Jusqu'à trois options, du plus de croissance que vos limites permettent au moins "
+                "d'actions; moins d'actions ne veut pas toujours dire une plus petite baisse passée, alors comparez les "
+                "baisses. Le choix vous appartient."]
+    for s in f["strategies"]:
+        line = f"- **{w(s['name'])}** : {s['growth']} en croissance, {s['defensive']} en défensif"
+        if s.get("split_set_by"):
+            line += f", fixée par {w(s['split_set_by'])}"
+        line += f". Pire baisse passée {s['worst_drop']} (votre limite : {lim['loss_limit']})"
+        if s["return_2022"]:
+            line += f"; en {f['stress_year']}, elle a rendu {s['return_2022']}"
+        if s["chance_of_loss_risk_only"]:
+            line += (f"; probabilité de finir sous votre mise de départ, sans supposer que les rendements passés se "
+                     f"répètent : {s['chance_of_loss_risk_only']}")
+        out.append(line + ".")
+        if s["conflict_message"]:
+            out.append(f"  {w(s['conflict_message'])}")
+    out += ["", f"**Limites de cette analyse.** Ces nombres décrivent seulement la période {f['period']}; ce ne sont pas "
+                "des prévisions. Un horizon plus long, une autre limite de perte ou de l'argent requis bientôt "
+                "changeraient la réponse.", "", f["disclaimer"]]
     return "\n".join(out)
 
 
@@ -445,8 +518,11 @@ def _run_agent(f: dict, strategies: list[dict], limits: dict, profile: dict) -> 
 
     model = BedrockModel(model_id=model_id(), region_name=os.getenv("AWS_REGION", "us-east-1"), max_tokens=16000)
     agent = Agent(model=model, system_prompt=SYSTEM_PROMPT, tools=[check_text], callback_handler=None)
+    fr = ("\n\nLANGUAGE: write the whole text in Canadian French (the five section titles too, in French), keeping "
+          "every {nK} id exactly as given, and end with this sentence verbatim instead of the English one: \""
+          + DISCLAIMER_FR + "\"") if f.get("language") == "fr" else ""
     res = agent("FACTS:\n" + json.dumps(tf, ensure_ascii=False, indent=1)
-                + "\n\nNUMBERS (write the id, never the value):\n" + json.dumps(table, ensure_ascii=False, indent=1))
+                + "\n\nNUMBERS (write the id, never the value):\n" + json.dumps(table, ensure_ascii=False, indent=1) + fr)
     return str(res).strip(), calls["n"]
 
 

@@ -56,7 +56,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     p = plan()
     live = os.getenv("LLM_PROVIDER", "mock").lower() == "bedrock" and not a.dry
-    n = 2 * len(p["clients"]) + 1 + len(p["clients"]) * len(p["questions"]) + 3 + len(p["existing"]["questions"])
+    n = 2 * (2 * len(p["clients"]) + len(p["clients"]) * len(p["questions"]) + 3 + len(p["existing"]["questions"])) + 1
     print(f"{'LIVE (Bedrock)' if live else 'DRY RUN: no call made'} · {n} calls")
     for c in p["clients"]:
         print(f"  critic + explainer  {c}")
@@ -85,39 +85,42 @@ def main(argv=None) -> int:
             failed.append(f"{what}: {e}")
             print(f"✘ {what}: {e}")
 
-    for c in p["clients"]:
-        prof = DEMO_PROFILES[c]
+    from dh.i18n import tr
+    for lang in ("en", "fr"):  # both languages of the app (#49): French answers get their own cache entries
+        os.environ["AF_LANG"] = lang
+        for c in p["clients"]:
+            prof = DEMO_PROFILES[c]
+            res = pipeline.run(prof)
+            cr = res.get("critic") or {}
+            if cr and cr.get("source") != "mock":
+                keep(f"[{lang}] critic {c} ({cr['source']})", critic.save_demo, cr)
+            else:
+                failed.append(f"critic {c}: no review ({cr.get('note', 'not run')})")
+            e = explainer.add_to_trace(res, prof)
+            keep(f"[{lang}] explainer {c} ({e['source']}, {e['verdict']})", explainer.save_demo, e)
+            for q in p["questions"]:
+                ans = analyst.ask(tr(q, to=lang), res, prof)
+                if ans["status"] != "valid":
+                    failed.append(f"analyst {c} «{q}»: {ans['status']} ({ans['note']})")
+                    print(f"✘ analyst {c} «{q}»: {ans['status']}")
+                    continue
+                keep(f"[{lang}] analyst {c} «{q}» ({ans['source']})", analyst.save_demo, ans)
+        prof = existing_profile(p)          # existing portfolio (#42): proposals' Critic, the review's Critic, Explainer
         res = pipeline.run(prof)
-        cr = res.get("critic") or {}
-        if cr and cr.get("source") != "mock":
-            keep(f"critic {c} ({cr['source']})", critic.save_demo, cr)
-        else:
-            failed.append(f"critic {c}: no review ({cr.get('note', 'not run')})")
+        for what, cr in (("critic", res.get("critic") or {}),
+                         ("critic (existing)", (res.get("existing_review") or {}).get("critic") or {})):
+            if cr and cr.get("source") != "mock":
+                keep(f"{what} robert+portfolio ({cr['source']})", critic.save_demo, cr)
+            else:
+                failed.append(f"{what} robert+portfolio: no review ({cr.get('note', 'not run')})")
         e = explainer.add_to_trace(res, prof)
-        keep(f"explainer {c} ({e['source']}, {e['verdict']})", explainer.save_demo, e)
-        for q in p["questions"]:
-            ans = analyst.ask(q, res, prof)
+        keep(f"explainer robert+portfolio ({e['source']}, {e['verdict']})", explainer.save_demo, e)
+        for q in p["existing"]["questions"]:
+            ans = analyst.ask(tr(q, to=lang), res, prof)
             if ans["status"] != "valid":
-                failed.append(f"analyst {c} «{q}»: {ans['status']} ({ans['note']})")
-                print(f"✘ analyst {c} «{q}»: {ans['status']}")
+                failed.append(f"analyst robert+portfolio «{q}»: {ans['status']} ({ans['note']})")
                 continue
-            keep(f"analyst {c} «{q}» ({ans['source']})", analyst.save_demo, ans)
-    prof = existing_profile(p)          # existing portfolio (#42): proposals' Critic, the review's Critic, Explainer
-    res = pipeline.run(prof)
-    for what, cr in (("critic", res.get("critic") or {}),
-                     ("critic (existing)", (res.get("existing_review") or {}).get("critic") or {})):
-        if cr and cr.get("source") != "mock":
-            keep(f"{what} robert+portfolio ({cr['source']})", critic.save_demo, cr)
-        else:
-            failed.append(f"{what} robert+portfolio: no review ({cr.get('note', 'not run')})")
-    e = explainer.add_to_trace(res, prof)
-    keep(f"explainer robert+portfolio ({e['source']}, {e['verdict']})", explainer.save_demo, e)
-    for q in p["existing"]["questions"]:
-        ans = analyst.ask(q, res, prof)
-        if ans["status"] != "valid":
-            failed.append(f"analyst robert+portfolio «{q}»: {ans['status']} ({ans['note']})")
-            continue
-        keep(f"analyst robert+portfolio «{q}» ({ans['source']})", analyst.save_demo, ans)
+            keep(f"analyst robert+portfolio «{q}» ({ans['source']})", analyst.save_demo, ans)
     ex = extractor.extract(p["text"])
     keep(f"extractor ({ex['source']})", extractor.save_demo, ex, p["text"])
 

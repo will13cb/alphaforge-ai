@@ -34,7 +34,7 @@ et **justifie chaque nombre**.
 | **Aucun nombre inventé** | L'Explicateur n'écrit jamais un chiffre : il place des repères que le code remplit avec les valeurs calculées. Les nombres du Critique et de l'Analyste doivent venir des outils qu'ils citent. Un texte qui échoue est remplacé par un gabarit vérifié, et la trace le dit. |
 | **Des limites propres à chaque client, et expliquées** | Pas de table de profils types : la limite de perte, le plancher défensif et le plafond de chaque société sont calculés pour le client, chacun avec sa raison écrite. Chaque stratégie dit quelle contrainte a fixé sa répartition. |
 | **Honnête sur ses limites** | Nous avons testé un optimiseur de Markowitz et une stratégie protégée (CPPI), puis les avons écartés, preuves à l'appui : les pondérations « optimales » changeaient avec la période et n'ont pas battu l'équipondération hors échantillon. Aucun rendement passé n'est présenté comme une prévision. |
-| **Utile au vrai client** | Questions guidées ou description libre, revue du portefeuille qu'on détient déjà (frais en $, mouvements en $), recherche d'obligations détenues jusqu'à l'échéance, questions de suivi en français ou en anglais, voix facultative. |
+| **Utile au vrai client** | Questions guidées ou description libre, revue du portefeuille qu'on détient déjà (frais en $, mouvements en $), recherche d'obligations détenues jusqu'à l'échéance, application entièrement en français ou en anglais (interface, résultats et textes de Claude), voix facultative. |
 
 ## Visite de deux minutes
 
@@ -106,7 +106,6 @@ continue de les rejouer après la fermeture du compte AWS de l'événement, et l
 - Les nombres décrivent 2021-2026 (un seul marché baissier modéré) : ce ne sont pas des prévisions.
 - La règle d'horizon (aucune action à 2 ans, aucun plafond à 15 ans) est un jugement de l'équipe, présenté comme tel.
 - Le modèle de perte simulé repose sur des hypothèses déclarées (prime de 3 %, seuil de 10 %), pas sur une garantie.
-- Les textes rédigés par les agents restent en anglais dans l'interface française : le Gardien vérifie ce texte-là.
 - Frais montrés mais non déduits; pas d'impôts ni de types de comptes (CELI/REER); un seul objectif à la fois.
 
 Détails, sources et hypothèses : [documentation technique](deliverables/TECHNICAL_DOC.md).

@@ -401,7 +401,9 @@ def _run_agent(f: dict, rec: Recorder, tools: list) -> list[dict]:
     model = BedrockModel(model_id=model_id(), region_name=os.getenv("AWS_REGION", "us-east-1"), max_tokens=8000)
     agent = Agent(model=model, system_prompt=SYSTEM_PROMPT, tools=[tool(rec.wrap(t)) for t in tools],
                   callback_handler=None)
-    return _parse(str(agent("FACTS:\n" + json.dumps(f, ensure_ascii=False, default=str))))
+    fr = ("\n\nLANGUAGE: write each claim in Canadian French. Keep every number exactly as the tool results show it "
+          "(dot decimals), and tickers as they are.") if f.get("language") == "fr" else ""
+    return _parse(str(agent("FACTS:\n" + json.dumps(f, ensure_ascii=False, default=str) + fr)))
 
 
 # ---- entry points ------------------------------------------------------------------------------------------
@@ -419,6 +421,12 @@ def review(strategies: list[dict], limits: dict, profile: dict, provider: str | 
         from ..holdings import holdings as load_holdings
         holdings = load_holdings()
     f = facts(strategies, limits, profile)
+    try:  # French run: claims in French, their own cache entries (English keys unchanged, #49)
+        from ..i18n import lang as _ui_lang
+        if _ui_lang() == "fr":
+            f["language"] = "fr"
+    except Exception:  # noqa: BLE001
+        pass
     if context:
         f.update(context)
     mid = model_id()

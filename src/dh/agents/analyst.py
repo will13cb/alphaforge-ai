@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 from ..data import ROOT, period, period_label
 from ..personas import DISCLAIMER
 
-DISCLAIMER_FR = "Simulation seulement, pour un profil fictif. Pas un conseil financier ; aucune transaction réelle."
+from ..personas import DISCLAIMER_FR  # noqa: E402  (one French disclaimer for every agent, #49)
 from . import critic, grounding, market
 from .rules import UNIVERSE
 

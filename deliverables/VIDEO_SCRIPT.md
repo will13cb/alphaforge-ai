@@ -21,8 +21,8 @@ première stratégie 15 % en actions, pire baisse −8,6 %, 2022 −5,8 % (`pers
    enregistré; un autre client ou une autre question s'exécuterait en direct (ou basculerait).
 3. Pour les questions de suivi, **cliquer sur les boutons de suggestion** (affichés en français) : ils envoient la
    question enregistrée. Une question tapée à la main n'aurait pas de réponse enregistrée.
-4. À l'écran, l'interface est en français; les textes rédigés par les agents (explication, objections, réponses de
-   l'Analyste) restent en anglais, comme indiqué dans la barre latérale. La narration les résume en français.
+4. Tout est en français à l'écran, y compris les textes de Claude, à condition que `make warm` ait enregistré les
+   réponses françaises (il enregistre les deux langues).
 5. Navigateur à 125 %, une seule fenêtre, notifications coupées. Garder `aws/architecture.png` ouvert dans un
    onglet. Facultatif : la console S3 sur `traces/` pour la séquence de 3 min 35.
 
