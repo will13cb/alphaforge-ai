@@ -1,13 +1,19 @@
 # AlphaForge AI: an investment analyst that can say no
 
+**Robert, 59, wants to put 25% of his portfolio in Tesla.** He accepts a loss of at most 15%.
+AlphaForge AI finds that Tesla's worst drop over 2021-2026 was −70.9%: at 25%, Tesla alone would have cost
+−17.7% of the portfolio, more than his whole loss limit. Tesla fits his limits up to 3.1%.
+The tool shows him the rule, the number and the source, then leaves the decision to him.
+
+**Try it:** https://alphaforge-ai-wj.streamlit.app/ (French by default, Français ⇄ English switch)
+· *Simulation only: fictional profiles, no transactions, not financial advice.*
+
 PolyFinances Datathon 2026 (Polytechnique Montréal), challenge **AlphaForge AI** by **National Bank × AWS**.
 Team: William Caron-Bastarache, Joud Katbe. *Version française : [`README.md`](README.md).*
 
-> A team of specialised agents profiles the investor the way a Canadian advisor would, proposes up to three
-> simulated strategies inside limits it can explain, and lets code (not the LLM) enforce those limits, so it can
-> tell Robert "no" to 25% in Tesla and show exactly which rule, number and source made it say so.
-
-**Live app:** https://alphaforge-ai-wj.streamlit.app/ · **Simulation only.** Fictional profiles, no real transactions, not financial advice.
+**In one sentence:** specialised agents (Strands on Amazon Bedrock, Claude Opus 5.5) profile the investor the way a
+Canadian advisor would, propose up to three simulated strategies, and code, not the LLM, enforces the limits. Every
+run leaves a trace in Amazon S3.
 
 ## What it does
 
@@ -16,14 +22,6 @@ strategies at different risk levels, sets each stocks/bonds split as the stricte
 stated horizon rule, money needed soon, a simulated chance of exceeding their loss threshold over their horizon) and says which one decided,
 checks everything against explicit rules, and explains the result in plain language, tying
 every number to the data.
-
-Example: Robert (59, about 4 years before he needs the money, accepts at most a 15% loss) asks for 25% in Tesla.
-- His horizon rule (a stated judgment, not a data result) allows at most about 15% in stocks: his first strategy is
-  about 15/85 and the second holds 10 points less in stocks; the trace says the horizon rule decided.
-- Caps are computed, not fixed: Tesla's own worst drop was −70.9%, so 25% alone would have cost −17.7% of the
-  portfolio, more than his whole 15% loss limit; it fits up to 3.1%.
-- The explanation (Claude Opus 5.5 on Amazon Bedrock) gives him those numbers and leaves the decision to him;
-  the Guardian checks that every % in it was computed and that the request is explained.
 
 ## How it works
 

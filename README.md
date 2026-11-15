@@ -1,15 +1,19 @@
 # AlphaForge AI : un analyste en placement qui sait dire non
 
+**Robert, 59 ans, veut mettre 25 % de son portefeuille dans Tesla.** Il accepte de perdre au plus 15 %.
+AlphaForge AI calcule que la pire baisse de Tesla sur 2021-2026 a été de −70,9 % : à 25 %, Tesla seule aurait
+coûté −17,7 % du portefeuille, plus que toute sa limite de perte. Tesla entre dans ses limites jusqu'à 3,1 %.
+L'outil lui montre la règle, le nombre et la source, puis lui laisse la décision.
+
+**Essayer :** https://alphaforge-ai-wj.streamlit.app/ (français par défaut, bouton Français ⇄ English)
+· *Simulation seulement : profils fictifs, aucune transaction, pas un conseil financier.*
+
 Datathon PolyFinances 2026 (Polytechnique Montréal), défi **AlphaForge AI** de la **Banque Nationale × AWS**.
 Équipe : William Caron-Bastarache, Joud Katbe. *English version: [`README.en.md`](README.en.md).*
 
-> Une équipe d'agents spécialisés établit le profil de l'investisseur comme le ferait un conseiller canadien, propose
-> jusqu'à trois stratégies simulées dans des limites qu'elle sait expliquer, et confie au code (pas au LLM) le respect
-> de ces limites. Elle peut ainsi dire « non » à Robert qui veut 25 % dans Tesla, et montrer exactement quelle règle,
-> quel nombre et quelle source l'ont amenée à cette réponse.
-
-**Application en ligne :** https://alphaforge-ai-wj.streamlit.app/ (en français par défaut; bouton Français ⇄ English
-dans la barre latérale) · **Simulation seulement.** Profils fictifs, aucune transaction réelle, pas un conseil financier.
+**En une phrase :** des agents spécialisés (Strands sur Amazon Bedrock, Claude Opus 5.5) établissent le profil
+de l'investisseur comme un conseiller canadien, proposent jusqu'à trois stratégies simulées, et c'est le code,
+pas le LLM, qui fait respecter les limites. Chaque exécution laisse une trace dans Amazon S3.
 
 ## Ce que ça fait
 
@@ -18,16 +22,6 @@ trois stratégies à des niveaux de risque différents, fixe la répartition act
 stricte des contraintes du client (une règle d'horizon assumée, l'argent requis bientôt, la probabilité simulée de
 dépasser son seuil de perte sur son horizon) et dit laquelle a décidé, vérifie tout par des règles explicites, puis
 explique le résultat en mots simples en reliant chaque nombre aux données.
-
-Exemple : Robert (59 ans, environ 4 ans avant d'avoir besoin de l'argent, accepte au plus une perte de 15 %) demande
-25 % dans Tesla.
-- Sa règle d'horizon (un jugement assumé, pas un résultat des données) permet au plus environ 15 % en actions : sa
-  première stratégie est d'environ 15/85 et la deuxième détient 10 points de moins en actions; la trace indique que
-  la règle d'horizon a décidé.
-- Les plafonds sont calculés, pas fixés : la pire baisse de Tesla a été de −70,9 %, donc 25 % à elle seule aurait
-  coûté −17,7 % du portefeuille, plus que toute sa limite de perte de 15 %; Tesla entre dans ses limites jusqu'à 3,1 %.
-- L'explication (Claude Opus 5.5 sur Amazon Bedrock) lui donne ces nombres et lui laisse la décision; le Gardien
-  vérifie que chaque % a été calculé et que la demande est expliquée.
 
 ## Comment ça fonctionne
 
