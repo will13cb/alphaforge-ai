@@ -1,0 +1,113 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "How would my strategy have done in 2022?",
+ "answer": {
+  "answer": "In 2022 the Broad core strategy lost 5.78% over the full year. During the rate-hike sell-off from January to mid-October 2022 it was down 8.01%, and at its lowest point it was 8.62% below where it started. The Income / dividends strategy lost 6.13% over the full year. In the same sell-off it was down 7.76%, with a deepest drop of 9.09%. Both stayed well inside your 15% loss limit (about $60,000), but this is past data and doesn't tell us what will happen next.",
+  "evidence": [
+   "t1",
+   "t2",
+   "t3"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "results_overview",
+   "args": {},
+   "result": {
+    "loss_limit": 0.15,
+    "loss_limit_cad": 60000,
+    "defensive_floor": 0.8462,
+    "horizon_growth_cap": 0.1538,
+    "strategies": [
+     {
+      "key": "core",
+      "name": "Broad core: most growth your limits allow",
+      "growth": 0.15,
+      "max_drawdown": -0.0862,
+      "return_2022": -0.0578,
+      "prob_loss": 0.0385,
+      "warnings": []
+     },
+     {
+      "key": "income",
+      "name": "Income / dividends: more prudent",
+      "growth": 0.05,
+      "max_drawdown": -0.0949,
+      "return_2022": -0.0613,
+      "prob_loss": 0.057,
+      "warnings": [
+       "C2"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "stress_test",
+   "args": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12"
+   },
+   "result": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12",
+    "cumulative_return": -0.0776,
+    "deepest_drop": -0.0909
+   }
+  },
+  {
+   "call_id": "t3",
+   "tool": "stress_test",
+   "args": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12"
+   },
+   "result": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12",
+    "cumulative_return": -0.0801,
+    "deepest_drop": -0.0862
+   }
+  }
+ ],
+ "created": "2026-11-15T15:15:21+00:00"
+}

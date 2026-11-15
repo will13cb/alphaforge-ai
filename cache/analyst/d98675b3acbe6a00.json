@@ -1,0 +1,98 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "Et si mon horizon était de 8 ans ?",
+ "answer": {
+  "answer": "Avec un horizon de 8 ans au lieu de 15, vos limites deviennent beaucoup plus prudentes : la perte maximale acceptée passe de 40 % à 22 %, et la part défensive minimale passe de 5 % à environ 53,9 %, ce qui plafonne la croissance à environ 46,2 %. La stratégie Croissance passerait de 95 % à 44,5 % de croissance, avec une pire baisse passée de -16,2 % au lieu de -31,6 %, et une probabilité de finir sous la mise de départ de 24,9 % au lieu de 38,2 %. La stratégie Cœur passerait à 30 % de croissance, avec une pire baisse de -9,6 % et une probabilité de perte de 3,4 %. La stratégie Revenu passerait à 20 % de croissance, avec une pire baisse de -8,6 % et une probabilité de perte de 2,4 %. Ces chiffres viennent de simulations sur le passé et ne prédisent pas l'avenir ; c'est à vous de décider.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 15,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 15,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.4,
+     "defensive_floor": 0.05,
+     "horizon_growth_cap": 1.0,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.95,
+       "max_drawdown": -0.3155,
+       "prob_loss": 0.3815
+      },
+      {
+       "key": "core",
+       "growth": 0.85,
+       "max_drawdown": -0.1478,
+       "prob_loss": 0.1565
+      },
+      {
+       "key": "income",
+       "growth": 0.75,
+       "max_drawdown": -0.1076,
+       "prob_loss": 0.074
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.22,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.445,
+       "max_drawdown": -0.1621,
+       "prob_loss": 0.2485
+      },
+      {
+       "key": "core",
+       "growth": 0.3,
+       "max_drawdown": -0.0963,
+       "prob_loss": 0.034
+      },
+      {
+       "key": "income",
+       "growth": 0.2,
+       "max_drawdown": -0.0864,
+       "prob_loss": 0.024
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "limit_reason",
+   "args": {
+    "name": "defensive_floor"
+   },
+   "result": {
+    "name": "defensive_floor",
+    "value": 0.05,
+    "reasons": [
+     "defensive floor 5%: safety net, never 100% growth"
+    ]
+   }
+  }
+ ],
+ "created": "2026-11-15T15:10:22+00:00"
+}

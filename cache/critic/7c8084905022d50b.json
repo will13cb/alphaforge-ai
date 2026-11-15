@@ -1,0 +1,499 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "critic-v1",
+ "objections": [
+  {
+   "strategy": "income",
+   "claim": "Income is labelled 'more prudent', but its past numbers are riskier than core: max drawdown 9.5% vs 8.6%, volatility 4.3% vs 3.8%, worst 12 months -6.2% vs -5.8%. Most of that comes from moving part of the cash-like ZST.TO (max drawdown 0.43%) into AGG, a USD bond fund with 7.4% volatility and a 12.75% max drawdown that leaves 30% of the portfolio exposed to the US dollar.",
+   "evidence": [
+    "t1",
+    "t3",
+    "t4",
+    "t5"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  },
+  {
+   "strategy": "income",
+   "claim": "Robert asked for dividends and Canada, but this strategy holds only 5% in equities, with each dividend name at 0.5% to 1% (RY.TO at 1.0% vs its 3.1% cap). The income from those holdings is small, and C2 warns that Canada makes up 80% of the equity sleeve.",
+   "evidence": [
+    "t1"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  },
+  {
+   "strategy": "core",
+   "claim": "The 'defensive' sleeve is not cash-like. XBB.TO, 42.5% of core and 38% of income, fell 14.8% in the 2022 sell-off and has a max drawdown of 15.5%, about the same as Robert's 15% loss limit. That is why core still fell 8.6% in 2022 despite being 85% defensive.",
+   "evidence": [
+    "t5",
+    "t4"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  }
+ ],
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "strategy_checks",
+   "args": {
+    "strategy": "income"
+   },
+   "result": {
+    "strategy": "income",
+    "checks": [
+     {
+      "check": "C1",
+      "value": 0.01,
+      "limit": 0.0308,
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs"
+     },
+     {
+      "check": "C2",
+      "value": 0.8,
+      "limit": 0.7,
+      "status": "warn",
+      "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+     },
+     {
+      "check": "C3",
+      "value": 0.015,
+      "limit": 0.3,
+      "status": "pass",
+      "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through"
+     },
+     {
+      "check": "C3b",
+      "value": null,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "job sector not given"
+     },
+     {
+      "check": "C4",
+      "value": 2,
+      "limit": 2,
+      "status": "pass",
+      "reason": "2 asset classes: bonds 95%, equity 5%"
+     },
+     {
+      "check": "C5",
+      "value": 303.4,
+      "limit": 8,
+      "status": "pass",
+      "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "C6",
+      "value": 0.0,
+      "limit": 0.85,
+      "status": "pass",
+      "reason": "no near-duplicate holdings"
+     },
+     {
+      "check": "D1",
+      "value": 0.0949,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "worst drop 9.5% vs the 15% the client said they'd accept"
+     },
+     {
+      "check": "D2",
+      "value": 0.0949,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "worst drop 9.5% vs loss limit 15% = 37,951 $ vs 60,000 $"
+     },
+     {
+      "check": "D3",
+      "value": -0.0623,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "2022 sell-off drop -9.1%, worst 12 months -6.2%, CVaR 95% 0.58% a day"
+     },
+     {
+      "check": "E",
+      "value": 0.057,
+      "limit": null,
+      "status": "pass",
+      "reason": "no target given; 6% chance of ending below what was put in (risk-only view)"
+     },
+     {
+      "check": "F1",
+      "value": "retirement",
+      "limit": null,
+      "status": "pass",
+      "reason": "objective retirement: no extra constraint"
+     },
+     {
+      "check": "F2",
+      "value": 0.05,
+      "limit": 0.1538,
+      "status": "pass",
+      "reason": "growth 5% vs 15% allowed for a 4-year horizon"
+     },
+     {
+      "check": "F3",
+      "value": 0.95,
+      "limit": 0.2,
+      "status": "pass",
+      "reason": "defensive 95% vs 20% needed within 3 years"
+     },
+     {
+      "check": "F4",
+      "value": 5,
+      "limit": 3,
+      "status": "pass",
+      "reason": "knowledge 5/5: single names allowed"
+     },
+     {
+      "check": "F5",
+      "value": null,
+      "limit": null,
+      "status": "pass",
+      "reason": "no ESG preference"
+     },
+     {
+      "check": "F6",
+      "value": [],
+      "limit": [],
+      "status": "pass",
+      "reason": "none held"
+     },
+     {
+      "check": "G2",
+      "status": "pass",
+      "reason": "sum 100.00%"
+     },
+     {
+      "check": "G3",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G4",
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)"
+     },
+     {
+      "check": "G5",
+      "status": "pass",
+      "reason": "crypto 0% vs cap 0%"
+     },
+     {
+      "check": "G6",
+      "status": "pass",
+      "reason": "defensive 95% vs floor 85%"
+     },
+     {
+      "check": "G7",
+      "status": "pass",
+      "reason": "max drawdown 9.5% vs loss limit 15%"
+     },
+     {
+      "check": "G8",
+      "status": "pass",
+      "reason": "volatility 4.3% vs target 8%"
+     },
+     {
+      "check": "G9",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G10",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G14",
+      "status": "warn",
+      "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+     },
+     {
+      "check": "G15",
+      "status": "pass",
+      "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given"
+     },
+     {
+      "check": "G16",
+      "status": "pass",
+      "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "G17",
+      "status": "pass",
+      "reason": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $"
+     }
+    ]
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "correlation_between",
+   "args": {
+    "tickers": [
+     "XBB.TO",
+     "AGG",
+     "ZST.TO",
+     "XIU.TO",
+     "SPY"
+    ]
+   },
+   "result": {
+    "pairs": [
+     {
+      "a": "XIU.TO",
+      "b": "SPY",
+      "correlation": 0.684
+     },
+     {
+      "a": "XBB.TO",
+      "b": "AGG",
+      "correlation": 0.63
+     },
+     {
+      "a": "XBB.TO",
+      "b": "ZST.TO",
+      "correlation": 0.354
+     },
+     {
+      "a": "AGG",
+      "b": "ZST.TO",
+      "correlation": 0.198
+     },
+     {
+      "a": "XBB.TO",
+      "b": "XIU.TO",
+      "correlation": 0.195
+     },
+     {
+      "a": "AGG",
+      "b": "SPY",
+      "correlation": 0.164
+     },
+     {
+      "a": "ZST.TO",
+      "b": "XIU.TO",
+      "correlation": 0.155
+     },
+     {
+      "a": "XBB.TO",
+      "b": "SPY",
+      "correlation": 0.129
+     },
+     {
+      "a": "ZST.TO",
+      "b": "SPY",
+      "correlation": 0.088
+     },
+     {
+      "a": "AGG",
+      "b": "XIU.TO",
+      "correlation": -0.059
+     }
+    ],
+    "average": 0.254
+   }
+  },
+  {
+   "call_id": "t3",
+   "tool": "portfolio_stats",
+   "args": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    }
+   },
+   "result": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    },
+    "ann_return": 0.0273,
+    "ann_vol": 0.0434,
+    "max_drawdown": -0.0949,
+    "cvar_95": 0.0058,
+    "worst_12m": -0.0623,
+    "return_2022": -0.0613,
+    "stress_2022": -0.0776,
+    "stress_2022_drawdown": -0.0909
+   }
+  },
+  {
+   "call_id": "t4",
+   "tool": "portfolio_stats",
+   "args": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    }
+   },
+   "result": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    },
+    "ann_return": 0.0397,
+    "ann_vol": 0.0384,
+    "max_drawdown": -0.0862,
+    "cvar_95": 0.0053,
+    "worst_12m": -0.0579,
+    "return_2022": -0.0578,
+    "stress_2022": -0.0801,
+    "stress_2022_drawdown": -0.0862
+   }
+  },
+  {
+   "call_id": "t5",
+   "tool": "asset_facts",
+   "args": {
+    "tickers": [
+     "AGG",
+     "XBB.TO",
+     "ZST.TO"
+    ]
+   },
+   "result": {
+    "assets": [
+     {
+      "ticker": "AGG",
+      "name": "iShares Core U.S. Aggregate Bond ETF",
+      "asset_class": "etf_bond",
+      "currency": "USD",
+      "sector": "Bonds (U.S. aggregate)",
+      "country": "United States",
+      "sharpe": -0.1263,
+      "ann_return": 0.0224,
+      "ann_vol": 0.0738,
+      "max_drawdown": -0.1275,
+      "cvar_95": 0.0098,
+      "worst_12m": -0.0911,
+      "return_2022": -0.0708,
+      "stress_2022": -0.0742,
+      "stress_2022_drawdown": -0.1074
+     },
+     {
+      "ticker": "XBB.TO",
+      "name": "iShares Core Canadian Universe Bond Index ETF",
+      "asset_class": "etf_bond",
+      "currency": "CAD",
+      "sector": "Bonds (Canada aggregate)",
+      "country": "Canada",
+      "sharpe": -0.375,
+      "ann_return": 0.0071,
+      "ann_vol": 0.0663,
+      "max_drawdown": -0.1548,
+      "cvar_95": 0.0089,
+      "worst_12m": -0.1166,
+      "return_2022": -0.1166,
+      "stress_2022": -0.1373,
+      "stress_2022_drawdown": -0.1481
+     },
+     {
+      "ticker": "ZST.TO",
+      "name": "BMO Ultra Short-Term Bond ETF",
+      "asset_class": "etf_bond",
+      "currency": "CAD",
+      "sector": "Bonds (Canada ultra short-term)",
+      "country": "Canada",
+      "sharpe": -0.0993,
+      "ann_return": 0.0342,
+      "ann_vol": 0.0056,
+      "max_drawdown": -0.0043,
+      "cvar_95": 0.0006,
+      "worst_12m": 0.0066,
+      "return_2022": 0.0122,
+      "stress_2022": 0.0029,
+      "stress_2022_drawdown": -0.0043
+     }
+    ],
+    "limits": "Past returns do not predict future returns; these numbers describe the data window only (see period)."
+   }
+  },
+  {
+   "call_id": "t6",
+   "tool": "goal_check",
+   "args": {
+    "weights": {
+     "AGG": 0.285,
+     "ENB.TO": 0.005,
+     "FTS.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "XBB.TO": 0.38,
+     "XIU.TO": 0.015,
+     "ZST.TO": 0.285
+    },
+    "capital": 400000.0,
+    "horizon_years": 4.0,
+    "monthly_contribution": 0.0,
+    "target_amount": null
+   },
+   "result": {
+    "weights": {
+     "AGG": 0.285,
+     "ENB.TO": 0.005,
+     "FTS.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "XBB.TO": 0.38,
+     "XIU.TO": 0.015,
+     "ZST.TO": 0.285
+    },
+    "horizon_years": 4.0,
+    "n_scenarios": 1000,
+    "total_invested": 400000.0,
+    "target_amount": null,
+    "replay": {
+     "prob_loss": 0.107,
+     "prob_target": null,
+     "final_p5": 383215.6523,
+     "final_p50": 444343.6006,
+     "final_p95": 509494.4491
+    },
+    "risk_only": {
+     "prob_loss": 0.07,
+     "prob_target": null,
+     "final_p5": 392080.4318,
+     "final_p50": 454620.9543,
+     "final_p95": 521277.135
+    },
+    "cash_return_used": 0.0342,
+    "method": "stationary block bootstrap of the strategy's 2021-2026 daily returns, fixed seed",
+    "limits": "Replays past days only: no crisis worse than 2021-2026, no fees or taxes. Not a forecast; 'replay' assumes 2021-2026 average returns repeat, 'risk_only' does not."
+   }
+  }
+ ],
+ "created": "2026-11-15T15:13:24+00:00"
+}

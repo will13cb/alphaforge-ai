@@ -1,0 +1,34 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "NVDA et QQQ, c'est le même pari ?",
+ "answer": {
+  "answer": "Pas tout à fait, mais presque : sur la période de nos données, leurs rendements quotidiens ont une corrélation de 0,77 (t1). C'est juste en dessous du seuil d'environ 0,8 au-delà duquel on parle en gros du même pari. Ils montent et baissent donc souvent ensemble. Une raison : NVDA est une seule entreprise, mais c'est aussi l'une des grosses positions de QQQ. Détenir les deux diversifie donc assez peu.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "correlation_between",
+   "args": {
+    "tickers": [
+     "NVDA",
+     "QQQ"
+    ]
+   },
+   "result": {
+    "pairs": [
+     {
+      "a": "NVDA",
+      "b": "QQQ",
+      "correlation": 0.766
+     }
+    ],
+    "average": 0.766
+   }
+  }
+ ],
+ "created": "2026-11-15T15:13:58+00:00"
+}

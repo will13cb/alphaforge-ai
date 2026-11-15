@@ -1,0 +1,78 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "Et si mon horizon était de 8 ans ?",
+ "answer": {
+  "answer": "Avec un horizon de 8 ans au lieu de 4, votre limite de perte reste à 15 %. En revanche, la part défensive minimale baisse de 84,6 % à 53,9 %, et la part de croissance permise passe de 15,4 % à 46,2 %. La stratégie « core » passerait de 15 % à 45 % de croissance : sa pire baisse historique irait de -8,6 % à -11,0 %, et la probabilité de finir sous votre mise de 3,9 % à 6,8 %. La stratégie « income » monterait à 34,5 % de croissance, avec une pire baisse de -8,3 % et une probabilité de perte de 3,8 %. Une troisième stratégie apparaîtrait aussi, avec 25 % de croissance, une pire baisse de -9,2 % et une probabilité de perte de 2,0 %. Ce sont des simulations basées sur le passé, pas des prévisions.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 4,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 4,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.8462,
+     "horizon_growth_cap": 0.1538,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.15,
+       "max_drawdown": -0.0862,
+       "prob_loss": 0.0385
+      },
+      {
+       "key": "income",
+       "growth": 0.05,
+       "max_drawdown": -0.0949,
+       "prob_loss": 0.057
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.45,
+       "max_drawdown": -0.1102,
+       "prob_loss": 0.068
+      },
+      {
+       "key": "income",
+       "growth": 0.345,
+       "max_drawdown": -0.083,
+       "prob_loss": 0.038
+      },
+      {
+       "key": "core-3",
+       "growth": 0.25,
+       "max_drawdown": -0.0921,
+       "prob_loss": 0.0195
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:15:00+00:00"
+}

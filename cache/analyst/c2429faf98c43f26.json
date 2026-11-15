@@ -1,0 +1,142 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "And with a 10-year horizon?",
+ "answer": {
+  "answer": "Robert, if your horizon were 10 years instead of 4, your growth cap would go from 15.4% to 61.5%, and your defensive floor would drop from 84.6% to 38.5%. Your loss limit would stay at 15%. The core strategy would then hold 60% growth, with a worst drop of -12.4% and an 11.3% chance of ending below what you put in. Income would hold 50% growth (-9.1%, 5.1%), and a new core-3 option would hold 40% growth (-10.6%, 4.35%). Your 25% Tesla request would still fail: its worst drop was -70.9%, which would put the portfolio at -27.8% (about $111,072, against your $60,000 limit), and even at the 5.3% Tesla weight that fits, two rule checks still fail.",
+  "evidence": [
+   "t1",
+   "t2"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 10.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 4,
+    "new": 10.0,
+    "changes": {
+     "horizon_years": {
+      "old": 4,
+      "new": 10.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.8462,
+     "horizon_growth_cap": 0.1538,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.15,
+       "max_drawdown": -0.0862,
+       "prob_loss": 0.0385
+      },
+      {
+       "key": "income",
+       "growth": 0.05,
+       "max_drawdown": -0.0949,
+       "prob_loss": 0.057
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1242,
+       "prob_loss": 0.113
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0913,
+       "prob_loss": 0.051
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1056,
+       "prob_loss": 0.0435
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "what_if_position",
+   "args": {
+    "ticker": "TSLA",
+    "weight": 0.25,
+    "also": null,
+    "profile_changes": {
+     "horizon_years": 10
+    }
+   },
+   "result": {
+    "request": {
+     "TSLA": 0.25
+    },
+    "profile_changes": {
+     "horizon_years": 10
+    },
+    "why": {
+     "TSLA": "TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% loss limit; it fits up to 5.3%"
+    },
+    "not_assessable": [],
+    "as_asked": {
+     "real_weight": {
+      "TSLA": 0.253
+     },
+     "max_drawdown": -0.2777,
+     "drawdown_cad": 111072,
+     "loss_limit": 0.15,
+     "loss_limit_cad": 60000,
+     "growth": 0.6,
+     "verdict": "fail",
+     "request_at": null,
+     "fails": [
+      "C1",
+      "D1",
+      "D2",
+      "G4",
+      "G7",
+      "G9",
+      "G17"
+     ]
+    },
+    "fits": {
+     "real_weight": {
+      "TSLA": 0.0576
+     },
+     "max_drawdown": -0.1375,
+     "drawdown_cad": 55014,
+     "loss_limit": 0.15,
+     "loss_limit_cad": 60000,
+     "growth": 0.6,
+     "verdict": "fail",
+     "request_at": {
+      "TSLA": 0.0529
+     },
+     "fails": [
+      "C1",
+      "G4"
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:15:44+00:00"
+}

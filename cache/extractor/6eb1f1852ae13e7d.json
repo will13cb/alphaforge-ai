@@ -1,0 +1,27 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "extractor-v1",
+ "text": "I'm 59 and I'm retiring in about 4 years. I have $400,000 saved and 12 months of expenses set aside; my job in a hospital is stable. I've been an experienced investor for 20 years of experience. I can't lose more than 15%, and if markets dropped I'd hold. Everyone talks about Tesla: put 25% of my savings in Tesla. No crypto.",
+ "raw": {
+  "age": 59,
+  "horizon_years": 4,
+  "objective": "retirement",
+  "capital": 400000,
+  "emergency_fund_months": 12,
+  "income_stability": "stable",
+  "employment_sector": "Health Care",
+  "years_experience": 20,
+  "knowledge_level": "advanced",
+  "max_loss_pct": 15,
+  "loss_reaction": "hold",
+  "exclusions": [
+   "crypto"
+  ],
+  "request": "Everyone talks about Tesla: put 25% of my savings in Tesla.",
+  "requested_positions": {
+   "TSLA": 0.25
+  }
+ },
+ "check_calls": 1,
+ "created": "2026-11-15T04:49:04+00:00"
+}

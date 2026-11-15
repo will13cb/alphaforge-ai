@@ -1,0 +1,11 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "What is volatility?",
+ "answer": {
+  "answer": "Volatility tells you how much an investment's value moves up and down over time, and how sharply it does so. When volatility is high, the price can swing a lot from day to day or month to month. When it is low, the path is smoother and the moves are smaller. It is not the same thing as losing money for good: a volatile investment can recover. But if you need the money during a dip, you could be forced to sell at a bad moment, which matters when your horizon is short.",
+  "evidence": []
+ },
+ "tool_calls": [],
+ "created": "2026-11-15T15:14:18+00:00"
+}

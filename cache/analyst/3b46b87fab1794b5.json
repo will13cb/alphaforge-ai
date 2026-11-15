@@ -1,0 +1,253 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "Explain my results",
+ "answer": {
+  "answer": "You said you could accept losing up to 25%, which is $37,500. So every strategy keeps at least 38.46% in defensive assets, and with your 10-year horizon no more than 61.54% can go into growth assets. The 'core' strategy uses the most growth your limits allow (60%): its worst drop in the past was -13.9%, it returned -9.35% in 2022, and the risk-only view gives a 13.5% chance of ending with less than you put in. 'Income' (50% growth) and 'core-3' (40% growth) were calmer: their worst drops were -9.56% and -11.57%, and each had about a 5.45% chance of ending below what you invested. The 'income' strategy carries one warning: Canada makes up 78% of its stocks, above the 70% guideline, but it passes all the other checks, including your no-fossil-fuel exclusion. These figures describe the past, not a forecast, and the choice is yours.",
+  "evidence": [
+   "t1",
+   "t2"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "results_overview",
+   "args": {},
+   "result": {
+    "loss_limit": 0.25,
+    "loss_limit_cad": 37500,
+    "defensive_floor": 0.3846,
+    "horizon_growth_cap": 0.6154,
+    "strategies": [
+     {
+      "key": "core",
+      "name": "Broad core: most growth your limits allow",
+      "growth": 0.6,
+      "max_drawdown": -0.1392,
+      "return_2022": -0.0935,
+      "prob_loss": 0.135,
+      "warnings": []
+     },
+     {
+      "key": "income",
+      "name": "Income / dividends: more prudent",
+      "growth": 0.5,
+      "max_drawdown": -0.0956,
+      "return_2022": -0.0412,
+      "prob_loss": 0.0545,
+      "warnings": [
+       "C2"
+      ]
+     },
+     {
+      "key": "core-3",
+      "name": "Broad core: most prudent",
+      "growth": 0.4,
+      "max_drawdown": -0.1157,
+      "return_2022": -0.0792,
+      "prob_loss": 0.0545,
+      "warnings": []
+     }
+    ]
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "strategy_checks",
+   "args": {
+    "strategy": "income"
+   },
+   "result": {
+    "strategy": "income",
+    "checks": [
+     {
+      "check": "C1",
+      "value": 0.085,
+      "limit": 0.1231,
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 8.5% vs 12.3% (each company has its own cap, from its worst drop) — counted through the ETFs"
+     },
+     {
+      "check": "C2",
+      "value": 0.78,
+      "limit": 0.7,
+      "status": "warn",
+      "reason": "Canada 78% of the equities (country of listing); currency CAD 74%, USD 26%"
+     },
+     {
+      "check": "C3",
+      "value": 0.14,
+      "limit": 0.3,
+      "status": "pass",
+      "reason": "largest sector Financials 14% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through"
+     },
+     {
+      "check": "C3b",
+      "value": null,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "job sector not given"
+     },
+     {
+      "check": "C4",
+      "value": 2,
+      "limit": 2,
+      "status": "pass",
+      "reason": "2 asset classes: bonds 50%, equity 50%"
+     },
+     {
+      "check": "C5",
+      "value": 48.6,
+      "limit": 8,
+      "status": "pass",
+      "reason": "48.6 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "C6",
+      "value": 0.0,
+      "limit": 0.85,
+      "status": "pass",
+      "reason": "no near-duplicate holdings"
+     },
+     {
+      "check": "D1",
+      "value": 0.0956,
+      "limit": 0.25,
+      "status": "pass",
+      "reason": "worst drop 9.6% vs the 25% the client said they'd accept"
+     },
+     {
+      "check": "D2",
+      "value": 0.0956,
+      "limit": 0.25,
+      "status": "pass",
+      "reason": "worst drop 9.6% vs loss limit 25% = 14,345 $ vs 37,500 $"
+     },
+     {
+      "check": "D3",
+      "value": -0.0437,
+      "limit": 0.25,
+      "status": "pass",
+      "reason": "2022 sell-off drop -9.6%, worst 12 months -4.4%, CVaR 95% 0.82% a day"
+     },
+     {
+      "check": "E",
+      "value": 0.054,
+      "limit": null,
+      "status": "pass",
+      "reason": "no target given; 5% chance of ending below what was put in (risk-only view)"
+     },
+     {
+      "check": "F1",
+      "value": "growth",
+      "limit": null,
+      "status": "pass",
+      "reason": "objective growth: no extra constraint"
+     },
+     {
+      "check": "F2",
+      "value": 0.5,
+      "limit": 0.6154,
+      "status": "pass",
+      "reason": "growth 50% vs 62% allowed for a 10-year horizon"
+     },
+     {
+      "check": "F3",
+      "value": 0.5,
+      "limit": 0.0,
+      "status": "pass",
+      "reason": "defensive 50% vs 0% needed within 3 years"
+     },
+     {
+      "check": "F4",
+      "value": 4,
+      "limit": 3,
+      "status": "pass",
+      "reason": "knowledge 4/5: single names allowed"
+     },
+     {
+      "check": "F5",
+      "value": "esg",
+      "limit": null,
+      "status": "pass",
+      "reason": "ESG interest: no fossil-fuel names, ESGV used"
+     },
+     {
+      "check": "F6",
+      "value": [],
+      "limit": [],
+      "status": "pass",
+      "reason": "none held"
+     },
+     {
+      "check": "G2",
+      "status": "pass",
+      "reason": "sum 100.00%"
+     },
+     {
+      "check": "G3",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G4",
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 8.5% vs 12.3% (direct only: no ETF holdings data)"
+     },
+     {
+      "check": "G5",
+      "status": "pass",
+      "reason": "crypto 0% vs cap 8%"
+     },
+     {
+      "check": "G6",
+      "status": "pass",
+      "reason": "defensive 50% vs floor 38%"
+     },
+     {
+      "check": "G7",
+      "status": "pass",
+      "reason": "max drawdown 9.6% vs loss limit 25%"
+     },
+     {
+      "check": "G8",
+      "status": "pass",
+      "reason": "volatility 6.0% vs target 12%"
+     },
+     {
+      "check": "G9",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G10",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G14",
+      "status": "warn",
+      "reason": "Canada 78% of the equities (country of listing); currency CAD 74%, USD 26%"
+     },
+     {
+      "check": "G15",
+      "status": "pass",
+      "reason": "largest sector Financials 14% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given"
+     },
+     {
+      "check": "G16",
+      "status": "pass",
+      "reason": "48.6 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "G17",
+      "status": "pass",
+      "reason": "worst drop 9.6% vs loss limit 25% = 14,340 $ vs 37,500 $"
+     }
+    ]
+   }
+  }
+ ],
+ "created": "2026-11-15T15:12:48+00:00"
+}

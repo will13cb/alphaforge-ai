@@ -1,0 +1,78 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "And with a 10-year horizon?",
+ "answer": {
+  "answer": "Your loss limit stays at 15% with a 10-year horizon, but the most growth your limits allow goes from 15.38% to 61.54%. The minimum defensive share drops from 84.62% to 38.46%. With that change, the Core strategy would hold 60% growth, up from 15%. Its worst drop would deepen from -8.62% to -12.42%, and its chance of ending below what you put in would rise from 3.85% to 11.3%. Income would hold 50% growth with a worst drop of -9.13% and a 5.1% chance of a loss, and a new third strategy would hold 40% growth with a worst drop of -10.56% and a 4.35% chance of a loss.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 10.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 4,
+    "new": 10.0,
+    "changes": {
+     "horizon_years": {
+      "old": 4,
+      "new": 10.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.8462,
+     "horizon_growth_cap": 0.1538,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.15,
+       "max_drawdown": -0.0862,
+       "prob_loss": 0.0385
+      },
+      {
+       "key": "income",
+       "growth": 0.05,
+       "max_drawdown": -0.0949,
+       "prob_loss": 0.057
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.15,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1242,
+       "prob_loss": 0.113
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0913,
+       "prob_loss": 0.051
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1056,
+       "prob_loss": 0.0435
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:14:26+00:00"
+}

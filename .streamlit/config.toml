@@ -1,0 +1,15 @@
+# Shared look for both front ends (make app, make ui): the colours of interface/ui/theme.py. Read by `streamlit run`
+# from the repo root (the Makefile targets run there).
+[theme]
+base = "light"                      # light whatever the OS theme (a dark-mode Mac broke the colours)
+primaryColor = "#B5432A"            # Érable: primary action, selection
+backgroundColor = "#F7F9FB"         # Neige
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#26313B"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"             # no "Deploy" button in a demo
+
+[browser]
+gatherUsageStats = false

@@ -1,0 +1,445 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "critic-v1",
+ "objections": [
+  {
+   "strategy": "growth",
+   "claim": "The NVDA count of 11.0% against its 15.8% cap only opens SPY. QQQ, the largest holding at 37.5%, was not looked through, so the real NVDA exposure is higher than shown and may be close to the cap.",
+   "evidence": [
+    "t1",
+    "t2"
+   ],
+   "action": {
+    "type": "trim",
+    "ticker": "NVDA",
+    "to": 0.05
+   }
+  },
+  {
+   "strategy": "growth",
+   "claim": "QQQ and SPY have a correlation of 0.95, and together they make up 61.5% of the portfolio. Holding both adds little diversification, and all of the equities are listed in the United States, with 98% of the money in USD.",
+   "evidence": [
+    "t3",
+    "t2"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  },
+  {
+   "strategy": "growth",
+   "claim": "In the 2022 sell-off this mix dropped as far as -31.2%, and its worst drop was 32.9% (about 9,859 $), against Amira's 40% loss limit (12,000 $). There is also a 40% chance of ending below what she put in.",
+   "evidence": [
+    "t4",
+    "t2"
+   ],
+   "action": {
+    "type": "shift",
+    "pct": 0.1
+   }
+  }
+ ],
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "look_through",
+   "args": {
+    "weights": {
+     "QQQ": 0.375,
+     "SPY": 0.24,
+     "NVDA": 0.095,
+     "MSFT": 0.095,
+     "BTC-USD": 0.065,
+     "GOOGL": 0.05,
+     "ETH-USD": 0.03,
+     "ZST.TO": 0.025,
+     "GLD": 0.025
+    }
+   },
+   "result": {
+    "exposures": [
+     {
+      "name": "QQQ",
+      "weight": 0.375,
+      "cap": null
+     },
+     {
+      "name": "NVDA",
+      "weight": 0.1097,
+      "cap": 0.1576
+     },
+     {
+      "name": "MSFT",
+      "weight": 0.1092,
+      "cap": 0.19
+     },
+     {
+      "name": "BTC-USD",
+      "weight": 0.065,
+      "cap": null
+     },
+     {
+      "name": "GOOGL",
+      "weight": 0.0616,
+      "cap": 0.19
+     },
+     {
+      "name": "ETH-USD",
+      "weight": 0.03,
+      "cap": null
+     },
+     {
+      "name": "ZST.TO",
+      "weight": 0.025,
+      "cap": null
+     },
+     {
+      "name": "GLD",
+      "weight": 0.025,
+      "cap": null
+     },
+     {
+      "name": "AAPL",
+      "weight": 0.019,
+      "cap": 0.19
+     },
+     {
+      "name": "AMZN",
+      "weight": 0.0096,
+      "cap": 0.19
+     }
+    ],
+    "holdings_data": [
+     "SPY"
+    ]
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "strategy_checks",
+   "args": {
+    "strategy": "growth"
+   },
+   "result": {
+    "strategy": "growth",
+    "checks": [
+     {
+      "check": "C1",
+      "value": 0.1097,
+      "limit": 0.1576,
+      "status": "pass",
+      "reason": "closest to its cap: NVDA 11.0% vs 15.8% (each company has its own cap, from its worst drop) — counted through the ETFs"
+     },
+     {
+      "check": "C2",
+      "value": 1.0,
+      "limit": 0.7,
+      "status": "warn",
+      "reason": "United States 100% of the equities (country of listing); currency USD 98%, CAD 2%"
+     },
+     {
+      "check": "C3",
+      "value": 0.2379,
+      "limit": 0.3,
+      "status": "pass",
+      "reason": "largest sector Information Technology 24% (⚠ above 30%, ✘ above 40%); lower bound, 39% of equity ETFs looked through"
+     },
+     {
+      "check": "C3b",
+      "value": null,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "job sector not given"
+     },
+     {
+      "check": "C4",
+      "value": 4,
+      "limit": 2,
+      "status": "pass",
+      "reason": "4 asset classes: equity 86%, crypto 10%, bonds 2%, gold 2%"
+     },
+     {
+      "check": "C5",
+      "value": 28.6,
+      "limit": 8,
+      "status": "pass",
+      "reason": "28.6 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "C6",
+      "value": 0.948,
+      "limit": 0.85,
+      "status": "warn",
+      "reason": "QQQ/SPY correlated 0.95"
+     },
+     {
+      "check": "D1",
+      "value": 0.3286,
+      "limit": 0.4,
+      "status": "warn",
+      "reason": "worst drop 32.9% vs the 40% the client said they'd accept (close to it)"
+     },
+     {
+      "check": "D2",
+      "value": 0.3286,
+      "limit": 0.4,
+      "status": "pass",
+      "reason": "worst drop 32.9% vs loss limit 40% = 9,859 $ vs 12,000 $"
+     },
+     {
+      "check": "D3",
+      "value": -0.307,
+      "limit": 0.4,
+      "status": "pass",
+      "reason": "2022 sell-off drop -31.2%, worst 12 months -30.7%, CVaR 95% 3.16% a day"
+     },
+     {
+      "check": "E",
+      "value": 0.401,
+      "limit": null,
+      "status": "pass",
+      "reason": "no target given; 40% chance of ending below what was put in (risk-only view)"
+     },
+     {
+      "check": "F1",
+      "value": "growth",
+      "limit": null,
+      "status": "pass",
+      "reason": "objective growth: no extra constraint"
+     },
+     {
+      "check": "F2",
+      "value": 0.95,
+      "limit": 1.0,
+      "status": "pass",
+      "reason": "growth 95% vs 100% allowed for a 15-year horizon"
+     },
+     {
+      "check": "F3",
+      "value": 0.05,
+      "limit": 0.0,
+      "status": "pass",
+      "reason": "defensive 5% vs 0% needed within 3 years"
+     },
+     {
+      "check": "F4",
+      "value": 3,
+      "limit": 3,
+      "status": "pass",
+      "reason": "knowledge 3/5: single names allowed"
+     },
+     {
+      "check": "F5",
+      "value": null,
+      "limit": null,
+      "status": "pass",
+      "reason": "no ESG preference"
+     },
+     {
+      "check": "F6",
+      "value": [],
+      "limit": [],
+      "status": "pass",
+      "reason": "none held"
+     },
+     {
+      "check": "G2",
+      "status": "pass",
+      "reason": "sum 100.00%"
+     },
+     {
+      "check": "G3",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G4",
+      "status": "pass",
+      "reason": "closest to its cap: NVDA 11.0% vs 15.8%"
+     },
+     {
+      "check": "G5",
+      "status": "pass",
+      "reason": "crypto 10% vs cap 13%"
+     },
+     {
+      "check": "G6",
+      "status": "pass",
+      "reason": "defensive 5% vs floor 5%"
+     },
+     {
+      "check": "G7",
+      "status": "pass",
+      "reason": "max drawdown 32.9% vs loss limit 40%"
+     },
+     {
+      "check": "G8",
+      "status": "warn",
+      "reason": "volatility 22.1% vs target 22%"
+     },
+     {
+      "check": "G9",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G10",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G14",
+      "status": "warn",
+      "reason": "United States 100% of the equities (country of listing); currency USD 98%, CAD 2%"
+     },
+     {
+      "check": "G15",
+      "status": "pass",
+      "reason": "largest sector Information Technology 24% (⚠ above 30%, ✘ above 40%); lower bound, 39% of equity ETFs looked through; job sector not given"
+     },
+     {
+      "check": "G16",
+      "status": "pass",
+      "reason": "28.6 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "G17",
+      "status": "pass",
+      "reason": "worst drop 32.9% vs loss limit 40% = 9,858 $ vs 12,000 $"
+     }
+    ]
+   }
+  },
+  {
+   "call_id": "t3",
+   "tool": "correlation_between",
+   "args": {
+    "tickers": [
+     "QQQ",
+     "SPY",
+     "BTC-USD",
+     "ETH-USD",
+     "NVDA",
+     "MSFT"
+    ]
+   },
+   "result": {
+    "pairs": [
+     {
+      "a": "QQQ",
+      "b": "SPY",
+      "correlation": 0.948
+     },
+     {
+      "a": "BTC-USD",
+      "b": "ETH-USD",
+      "correlation": 0.845
+     },
+     {
+      "a": "QQQ",
+      "b": "NVDA",
+      "correlation": 0.766
+     },
+     {
+      "a": "QQQ",
+      "b": "MSFT",
+      "correlation": 0.703
+     },
+     {
+      "a": "SPY",
+      "b": "NVDA",
+      "correlation": 0.684
+     },
+     {
+      "a": "SPY",
+      "b": "MSFT",
+      "correlation": 0.68
+     },
+     {
+      "a": "NVDA",
+      "b": "MSFT",
+      "correlation": 0.532
+     },
+     {
+      "a": "QQQ",
+      "b": "ETH-USD",
+      "correlation": 0.413
+     },
+     {
+      "a": "SPY",
+      "b": "ETH-USD",
+      "correlation": 0.402
+     },
+     {
+      "a": "QQQ",
+      "b": "BTC-USD",
+      "correlation": 0.398
+     },
+     {
+      "a": "SPY",
+      "b": "BTC-USD",
+      "correlation": 0.383
+     },
+     {
+      "a": "ETH-USD",
+      "b": "NVDA",
+      "correlation": 0.334
+     },
+     {
+      "a": "BTC-USD",
+      "b": "NVDA",
+      "correlation": 0.313
+     },
+     {
+      "a": "BTC-USD",
+      "b": "MSFT",
+      "correlation": 0.311
+     },
+     {
+      "a": "ETH-USD",
+      "b": "MSFT",
+      "correlation": 0.31
+     }
+    ],
+    "average": 0.535
+   }
+  },
+  {
+   "call_id": "t4",
+   "tool": "stress_test",
+   "args": {
+    "weights": {
+     "QQQ": 0.375,
+     "SPY": 0.24,
+     "NVDA": 0.095,
+     "MSFT": 0.095,
+     "BTC-USD": 0.065,
+     "GOOGL": 0.05,
+     "ETH-USD": 0.03,
+     "ZST.TO": 0.025,
+     "GLD": 0.025
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12"
+   },
+   "result": {
+    "weights": {
+     "QQQ": 0.375,
+     "SPY": 0.24,
+     "NVDA": 0.095,
+     "MSFT": 0.095,
+     "BTC-USD": 0.065,
+     "GOOGL": 0.05,
+     "ETH-USD": 0.03,
+     "ZST.TO": 0.025,
+     "GLD": 0.025
+    },
+    "start": "2022-01-03",
+    "end": "2022-10-12",
+    "cumulative_return": -0.2963,
+    "deepest_drop": -0.3116
+   }
+  }
+ ],
+ "created": "2026-11-15T15:09:36+00:00"
+}

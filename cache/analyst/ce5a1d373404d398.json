@@ -1,0 +1,294 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "Et si mon horizon était de 8 ans ?",
+ "answer": {
+  "answer": "Avec un horizon de 8 ans au lieu de 10, votre limite de perte passe de 25 % à 22 %, et la part défensive minimale monte de 38,5 % à 53,9 % (la part en croissance est alors plafonnée à 46,2 %). La stratégie « core » passerait ainsi de 60 % à 45 % en croissance : sa pire baisse passerait de -13,9 % à -12,2 %, et sa probabilité de finir sous la mise de départ de 13,5 % à 8,25 %. La stratégie « income » passerait de 50 % à 35 % en croissance, avec une pire baisse de -8,85 % et une probabilité de perte de 4,05 %. La stratégie « core-3 » passerait de 40 % à 25 % en croissance, avec une pire baisse de -9,84 % et une probabilité de perte de 2,45 %. Ce sont des simulations basées sur le passé, pas des prévisions : c'est à vous de décider.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 10,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 10,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.25,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1392,
+       "prob_loss": 0.135
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0956,
+       "prob_loss": 0.0545
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1157,
+       "prob_loss": 0.0545
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.22,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.45,
+       "max_drawdown": -0.1216,
+       "prob_loss": 0.0825
+      },
+      {
+       "key": "income",
+       "growth": 0.35,
+       "max_drawdown": -0.0885,
+       "prob_loss": 0.0405
+      },
+      {
+       "key": "core-3",
+       "growth": 0.25,
+       "max_drawdown": -0.0984,
+       "prob_loss": 0.0245
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 10,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 10,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.25,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1392,
+       "prob_loss": 0.135
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0956,
+       "prob_loss": 0.0545
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1157,
+       "prob_loss": 0.0545
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.22,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.45,
+       "max_drawdown": -0.1216,
+       "prob_loss": 0.0825
+      },
+      {
+       "key": "income",
+       "growth": 0.35,
+       "max_drawdown": -0.0885,
+       "prob_loss": 0.0405
+      },
+      {
+       "key": "core-3",
+       "growth": 0.25,
+       "max_drawdown": -0.0984,
+       "prob_loss": 0.0245
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t3",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 10,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 10,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.25,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1392,
+       "prob_loss": 0.135
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0956,
+       "prob_loss": 0.0545
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1157,
+       "prob_loss": 0.0545
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.22,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.45,
+       "max_drawdown": -0.1216,
+       "prob_loss": 0.0825
+      },
+      {
+       "key": "income",
+       "growth": 0.35,
+       "max_drawdown": -0.0885,
+       "prob_loss": 0.0405
+      },
+      {
+       "key": "core-3",
+       "growth": 0.25,
+       "max_drawdown": -0.0984,
+       "prob_loss": 0.0245
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t4",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 8.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 10,
+    "new": 8.0,
+    "changes": {
+     "horizon_years": {
+      "old": 10,
+      "new": 8.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.25,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.6,
+       "max_drawdown": -0.1392,
+       "prob_loss": 0.135
+      },
+      {
+       "key": "income",
+       "growth": 0.5,
+       "max_drawdown": -0.0956,
+       "prob_loss": 0.0545
+      },
+      {
+       "key": "core-3",
+       "growth": 0.4,
+       "max_drawdown": -0.1157,
+       "prob_loss": 0.0545
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.22,
+     "defensive_floor": 0.5385,
+     "horizon_growth_cap": 0.4615,
+     "strategies": [
+      {
+       "key": "core",
+       "growth": 0.45,
+       "max_drawdown": -0.1216,
+       "prob_loss": 0.0825
+      },
+      {
+       "key": "income",
+       "growth": 0.35,
+       "max_drawdown": -0.0885,
+       "prob_loss": 0.0405
+      },
+      {
+       "key": "core-3",
+       "growth": 0.25,
+       "max_drawdown": -0.0984,
+       "prob_loss": 0.0245
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:12:08+00:00"
+}

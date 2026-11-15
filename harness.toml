@@ -1,0 +1,15 @@
+# Shared settings for AlphaForge AI. Change only with team agreement (it changes everyone's numbers).
+
+[data]
+dir = "data/raw"              # starter CSVs land here (`make data`), gitignored
+base_currency = "CAD"         # returns are converted to this currency (CAD or USD)
+calendar = "weekdays"         # weekdays: crypto weekends dropped, holidays forward-filled
+start = ""                    # first day used, e.g. "2005-01-03"; "" = everything in the files (decision #31)
+
+# Before an asset's FIRST real price only, use a documented stand-in so a strategy's history isn't cut to the youngest
+# asset's (decision #31). Never applied after the first real price. "cash" = Bank of Canada overnight target rate
+# (macro series V39079), accrued daily. Empty table = no stand-ins. No effect on the 2021-2026 starter pack (every
+# asset starts on its first day).
+[data.proxies]
+"ZST.TO" = "cash"             # ultra-short bonds ≈ the overnight rate (ZST listed 2011)
+"ESGV" = "SPY"                # ESG-screened U.S. total market ≈ S&P 500 (ESGV listed 2018; daily correlation 0.99)

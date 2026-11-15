@@ -1,0 +1,69 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "What if I put 10% in Tesla?",
+ "answer": {
+  "answer": "Robert, I tested 10% in Tesla and the portfolio fails your limits (checks C1, G4 and G9). Your real Tesla exposure would be about 10.0%, and the worst drop would be -14.3%, about $57,158. That is just under your 15% loss limit of $60,000. The problem is Tesla itself: its worst drop in 2021-2026 was -70.9%, so at 10% it alone could cost -7.1% of the portfolio, more than one asset may use from your loss limit. Tesla's cap for you is about 3.1%, which gives a worst drop of -9.6% (about $38,241), but even that version still fails two checks (C1 and G4), so it doesn't fully fit your limits either.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_position",
+   "args": {
+    "ticker": "TSLA",
+    "weight": 0.1,
+    "also": null,
+    "profile_changes": null
+   },
+   "result": {
+    "request": {
+     "TSLA": 0.1
+    },
+    "profile_changes": {},
+    "why": {
+     "TSLA": "TSLA's worst drop in 2021-2026 was -70.9%; at 10% that alone would be -7.1% of the portfolio, more than the 25% of your 15% loss limit one asset may use; you can hold about 15% in stocks, and one company is kept to 1/5 of that; it fits up to 3.1%"
+    },
+    "not_assessable": [],
+    "as_asked": {
+     "real_weight": {
+      "TSLA": 0.1004
+     },
+     "max_drawdown": -0.1429,
+     "drawdown_cad": 57158,
+     "loss_limit": 0.15,
+     "loss_limit_cad": 60000,
+     "growth": 0.15,
+     "verdict": "fail",
+     "request_at": null,
+     "fails": [
+      "C1",
+      "G4",
+      "G9"
+     ]
+    },
+    "fits": {
+     "real_weight": {
+      "TSLA": 0.0318
+     },
+     "max_drawdown": -0.0956,
+     "drawdown_cad": 38241,
+     "loss_limit": 0.15,
+     "loss_limit_cad": 60000,
+     "growth": 0.15,
+     "verdict": "fail",
+     "request_at": {
+      "TSLA": 0.0308
+     },
+     "fails": [
+      "C1",
+      "G4"
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:14:53+00:00"
+}

@@ -1,0 +1,11 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "What is volatility?",
+ "answer": {
+  "answer": "Volatility is a measure of how much an investment's value moves up and down over time. When volatility is high, the price can swing a lot from day to day or month to month, both up and down. When it is low, the ride is smoother and more predictable. It tells you about the size of the bumps along the way, not whether the investment will end up gaining or losing. For someone with a shorter horizon like yours, lower volatility usually means a smaller risk of having to take money out right after a big drop.",
+  "evidence": []
+ },
+ "tool_calls": [],
+ "created": "2026-11-15T15:15:32+00:00"
+}

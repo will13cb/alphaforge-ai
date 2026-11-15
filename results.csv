@@ -1,0 +1,118 @@
+run_id,timestamp,author,commit,experiment,persona,metric,value,notes
+1114-201435-will13cb-747d,2026-11-14T20:14:35+00:00,will13cb,ad927df,guardian-scenarios,,pass_rate,1,"16 fictional profiles, src/dh/agents/scenarios.py"
+1114-213206-joud-a822,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,dd_limit_pass_rate,0.9,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-8097,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,vol_target_pass_rate,0.5,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-087f,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L1_worst_max_drawdown,-0.104917,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-d2b9,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L1_worst_ann_vol,0.0689427,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-cf27,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L2_worst_max_drawdown,-0.146886,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-877c,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L2_worst_ann_vol,0.0967851,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-ce11,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L3_worst_max_drawdown,-0.194894,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-6e22,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L3_worst_ann_vol,0.127391,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-4119,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L4_worst_max_drawdown,-0.238269,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-cff4,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L4_worst_ann_vol,0.154523,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-7fb1,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L5_worst_max_drawdown,-0.282428,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-213206-joud-0ff0,2026-11-14T21:32:06+00:00,joud,ef4a65c,threshold-check,,L5_worst_ann_vol,0.179494,"riskiest mix allowed by rules.py, broad ETFs, 4 baskets per level, experiments/data/threshold_check.py"
+1114-232656-joud-e919,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,project_min_pv_ratio,0.7,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-0efd,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,project_max_pv_ratio,0.85,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-0e82,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,conflict_ratio,nan,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-a489,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,project_cells_reliable_share,0.714286,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-6236,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,ratchet_worst_p_break_loss_limit,0.003,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-f117,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,static_ceiling_median_oos_break,0.147,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1114-232656-joud-889e,2026-11-14T23:26:56+00:00,joud,32d317a,cppi-thresholds,,conflict_cells_reliable_share,0.0637255,"hypothetical clients, 2 halves x CAD/local x risk_only/replay, m=3, experiments/data/cppi_thresholds.py"
+1115-005434-joud-fcbc,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,amira,max_drawdown,-0.1572,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-d54f,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,amira,return_2022,-0.09,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-8523,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,amira,growth_share,0.95,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-73a5,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,amira,risk_only_prob_loss,0.201,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-1252,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,amira,max_drawdown,-0.131,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-bbe7,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,amira,return_2022,-0.008,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-aa2f,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,amira,growth_share,0.95,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-bc57,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,amira,risk_only_prob_loss,0.117,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-017b,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-growth,amira,max_drawdown,-0.3286,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-31f2,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-growth,amira,return_2022,-0.2781,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-7bf4,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-growth,amira,growth_share,0.95,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-01d3,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-growth,amira,risk_only_prob_loss,0.4005,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-85e7,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,mateo,max_drawdown,-0.1392,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-429b,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,mateo,return_2022,-0.0935,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-58b2,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,mateo,growth_share,0.6,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-a4ff,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,mateo,risk_only_prob_loss,0.135,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-e3ee,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,mateo,max_drawdown,-0.1029,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-2821,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,mateo,return_2022,-0.0373,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-ed89,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,mateo,growth_share,0.6,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-51a6,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,mateo,risk_only_prob_loss,0.0785,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-b022,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,robert,max_drawdown,-0.0862,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-38f3,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,robert,return_2022,-0.0578,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-fdeb,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,robert,growth_share,0.15,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-d267,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-core,robert,risk_only_prob_loss,0.0385,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-a079,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,robert,max_drawdown,-0.0884,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-1541,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,robert,return_2022,-0.0554,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-2bf4,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,robert,growth_share,0.145,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-4488,2026-11-15T00:54:34+00:00,joud,bfdaa9d,proposal-income,robert,risk_only_prob_loss,0.058,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-9961,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-as_asked,robert,max_drawdown,-0.2653,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-8877,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-as_asked,robert,n_failing_checks,9,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-7caf,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-as_asked,robert,real_weight_TSLA,0.25,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-587b,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-as_asked,robert,drawdown_cad,106121,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-a5d2,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-fits,robert,max_drawdown,-0.0956,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-3c07,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-fits,robert,n_failing_checks,0,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-696f,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-fits,robert,real_weight_TSLA,0.0308,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-005434-joud-ae62,2026-11-15T00:54:34+00:00,joud,bfdaa9d,request-fits,robert,drawdown_cad,38241,"pipeline.run on the starter data, experiments/data/persona_numbers.py"
+1115-044929-will13cb-ca0b,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-limits,amira,loss_limit,0.4,pipeline.run on the starter data
+1115-044929-will13cb-fc2d,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-limits,amira,min_defensive,0.05,pipeline.run on the starter data
+1115-044929-will13cb-6dc0,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-limits,amira,max_crypto,0.1295,pipeline.run on the starter data
+1115-044929-will13cb-035b,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_growth,0.95,Growth tilt: most growth your limits allow
+1115-044929-will13cb-c067,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_max_drawdown,-0.3607,Growth tilt: most growth your limits allow
+1115-044929-will13cb-b785,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_return_2022,-0.3118,Growth tilt: most growth your limits allow
+1115-044929-will13cb-d4a1,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_stress_2022,-0.3196,Growth tilt: most growth your limits allow
+1115-044929-will13cb-a86d,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_ann_vol,0.2368,Growth tilt: most growth your limits allow
+1115-044929-will13cb-cb70,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,growth_prob_loss,0.428,Growth tilt: most growth your limits allow
+1115-044929-will13cb-d6a5,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_growth,0.85,Broad core: more prudent
+1115-044929-will13cb-84c6,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_max_drawdown,-0.1478,Broad core: more prudent
+1115-044929-will13cb-3735,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_return_2022,-0.0851,Broad core: more prudent
+1115-044929-will13cb-6505,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_stress_2022,-0.1348,Broad core: more prudent
+1115-044929-will13cb-a899,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_ann_vol,0.1169,Broad core: more prudent
+1115-044929-will13cb-fc9e,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,core_prob_loss,0.1565,Broad core: more prudent
+1115-044929-will13cb-8384,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,income_growth,0.75,Income / dividends: most prudent
+1115-044929-will13cb-aa40,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,income_max_drawdown,-0.1076,Income / dividends: most prudent
+1115-044929-will13cb-88da,2026-11-15T04:49:29+00:00,will13cb,30f7f2a,persona-strategies,amira,income_return_2022,-0.019,Income / dividends: most prudent
+1115-044930-will13cb-b610,2026-11-15T04:49:30+00:00,will13cb,30f7f2a,persona-strategies,amira,income_stress_2022,-0.0865,Income / dividends: most prudent
+1115-044930-will13cb-102a,2026-11-15T04:49:30+00:00,will13cb,30f7f2a,persona-strategies,amira,income_ann_vol,0.079,Income / dividends: most prudent
+1115-044930-will13cb-5f04,2026-11-15T04:49:30+00:00,will13cb,30f7f2a,persona-strategies,amira,income_prob_loss,0.074,Income / dividends: most prudent
+1115-044932-will13cb-7b15,2026-11-15T04:49:32+00:00,will13cb,30f7f2a,persona-limits,mateo,loss_limit,0.25,pipeline.run on the starter data
+1115-044932-will13cb-fca6,2026-11-15T04:49:32+00:00,will13cb,30f7f2a,persona-limits,mateo,min_defensive,0.3846,pipeline.run on the starter data
+1115-044932-will13cb-ec11,2026-11-15T04:49:32+00:00,will13cb,30f7f2a,persona-limits,mateo,max_crypto,0.081,pipeline.run on the starter data
+1115-044933-will13cb-8e94,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_growth,0.6,Broad core: most growth your limits allow
+1115-044933-will13cb-85c5,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_max_drawdown,-0.1392,Broad core: most growth your limits allow
+1115-044933-will13cb-22b3,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_return_2022,-0.0935,Broad core: most growth your limits allow
+1115-044933-will13cb-8f21,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_stress_2022,-0.129,Broad core: most growth your limits allow
+1115-044933-will13cb-2036,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_ann_vol,0.089,Broad core: most growth your limits allow
+1115-044933-will13cb-30fa,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core_prob_loss,0.135,Broad core: most growth your limits allow
+1115-044933-will13cb-c3cf,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_growth,0.5,Income / dividends: more prudent
+1115-044933-will13cb-f37a,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_max_drawdown,-0.0956,Income / dividends: more prudent
+1115-044933-will13cb-7808,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_return_2022,-0.0412,Income / dividends: more prudent
+1115-044933-will13cb-fcc3,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_stress_2022,-0.09,Income / dividends: more prudent
+1115-044933-will13cb-bbab,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_ann_vol,0.0597,Income / dividends: more prudent
+1115-044933-will13cb-b39d,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,income_prob_loss,0.0545,Income / dividends: more prudent
+1115-044933-will13cb-cb2f,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_growth,0.4,Broad core: most prudent
+1115-044933-will13cb-07f0,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_max_drawdown,-0.1157,Broad core: most prudent
+1115-044933-will13cb-7837,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_return_2022,-0.0792,Broad core: most prudent
+1115-044933-will13cb-7447,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_stress_2022,-0.1086,Broad core: most prudent
+1115-044933-will13cb-3b74,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_ann_vol,0.064,Broad core: most prudent
+1115-044933-will13cb-b500,2026-11-15T04:49:33+00:00,will13cb,30f7f2a,persona-strategies,mateo,core-3_prob_loss,0.0545,Broad core: most prudent
+1115-044934-will13cb-15cc,2026-11-15T04:49:34+00:00,will13cb,30f7f2a,persona-limits,robert,loss_limit,0.15,pipeline.run on the starter data
+1115-044934-will13cb-af0c,2026-11-15T04:49:34+00:00,will13cb,30f7f2a,persona-limits,robert,min_defensive,0.8462,pipeline.run on the starter data
+1115-044934-will13cb-85f0,2026-11-15T04:49:34+00:00,will13cb,30f7f2a,persona-limits,robert,max_crypto,0,pipeline.run on the starter data
+1115-044935-will13cb-2d61,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-request,robert,TSLA_asked,0.25,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-044935-will13cb-4421,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-request,robert,TSLA_worst_drop,-0.708806,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-044935-will13cb-00f0,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-request,robert,TSLA_loss_at_asked,-0.1772,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-044935-will13cb-bfc4,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-request,robert,TSLA_fits_up_to,0.0308,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-044935-will13cb-06c6,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_growth,0.15,Broad core: most growth your limits allow
+1115-044935-will13cb-3e50,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_max_drawdown,-0.0862,Broad core: most growth your limits allow
+1115-044935-will13cb-2d00,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_return_2022,-0.0578,Broad core: most growth your limits allow
+1115-044935-will13cb-62d1,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_stress_2022,-0.0801,Broad core: most growth your limits allow
+1115-044935-will13cb-c417,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_ann_vol,0.0384,Broad core: most growth your limits allow
+1115-044935-will13cb-38f5,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,core_prob_loss,0.0385,Broad core: most growth your limits allow
+1115-044935-will13cb-fa85,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_growth,0.05,Income / dividends: more prudent
+1115-044935-will13cb-3796,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_max_drawdown,-0.0949,Income / dividends: more prudent
+1115-044935-will13cb-fadc,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_return_2022,-0.0613,Income / dividends: more prudent
+1115-044935-will13cb-207d,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_stress_2022,-0.0776,Income / dividends: more prudent
+1115-044935-will13cb-48fc,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_ann_vol,0.0434,Income / dividends: more prudent
+1115-044935-will13cb-d3a4,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_prob_loss,0.057,Income / dividends: more prudent

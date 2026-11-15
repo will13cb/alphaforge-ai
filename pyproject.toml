@@ -1,0 +1,31 @@
+[project]
+name = "alphaforge-harness"
+version = "0.1.0"
+description = "Team harness for the PolyFinances Datathon 2026 (Polytechnique Montréal)"
+requires-python = ">=3.12"
+dependencies = [
+  "pandas>=2.0",
+  "numpy>=1.24",
+  "scipy>=1.11",
+  "altair>=5",
+  "pyarrow>=14",
+  "boto3>=1.34",
+  "streamlit>=1.50",
+  "yfinance>=0.2.40",
+  "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+agents = ["strands-agents>=1.65"]
+dev = ["pytest>=8", "ruff>=0.6", "nbstripout>=0.7", "ipykernel", "vl-convert-python>=1.3"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -1,0 +1,11 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "What is volatility?",
+ "answer": {
+  "answer": "Volatility is how much an investment's value tends to swing up and down, usually measured over a year. When volatility is high, the value can rise or fall a lot in a short time. When it is low, the path is smoother. It shows how bumpy the ride is, not whether you end up gaining or losing. A more volatile portfolio can feel harder to stay with during sharp drops, so it's worth comparing it with how much loss you're comfortable seeing.",
+  "evidence": []
+ },
+ "tool_calls": [],
+ "created": "2026-11-15T15:11:12+00:00"
+}

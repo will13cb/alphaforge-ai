@@ -1,0 +1,3149 @@
+{
+ "run_id": "20261115T044531-interface-841d0b",
+ "created": "2026-11-15T04:45:31+00:00",
+ "commit": "30f7f2a",
+ "persona": "interface",
+ "profile": {
+  "name": "Robert",
+  "age": 59,
+  "income_stability": "stable",
+  "emergency_fund_months": 12.0,
+  "objective": "retirement",
+  "capital": 400000.0,
+  "horizon_years": 4.0,
+  "loss_reaction": "hold",
+  "max_loss_pct": 15.0,
+  "knowledge_level": "advanced",
+  "monthly_contribution": 0.0,
+  "withdrawal_share_3y": 0.2,
+  "years_experience": 20,
+  "products_held": [
+   "stocks",
+   "etfs",
+   "bonds"
+  ],
+  "interests": [
+   "dividends",
+   "canada"
+  ],
+  "exclusions": [
+   "crypto"
+  ]
+ },
+ "limits": {
+  "risk_tolerance": 2,
+  "risk_capacity": 2,
+  "risk_level": 2,
+  "risk_name": "Cautious",
+  "knowledge_score": 5,
+  "max_drawdown": 0.15,
+  "target_vol": 0.08,
+  "min_defensive": 0.8462,
+  "max_single": 0.0308,
+  "max_crypto": 0.0,
+  "min_defensive_source": "horizon",
+  "min_defensive_why": "the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks",
+  "company_caps": {
+   "ENB.TO": 0.0308,
+   "JNJ": 0.0308,
+   "TSLA": 0.0308,
+   "JPM": 0.0308,
+   "CNQ.TO": 0.0308,
+   "MFC.TO": 0.0308,
+   "AAPL": 0.0308,
+   "FTS.TO": 0.0308,
+   "RY.TO": 0.0308,
+   "XOM": 0.0308,
+   "TD.TO": 0.0308,
+   "SHOP.TO": 0.0308,
+   "NVDA": 0.0308,
+   "MSFT": 0.0308,
+   "PG": 0.0308,
+   "CSU.TO": 0.0308,
+   "ATD.TO": 0.0308,
+   "GOOGL": 0.0308,
+   "AMZN": 0.0308,
+   "CNR.TO": 0.0308
+  },
+  "loss_limit": 0.15,
+  "loss_limit_source": "tolerance",
+  "loss_limit_cad": 60000,
+  "liquidity_floor": 0.2,
+  "horizon_max_growth": 0.1538,
+  "allowed_assets": [
+   "AAPL",
+   "AGG",
+   "AMZN",
+   "ATD.TO",
+   "CNQ.TO",
+   "CNR.TO",
+   "CSU.TO",
+   "ENB.TO",
+   "ESGV",
+   "FTS.TO",
+   "GLD",
+   "GOOGL",
+   "JNJ",
+   "JPM",
+   "MFC.TO",
+   "MSFT",
+   "NVDA",
+   "PG",
+   "QQQ",
+   "RY.TO",
+   "SHOP.TO",
+   "SPY",
+   "TD.TO",
+   "TLT",
+   "TSLA",
+   "XBB.TO",
+   "XIU.TO",
+   "XOM",
+   "ZST.TO"
+  ],
+  "reasons": [
+   "reaction to a 20% drop 'hold' → 4",
+   "max acceptable loss 15.0% → 2",
+   "tolerance = the more cautious of the two → 2",
+   "horizon 4.0 years → 2",
+   "risk level = lower of tolerance 2 and capacity 2 → 2 (Cautious)",
+   "declared knowledge 'advanced' → 4",
+   "5+ years investing in stocks/ETFs → 5",
+   "loss limit = smaller of the drop you'd accept (15%) and what your situation allows (capacity 2: 15%) → 15%, i.e. 60,000 $ on 400,000 $",
+   "defensive floor 85%: horizon 4 years → at most 15% in stocks",
+   "one company: its own worst drop in the data (2021-2026) may cost at most 25% of your loss limit (3.8% of the portfolio), and no company above 1/5 of the 15% you can hold in stocks (3.1%)",
+   "crypto: you excluded it"
+  ],
+  "flags": [],
+  "request_checks": [],
+  "missing": []
+ },
+ "verdict": "warn",
+ "strategies": [
+  {
+   "key": "core",
+   "flavour": "core",
+   "name": "Broad core: most growth your limits allow",
+   "risk_level": 2,
+   "weights": {
+    "ZST.TO": 0.425,
+    "XBB.TO": 0.425,
+    "XIU.TO": 0.075,
+    "SPY": 0.075
+   },
+   "split": {
+    "growth": 0.15,
+    "defensive": 0.85
+   },
+   "split_range": {
+    "floor": null,
+    "ceiling": 0.15,
+    "liquidity_floor": 0.2,
+    "conflict": false,
+    "conflict_message": null,
+    "set_by": "horizon",
+    "set_by_text": "the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks",
+    "data_ceiling": 0.85
+   },
+   "split_curve": [
+    {
+     "growth": 0.0,
+     "max_drawdown": -0.07932894204664376,
+     "stress_2022": -0.06930802304053352,
+     "return_2022": -0.05363262378524447,
+     "ann_vol": 0.034244193150329616
+    },
+    {
+     "growth": 0.05,
+     "max_drawdown": -0.08103595909961858,
+     "stress_2022": -0.07284873404081083,
+     "return_2022": -0.054950058609168684,
+     "ann_vol": 0.03439877178433147
+    },
+    {
+     "growth": 0.1,
+     "max_drawdown": -0.08362505421003597,
+     "stress_2022": -0.0764315563236877,
+     "return_2022": -0.056335641611437226,
+     "ann_vol": 0.03583929061493646
+    },
+    {
+     "growth": 0.15,
+     "max_drawdown": -0.08624017000337947,
+     "stress_2022": -0.08005592128075745,
+     "return_2022": -0.05778908323510934,
+     "ann_vol": 0.038421381014366755
+    },
+    {
+     "growth": 0.2,
+     "max_drawdown": -0.08888106003917762,
+     "stress_2022": -0.08372125505498618,
+     "return_2022": -0.05931007958167378,
+     "ann_vol": 0.041934696875956155
+    },
+    {
+     "growth": 0.25,
+     "max_drawdown": -0.09207565394866479,
+     "stress_2022": -0.08742697868843685,
+     "return_2022": -0.0608983125145649,
+     "ann_vol": 0.046167126842196135
+    },
+    {
+     "growth": 0.3,
+     "max_drawdown": -0.09632559544632857,
+     "stress_2022": -0.09117250827095835,
+     "return_2022": -0.06255344976758248,
+     "ann_vol": 0.050939738077521016
+    },
+    {
+     "growth": 0.35,
+     "max_drawdown": -0.10094773117745548,
+     "stress_2022": -0.09495725508976816,
+     "return_2022": -0.06427514505816045,
+     "ann_vol": 0.05611487098539367
+    },
+    {
+     "growth": 0.4,
+     "max_drawdown": -0.10558184171290819,
+     "stress_2022": -0.09878062577990188,
+     "return_2022": -0.06606303820542747,
+     "ann_vol": 0.061591144588862966
+    },
+    {
+     "growth": 0.45,
+     "max_drawdown": -0.11022752514596756,
+     "stress_2022": -0.10264202247545984,
+     "return_2022": -0.06791675525301133,
+     "ann_vol": 0.06729508119902217
+    },
+    {
+     "growth": 0.5,
+     "max_drawdown": -0.11488438005688839,
+     "stress_2022": -0.10654084296160327,
+     "return_2022": -0.06983590859652977,
+     "ann_vol": 0.0731734605656837
+    },
+    {
+     "growth": 0.55,
+     "max_drawdown": -0.11955200556823065,
+     "stress_2022": -0.11047648082725015,
+     "return_2022": -0.07182009711569903,
+     "ann_vol": 0.07918744360370693
+    },
+    {
+     "growth": 0.6,
+     "max_drawdown": -0.12423000139987761,
+     "stress_2022": -0.11444832561840956,
+     "return_2022": -0.07386890631101062,
+     "ann_vol": 0.085308356176759
+    },
+    {
+     "growth": 0.65,
+     "max_drawdown": -0.12891796792374688,
+     "stress_2022": -0.11845576299212102,
+     "return_2022": -0.0759819084449127,
+     "ann_vol": 0.09151474503285906
+    },
+    {
+     "growth": 0.7,
+     "max_drawdown": -0.13361550621813556,
+     "stress_2022": -0.1224981748709052,
+     "return_2022": -0.07815866268739824,
+     "ann_vol": 0.0977903369410063
+    },
+    {
+     "growth": 0.75,
+     "max_drawdown": -0.13832221812176804,
+     "stress_2022": -0.1265749395977328,
+     "return_2022": -0.08039871526599673,
+     "ann_vol": 0.10412261980664816
+    },
+    {
+     "growth": 0.8,
+     "max_drawdown": -0.14303770628745693,
+     "stress_2022": -0.1306854320914017,
+     "return_2022": -0.08270159962003265,
+     "ann_vol": 0.11050184807288056
+    },
+    {
+     "growth": 0.85,
+     "max_drawdown": -0.14776157423541858,
+     "stress_2022": -0.1348290240022969,
+     "return_2022": -0.08506683655911051,
+     "ann_vol": 0.11692033790321539
+    },
+    {
+     "growth": 0.9,
+     "max_drawdown": -0.15249342640621666,
+     "stress_2022": -0.1390050838684883,
+     "return_2022": -0.0874939344257698,
+     "ann_vol": 0.12337196164056106
+    },
+    {
+     "growth": 0.95,
+     "max_drawdown": -0.1572328682133255,
+     "stress_2022": -0.14321297727208981,
+     "return_2022": -0.08998238926218538,
+     "ann_vol": 0.12985178065177233
+    },
+    {
+     "growth": 1.0,
+     "max_drawdown": -0.16197950609530232,
+     "stress_2022": -0.14745206699583868,
+     "return_2022": -0.09253168498088493,
+     "ann_vol": 0.13635577535839777
+    }
+   ],
+   "stats": {
+    "ann_return": 0.0397,
+    "ann_vol": 0.0384,
+    "max_drawdown": -0.0862,
+    "cvar_95": 0.0053,
+    "worst_12m": -0.0579,
+    "return_2022": -0.0578,
+    "stress_2022": -0.0801,
+    "stress_2022_drawdown": -0.0862,
+    "prob_loss": 0.0385
+   },
+   "outlook": {
+    "horizon_years": 4.0,
+    "n_scenarios": 2000,
+    "total_invested": 400000.0,
+    "target_amount": null,
+    "replay": {
+     "prob_loss": 0.0175,
+     "prob_target": null,
+     "final_p5": 414383.013,
+     "final_p50": 468030.8324,
+     "final_p95": 531861.9777
+    },
+    "risk_only": {
+     "prob_loss": 0.0385,
+     "prob_target": null,
+     "final_p5": 404464.7132,
+     "final_p50": 456829.7582,
+     "final_p95": 519134.8172
+    },
+    "cash_return_used": 0.0342,
+    "method": "stationary block bootstrap of the strategy's 2021-2026 daily returns, fixed seed",
+    "limits": "Replays past days only: no crisis worse than 2021-2026, no fees or taxes. Not a forecast; 'replay' assumes 2021-2026 average returns repeat, 'risk_only' does not."
+   },
+   "diversification": {
+    "n_holdings": 4,
+    "effective_n_holdings": 2.6846,
+    "asset_classes": {
+     "bonds": 0.85,
+     "equity": 0.15
+    },
+    "n_asset_classes": 2,
+    "companies_top5": [
+     {
+      "name": "AAPL",
+      "weight": 0.0059
+     },
+     {
+      "name": "NVDA",
+      "weight": 0.0046
+     },
+     {
+      "name": "MSFT",
+      "weight": 0.0044
+     },
+     {
+      "name": "GOOGL",
+      "weight": 0.0036
+     },
+     {
+      "name": "AMZN",
+      "weight": 0.003
+     }
+    ],
+    "largest_company": {
+     "name": "AAPL",
+     "weight": 0.0059
+    },
+    "effective_n_companies": 45.6946,
+    "sectors": {
+     "Bonds": 0.85,
+     "Broad market (Canada)": 0.075,
+     "Unknown": 0.049,
+     "Information Technology": 0.015,
+     "Consumer Discretionary": 0.0043,
+     "Communication Services": 0.0036,
+     "Financials": 0.001,
+     "Energy": 0.0008,
+     "Health Care": 0.0008,
+     "Consumer Staples": 0.0004,
+     "ETF remainder (no detail)": 0.0001
+    },
+    "largest_sector": {
+     "name": "Information Technology",
+     "weight": 0.015
+    },
+    "tech_share": 0.015,
+    "look_through_coverage": 0.4994,
+    "currency": {
+     "CAD": 0.925,
+     "USD": 0.075
+    },
+    "avg_correlation": 0.2737,
+    "diversification_ratio": 1.3746,
+    "redundant_pairs": [],
+    "etf_overlaps": [],
+    "checks": [
+     {
+      "rule": "C3",
+      "status": "pass",
+      "detail": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through",
+      "text": "No sector above 40% of the portfolio (⚠ above 30%), counted through the ETFs"
+     },
+     {
+      "rule": "C6",
+      "status": "pass",
+      "detail": "ok",
+      "text": "No two holdings correlated above 0.95 (same bet twice)"
+     },
+     {
+      "rule": "C4",
+      "status": "pass",
+      "detail": "2 asset classes: bonds 85%, equity 15%",
+      "text": "At least 2 asset classes (equity, bonds, gold, crypto)"
+     }
+    ]
+   },
+   "checks": [
+    {
+     "check": "C1",
+     "value": 0.0059,
+     "limit": 0.0308,
+     "status": "pass",
+     "reason": "closest to its cap: AAPL 0.6% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs",
+     "source": "dh.metrics.look_through, profiler company_caps"
+    },
+    {
+     "check": "C2",
+     "value": 0.5,
+     "limit": 0.7,
+     "status": "pass",
+     "reason": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%",
+     "source": "market.countries, dh.holdings"
+    },
+    {
+     "check": "C3",
+     "value": 0.015,
+     "limit": 0.3,
+     "status": "pass",
+     "reason": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through",
+     "source": "diversification.report"
+    },
+    {
+     "check": "C3b",
+     "value": null,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "job sector not given",
+     "source": "profile.employment_sector"
+    },
+    {
+     "check": "C4",
+     "value": 2,
+     "limit": 2,
+     "status": "pass",
+     "reason": "2 asset classes: bonds 85%, equity 15%",
+     "source": "diversification.report"
+    },
+    {
+     "check": "C5",
+     "value": 263.7,
+     "limit": 8,
+     "status": "pass",
+     "reason": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+     "source": "dh.metrics.look_through"
+    },
+    {
+     "check": "C6",
+     "value": 0.0,
+     "limit": 0.85,
+     "status": "pass",
+     "reason": "no near-duplicate holdings",
+     "source": "diversification.report, dh.metrics.overlap"
+    },
+    {
+     "check": "D1",
+     "value": 0.0862,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "worst drop 8.6% vs the 15% the client said they'd accept",
+     "source": "market.strategy_stats"
+    },
+    {
+     "check": "D2",
+     "value": 0.0862,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "worst drop 8.6% vs loss limit 15% = 34,496 $ vs 60,000 $",
+     "source": "market.strategy_stats, profiler loss limit"
+    },
+    {
+     "check": "D3",
+     "value": -0.05793053689968906,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "2022 sell-off drop -8.6%, worst 12 months -5.8%, CVaR 95% 0.53% a day",
+     "source": "market.strategy_stats"
+    },
+    {
+     "check": "E",
+     "value": 0.038,
+     "limit": null,
+     "status": "pass",
+     "reason": "no target given; 4% chance of ending below what was put in (risk-only view)",
+     "source": "market.goal_outlook"
+    },
+    {
+     "check": "F1",
+     "value": "retirement",
+     "limit": null,
+     "status": "pass",
+     "reason": "objective retirement: no extra constraint",
+     "source": "profile.objective"
+    },
+    {
+     "check": "F2",
+     "value": 0.15,
+     "limit": 0.1538,
+     "status": "pass",
+     "reason": "growth 15% vs 15% allowed for a 4-year horizon",
+     "source": "rules.horizon_max_growth (#22)"
+    },
+    {
+     "check": "F3",
+     "value": 0.85,
+     "limit": 0.2,
+     "status": "pass",
+     "reason": "defensive 85% vs 20% needed within 3 years",
+     "source": "profile.withdrawal_share_3y"
+    },
+    {
+     "check": "F4",
+     "value": 5,
+     "limit": 3,
+     "status": "pass",
+     "reason": "knowledge 5/5: single names allowed",
+     "source": "profiler knowledge score"
+    },
+    {
+     "check": "F5",
+     "value": null,
+     "limit": null,
+     "status": "pass",
+     "reason": "no ESG preference",
+     "source": "profile.interests"
+    },
+    {
+     "check": "F6",
+     "value": [],
+     "limit": [],
+     "status": "pass",
+     "reason": "none held",
+     "source": "profile.exclusions, dh.metrics.look_through"
+    }
+   ],
+   "adjustments": [
+    "offered: always offered: broad and simple",
+    "holds: broad Canadian and U.S. stock ETFs, short and aggregate bonds",
+    "split 15% growth, set by the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks; the worst-drop test alone would allow 85%"
+   ],
+   "baskets": {
+    "growth": {
+     "XIU.TO": 0.5,
+     "SPY": 0.5
+    },
+    "defensive": {
+     "ZST.TO": 0.5,
+     "XBB.TO": 0.5
+    }
+   },
+   "pros": [
+    "smallest worst drop of the 2: -8.6%",
+    "held up best in 2022: -5.8%",
+    "4% chance of ending below what you put in (without assuming past returns repeat)",
+    "all 17 diversification and profile checks pass"
+   ],
+   "cons": [],
+   "level": {
+    "rank": 1,
+    "label": "most growth your limits allow",
+    "delta": 0.0,
+    "target_growth": 0.15
+   },
+   "guardian": {
+    "verdict": "pass",
+    "checks": [
+     {
+      "rule": "G2",
+      "status": "pass",
+      "detail": "sum 100.00%",
+      "text": "Weights are valid: no negatives, sum to 100%"
+     },
+     {
+      "rule": "G3",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+     },
+     {
+      "rule": "G4",
+      "status": "pass",
+      "detail": "closest to its cap: AAPL 0.6% vs 3.1%",
+      "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+     },
+     {
+      "rule": "G5",
+      "status": "pass",
+      "detail": "crypto 0% vs cap 0%",
+      "text": "Crypto ≤ crypto cap"
+     },
+     {
+      "rule": "G6",
+      "status": "pass",
+      "detail": "defensive 85% vs floor 85%",
+      "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+     },
+     {
+      "rule": "G7",
+      "status": "pass",
+      "detail": "max drawdown 8.6% vs loss limit 15%",
+      "text": "Historical max drawdown within the client's loss limit"
+     },
+     {
+      "rule": "G8",
+      "status": "pass",
+      "detail": "volatility 3.8% vs target 8%",
+      "text": "Volatility within target (warning only)"
+     },
+     {
+      "rule": "G9",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Requests that break a limit are refused, not quietly applied"
+     },
+     {
+      "rule": "G10",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Exclusions respected through ETFs too (warning: disclose)"
+     },
+     {
+      "rule": "G14",
+      "status": "pass",
+      "detail": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%",
+      "text": "Geography: no country above 70% of the equities (warning: disclose)"
+     },
+     {
+      "rule": "G15",
+      "status": "pass",
+      "detail": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through; job sector not given",
+      "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+     },
+     {
+      "rule": "G16",
+      "status": "pass",
+      "detail": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+      "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+     },
+     {
+      "rule": "G17",
+      "status": "pass",
+      "detail": "worst drop 8.6% vs loss limit 15% = 34,480 $ vs 60,000 $",
+      "text": "Worst drop in dollars within the client's loss limit in dollars"
+     }
+    ]
+   }
+  },
+  {
+   "key": "income",
+   "flavour": "income",
+   "name": "Income / dividends: more prudent",
+   "risk_level": 2,
+   "weights": {
+    "XBB.TO": 0.38,
+    "AGG": 0.285,
+    "ZST.TO": 0.285,
+    "XIU.TO": 0.015,
+    "RY.TO": 0.01,
+    "TD.TO": 0.005,
+    "FTS.TO": 0.005,
+    "ENB.TO": 0.005,
+    "JNJ": 0.005,
+    "PG": 0.005
+   },
+   "split": {
+    "growth": 0.05,
+    "defensive": 0.95
+   },
+   "split_range": {
+    "floor": null,
+    "ceiling": 0.05,
+    "liquidity_floor": 0.2,
+    "conflict": false,
+    "conflict_message": null,
+    "set_by": "level",
+    "set_by_text": "risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit",
+    "data_ceiling": 0.95
+   },
+   "split_curve": [
+    {
+     "growth": 0.0,
+     "max_drawdown": -0.09920851940061515,
+     "stress_2022": -0.07733106402125411,
+     "return_2022": -0.0646506838895401,
+     "ann_vol": 0.04451316568966883
+    },
+    {
+     "growth": 0.05,
+     "max_drawdown": -0.09487752720159237,
+     "stress_2022": -0.07763145735899502,
+     "return_2022": -0.06127176133205703,
+     "ann_vol": 0.04342702302010598
+    },
+    {
+     "growth": 0.1,
+     "max_drawdown": -0.09068592773233408,
+     "stress_2022": -0.07815126818087148,
+     "return_2022": -0.0581694971296689,
+     "ann_vol": 0.042971373845609416
+    },
+    {
+     "growth": 0.15,
+     "max_drawdown": -0.08843925376385653,
+     "stress_2022": -0.07880367580342851,
+     "return_2022": -0.055418191666512184,
+     "ann_vol": 0.04318641984742249
+    },
+    {
+     "growth": 0.2,
+     "max_drawdown": -0.08643365104477108,
+     "stress_2022": -0.07909312926503209,
+     "return_2022": -0.05179917847643856,
+     "ann_vol": 0.043908116720744864
+    },
+    {
+     "growth": 0.25,
+     "max_drawdown": -0.08544145232615274,
+     "stress_2022": -0.07989258633343932,
+     "return_2022": -0.0490360373540728,
+     "ann_vol": 0.04528887512516518
+    },
+    {
+     "growth": 0.3,
+     "max_drawdown": -0.08448159400173638,
+     "stress_2022": -0.08072240672714492,
+     "return_2022": -0.04630479413659838,
+     "ann_vol": 0.04720487805980124
+    },
+    {
+     "growth": 0.35,
+     "max_drawdown": -0.08525103465851314,
+     "stress_2022": -0.08298910472740384,
+     "return_2022": -0.04622242556608758,
+     "ann_vol": 0.049735076971808435
+    },
+    {
+     "growth": 0.4,
+     "max_drawdown": -0.08724084569686319,
+     "stress_2022": -0.08521060257530677,
+     "return_2022": -0.04589177651920262,
+     "ann_vol": 0.05312851951132934
+    },
+    {
+     "growth": 0.45,
+     "max_drawdown": -0.08978556216326083,
+     "stress_2022": -0.0874020353604904,
+     "return_2022": -0.045330839775157505,
+     "ann_vol": 0.05746073748668781
+    },
+    {
+     "growth": 0.5,
+     "max_drawdown": -0.09254037255312253,
+     "stress_2022": -0.08971966413517674,
+     "return_2022": -0.04513337622586677,
+     "ann_vol": 0.06195658695124454
+    },
+    {
+     "growth": 0.55,
+     "max_drawdown": -0.09627552964758801,
+     "stress_2022": -0.09208224937647103,
+     "return_2022": -0.04499960806994541,
+     "ann_vol": 0.06682092609755205
+    },
+    {
+     "growth": 0.6,
+     "max_drawdown": -0.10056344860114241,
+     "stress_2022": -0.09448942939843474,
+     "return_2022": -0.04492957758611271,
+     "ann_vol": 0.07197908617213902
+    },
+    {
+     "growth": 0.65,
+     "max_drawdown": -0.10719705843139771,
+     "stress_2022": -0.09694083610892323,
+     "return_2022": -0.04492331463484078,
+     "ann_vol": 0.07737232523048686
+    },
+    {
+     "growth": 0.7,
+     "max_drawdown": -0.11396207459314378,
+     "stress_2022": -0.09943609510088014,
+     "return_2022": -0.04498083664386232,
+     "ann_vol": 0.0829548055312202
+    },
+    {
+     "growth": 0.75,
+     "max_drawdown": -0.12071370358567624,
+     "stress_2022": -0.10197482574509042,
+     "return_2022": -0.04510214859759032,
+     "ann_vol": 0.08869079993791468
+    },
+    {
+     "growth": 0.8,
+     "max_drawdown": -0.12745149069903905,
+     "stress_2022": -0.10455664128437825,
+     "return_2022": -0.045287243030493696,
+     "ann_vol": 0.09455237390085011
+    },
+    {
+     "growth": 0.85,
+     "max_drawdown": -0.1341749861861894,
+     "stress_2022": -0.10718114892920139,
+     "return_2022": -0.045536100024404,
+     "ann_vol": 0.10051756070806449
+    },
+    {
+     "growth": 0.9,
+     "max_drawdown": -0.1408837452979791,
+     "stress_2022": -0.10984794995462199,
+     "return_2022": -0.04584868720977786,
+     "ann_vol": 0.10656896262452316
+    },
+    {
+     "growth": 0.95,
+     "max_drawdown": -0.14757732831691428,
+     "stress_2022": -0.11255663979860209,
+     "return_2022": -0.046224959770896135,
+     "ann_vol": 0.11269269170087699
+    },
+    {
+     "growth": 1.0,
+     "max_drawdown": -0.15425530058972925,
+     "stress_2022": -0.11530680816161465,
+     "return_2022": -0.046664860455021384,
+     "ann_vol": 0.11887757111610718
+    }
+   ],
+   "stats": {
+    "ann_return": 0.0273,
+    "ann_vol": 0.0434,
+    "max_drawdown": -0.0949,
+    "cvar_95": 0.0058,
+    "worst_12m": -0.0623,
+    "return_2022": -0.0613,
+    "stress_2022": -0.0776,
+    "stress_2022_drawdown": -0.0909,
+    "prob_loss": 0.057
+   },
+   "outlook": {
+    "horizon_years": 4.0,
+    "n_scenarios": 2000,
+    "total_invested": 400000.0,
+    "target_amount": null,
+    "replay": {
+     "prob_loss": 0.0955,
+     "prob_target": null,
+     "final_p5": 388962.8165,
+     "final_p50": 446987.5974,
+     "final_p95": 513667.5766
+    },
+    "risk_only": {
+     "prob_loss": 0.057,
+     "prob_target": null,
+     "final_p5": 397960.4122,
+     "final_p50": 457326.0484,
+     "final_p95": 525546.6794
+    },
+    "cash_return_used": 0.0342,
+    "method": "stationary block bootstrap of the strategy's 2021-2026 daily returns, fixed seed",
+    "limits": "Replays past days only: no crisis worse than 2021-2026, no fees or taxes. Not a forecast; 'replay' assumes 2021-2026 average returns repeat, 'risk_only' does not."
+   },
+   "diversification": {
+    "n_holdings": 10,
+    "effective_n_holdings": 3.2541,
+    "asset_classes": {
+     "bonds": 0.95,
+     "equity": 0.05
+    },
+    "n_asset_classes": 2,
+    "companies_top5": [
+     {
+      "name": "RY.TO",
+      "weight": 0.01
+     },
+     {
+      "name": "TD.TO",
+      "weight": 0.005
+     },
+     {
+      "name": "FTS.TO",
+      "weight": 0.005
+     },
+     {
+      "name": "ENB.TO",
+      "weight": 0.005
+     },
+     {
+      "name": "JNJ",
+      "weight": 0.005
+     }
+    ],
+    "largest_company": {
+     "name": "RY.TO",
+     "weight": 0.01
+    },
+    "effective_n_companies": 5.4444,
+    "sectors": {
+     "Bonds": 0.95,
+     "Broad market (Canada)": 0.015,
+     "Financials": 0.015,
+     "Utilities": 0.005,
+     "Energy": 0.005,
+     "Health Care": 0.005,
+     "Consumer Staples": 0.005
+    },
+    "largest_sector": {
+     "name": "Financials",
+     "weight": 0.015
+    },
+    "tech_share": 0.0,
+    "look_through_coverage": 0.0,
+    "currency": {
+     "CAD": 0.705,
+     "USD": 0.295
+    },
+    "avg_correlation": 0.3687,
+    "diversification_ratio": 1.28,
+    "redundant_pairs": [],
+    "etf_overlaps": [],
+    "checks": [
+     {
+      "rule": "C3",
+      "status": "pass",
+      "detail": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through",
+      "text": "No sector above 40% of the portfolio (⚠ above 30%), counted through the ETFs"
+     },
+     {
+      "rule": "C6",
+      "status": "pass",
+      "detail": "ok",
+      "text": "No two holdings correlated above 0.95 (same bet twice)"
+     },
+     {
+      "rule": "C4",
+      "status": "pass",
+      "detail": "2 asset classes: bonds 95%, equity 5%",
+      "text": "At least 2 asset classes (equity, bonds, gold, crypto)"
+     }
+    ]
+   },
+   "checks": [
+    {
+     "check": "C1",
+     "value": 0.01,
+     "limit": 0.0308,
+     "status": "pass",
+     "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs",
+     "source": "dh.metrics.look_through, profiler company_caps"
+    },
+    {
+     "check": "C2",
+     "value": 0.8,
+     "limit": 0.7,
+     "status": "warn",
+     "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+     "source": "market.countries, dh.holdings"
+    },
+    {
+     "check": "C3",
+     "value": 0.015,
+     "limit": 0.3,
+     "status": "pass",
+     "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through",
+     "source": "diversification.report"
+    },
+    {
+     "check": "C3b",
+     "value": null,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "job sector not given",
+     "source": "profile.employment_sector"
+    },
+    {
+     "check": "C4",
+     "value": 2,
+     "limit": 2,
+     "status": "pass",
+     "reason": "2 asset classes: bonds 95%, equity 5%",
+     "source": "diversification.report"
+    },
+    {
+     "check": "C5",
+     "value": 303.4,
+     "limit": 8,
+     "status": "pass",
+     "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+     "source": "dh.metrics.look_through"
+    },
+    {
+     "check": "C6",
+     "value": 0.0,
+     "limit": 0.85,
+     "status": "pass",
+     "reason": "no near-duplicate holdings",
+     "source": "diversification.report, dh.metrics.overlap"
+    },
+    {
+     "check": "D1",
+     "value": 0.0949,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "worst drop 9.5% vs the 15% the client said they'd accept",
+     "source": "market.strategy_stats"
+    },
+    {
+     "check": "D2",
+     "value": 0.0949,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "worst drop 9.5% vs loss limit 15% = 37,951 $ vs 60,000 $",
+     "source": "market.strategy_stats, profiler loss limit"
+    },
+    {
+     "check": "D3",
+     "value": -0.062284920396835856,
+     "limit": 0.15,
+     "status": "pass",
+     "reason": "2022 sell-off drop -9.1%, worst 12 months -6.2%, CVaR 95% 0.58% a day",
+     "source": "market.strategy_stats"
+    },
+    {
+     "check": "E",
+     "value": 0.057,
+     "limit": null,
+     "status": "pass",
+     "reason": "no target given; 6% chance of ending below what was put in (risk-only view)",
+     "source": "market.goal_outlook"
+    },
+    {
+     "check": "F1",
+     "value": "retirement",
+     "limit": null,
+     "status": "pass",
+     "reason": "objective retirement: no extra constraint",
+     "source": "profile.objective"
+    },
+    {
+     "check": "F2",
+     "value": 0.05,
+     "limit": 0.1538,
+     "status": "pass",
+     "reason": "growth 5% vs 15% allowed for a 4-year horizon",
+     "source": "rules.horizon_max_growth (#22)"
+    },
+    {
+     "check": "F3",
+     "value": 0.95,
+     "limit": 0.2,
+     "status": "pass",
+     "reason": "defensive 95% vs 20% needed within 3 years",
+     "source": "profile.withdrawal_share_3y"
+    },
+    {
+     "check": "F4",
+     "value": 5,
+     "limit": 3,
+     "status": "pass",
+     "reason": "knowledge 5/5: single names allowed",
+     "source": "profiler knowledge score"
+    },
+    {
+     "check": "F5",
+     "value": null,
+     "limit": null,
+     "status": "pass",
+     "reason": "no ESG preference",
+     "source": "profile.interests"
+    },
+    {
+     "check": "F6",
+     "value": [],
+     "limit": [],
+     "status": "pass",
+     "reason": "none held",
+     "source": "profile.exclusions, dh.metrics.look_through"
+    }
+   ],
+   "adjustments": [
+    "offered: single names allowed (knowledge ≥ 3)",
+    "holds: dividend-paying established companies plus the TSX 60, aggregate bonds",
+    "split 5% growth, set by risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit; the worst-drop test alone would allow 95%",
+    "level 2 of 3 (more prudent): growth capped at 5%, 10 points below the top strategy's 15%"
+   ],
+   "baskets": {
+    "growth": {
+     "XIU.TO": 0.35,
+     "RY.TO": 0.15,
+     "TD.TO": 0.1,
+     "FTS.TO": 0.1,
+     "ENB.TO": 0.1,
+     "JNJ": 0.1,
+     "PG": 0.1
+    },
+    "defensive": {
+     "XBB.TO": 0.4,
+     "AGG": 0.3,
+     "ZST.TO": 0.3
+    }
+   },
+   "pros": [
+    "6% chance of ending below what you put in (without assuming past returns repeat)"
+   ],
+   "cons": [
+    "largest worst drop of the 2: -9.5%",
+    "C2: Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+    "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%."
+   ],
+   "level": {
+    "rank": 2,
+    "label": "more prudent",
+    "delta": 0.1,
+    "target_growth": 0.05
+   },
+   "guardian": {
+    "verdict": "warn",
+    "checks": [
+     {
+      "rule": "G2",
+      "status": "pass",
+      "detail": "sum 100.00%",
+      "text": "Weights are valid: no negatives, sum to 100%"
+     },
+     {
+      "rule": "G3",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+     },
+     {
+      "rule": "G4",
+      "status": "pass",
+      "detail": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)",
+      "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+     },
+     {
+      "rule": "G5",
+      "status": "pass",
+      "detail": "crypto 0% vs cap 0%",
+      "text": "Crypto ≤ crypto cap"
+     },
+     {
+      "rule": "G6",
+      "status": "pass",
+      "detail": "defensive 95% vs floor 85%",
+      "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+     },
+     {
+      "rule": "G7",
+      "status": "pass",
+      "detail": "max drawdown 9.5% vs loss limit 15%",
+      "text": "Historical max drawdown within the client's loss limit"
+     },
+     {
+      "rule": "G8",
+      "status": "pass",
+      "detail": "volatility 4.3% vs target 8%",
+      "text": "Volatility within target (warning only)"
+     },
+     {
+      "rule": "G9",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Requests that break a limit are refused, not quietly applied"
+     },
+     {
+      "rule": "G10",
+      "status": "pass",
+      "detail": "ok",
+      "text": "Exclusions respected through ETFs too (warning: disclose)"
+     },
+     {
+      "rule": "G14",
+      "status": "warn",
+      "detail": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+      "text": "Geography: no country above 70% of the equities (warning: disclose)"
+     },
+     {
+      "rule": "G15",
+      "status": "pass",
+      "detail": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given",
+      "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+     },
+     {
+      "rule": "G16",
+      "status": "pass",
+      "detail": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+      "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+     },
+     {
+      "rule": "G17",
+      "status": "pass",
+      "detail": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $",
+      "text": "Worst drop in dollars within the client's loss limit in dollars"
+     }
+    ]
+   }
+  }
+ ],
+ "dropped": [],
+ "explanation": {
+  "text": "**Robert, here is what this simulation found.**\n\n**What we looked at.** Daily prices 2021-11-12 to 2026-11-12 (Yahoo Finance via the organizers' starter pack), Bank of Canada USD/CAD; all returns in CAD.\n\n**What we found about you.** Your loss limit is 15.0% (60,000 $): risk level 2 (Cautious). At least 84.6% stays in defensive assets and crypto is capped at 0.0%. Caps on one company are computed for this client and each asset: one company's own worst 2021-2026 drop may cost at most a quarter of the loss limit, and no company above a fifth of what the client can hold in stocks.\n\n**The strategies.** Up to three risk levels, from the most growth your limits allow to the most prudent; the choice is yours.\n- **Broad core: most growth your limits allow**: 15.0% growth, 85.0% defensive, set by the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks (the worst-drop test alone would allow 85.0%). Worst historical drop -8.6% (your limit 15.0%); in 2022 it returned -5.8%; chance of ending below what you put in, without assuming past returns repeat: 3.9%.\n- **Income / dividends: more prudent**: 5.0% growth, 95.0% defensive, set by risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit (the worst-drop test alone would allow 95.0%). Worst historical drop -9.5% (your limit 15.0%); in 2022 it returned -6.1%; chance of ending below what you put in, without assuming past returns repeat: 5.7%.\n\n**Limits of this analysis.** These numbers describe 2021–2026 only; they are not predictions. A longer horizon, a different loss limit or new money needed soon would change the answer.\n\nSimulation only, for a fictional persona. Not financial advice; no real transactions.",
+  "source": "template",
+  "model": "",
+  "check_calls": 0,
+  "checks": [
+   {
+    "rule": "G11",
+    "status": "pass",
+    "detail": "present",
+    "text": "Explanation carries the simulation disclaimer"
+   },
+   {
+    "rule": "G12",
+    "status": "pass",
+    "detail": "every number is one of the computed facts, exactly",
+    "text": "Every % in the explanation matches a computed number"
+   },
+   {
+    "rule": "G13",
+    "status": "pass",
+    "detail": "ok",
+    "text": "Explanation addresses each refused request"
+   }
+  ],
+  "verdict": "pass",
+  "facts_hash": "80e55a4c5e443873",
+  "note": "mock mode"
+ },
+ "trace": [
+  {
+   "agent": "Profiler",
+   "to": "Portfolio, Guardian",
+   "timestamp": "2026-11-15T04:45:30+00:00",
+   "summary": "risk level 2 (Cautious; tolerance 2, capacity 2), knowledge 5/5. Limits: max drawdown 15%, defensive ≥ 85%, crypto ≤ 0.0%, one company ≤ 3.1% (same for all: the stock room binds).",
+   "output": {
+    "risk_tolerance": 2,
+    "risk_capacity": 2,
+    "risk_level": 2,
+    "risk_name": "Cautious",
+    "knowledge_score": 5,
+    "max_drawdown": 0.15,
+    "target_vol": 0.08,
+    "min_defensive": 0.8462,
+    "max_single": 0.0308,
+    "max_crypto": 0.0,
+    "min_defensive_source": "horizon",
+    "min_defensive_why": "the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks",
+    "company_caps": {
+     "ENB.TO": 0.0308,
+     "JNJ": 0.0308,
+     "TSLA": 0.0308,
+     "JPM": 0.0308,
+     "CNQ.TO": 0.0308,
+     "MFC.TO": 0.0308,
+     "AAPL": 0.0308,
+     "FTS.TO": 0.0308,
+     "RY.TO": 0.0308,
+     "XOM": 0.0308,
+     "TD.TO": 0.0308,
+     "SHOP.TO": 0.0308,
+     "NVDA": 0.0308,
+     "MSFT": 0.0308,
+     "PG": 0.0308,
+     "CSU.TO": 0.0308,
+     "ATD.TO": 0.0308,
+     "GOOGL": 0.0308,
+     "AMZN": 0.0308,
+     "CNR.TO": 0.0308
+    },
+    "loss_limit": 0.15,
+    "loss_limit_source": "tolerance",
+    "loss_limit_cad": 60000,
+    "liquidity_floor": 0.2,
+    "horizon_max_growth": 0.1538,
+    "allowed_assets": [
+     "AAPL",
+     "AGG",
+     "AMZN",
+     "ATD.TO",
+     "CNQ.TO",
+     "CNR.TO",
+     "CSU.TO",
+     "ENB.TO",
+     "ESGV",
+     "FTS.TO",
+     "GLD",
+     "GOOGL",
+     "JNJ",
+     "JPM",
+     "MFC.TO",
+     "MSFT",
+     "NVDA",
+     "PG",
+     "QQQ",
+     "RY.TO",
+     "SHOP.TO",
+     "SPY",
+     "TD.TO",
+     "TLT",
+     "TSLA",
+     "XBB.TO",
+     "XIU.TO",
+     "XOM",
+     "ZST.TO"
+    ],
+    "reasons": [
+     "reaction to a 20% drop 'hold' → 4",
+     "max acceptable loss 15.0% → 2",
+     "tolerance = the more cautious of the two → 2",
+     "horizon 4.0 years → 2",
+     "risk level = lower of tolerance 2 and capacity 2 → 2 (Cautious)",
+     "declared knowledge 'advanced' → 4",
+     "5+ years investing in stocks/ETFs → 5",
+     "loss limit = smaller of the drop you'd accept (15%) and what your situation allows (capacity 2: 15%) → 15%, i.e. 60,000 $ on 400,000 $",
+     "defensive floor 85%: horizon 4 years → at most 15% in stocks",
+     "one company: its own worst drop in the data (2021-2026) may cost at most 25% of your loss limit (3.8% of the portfolio), and no company above 1/5 of the 15% you can hold in stocks (3.1%)",
+     "crypto: you excluded it"
+    ],
+    "flags": [],
+    "request_checks": [],
+    "missing": []
+   },
+   "checks": [
+    {
+     "rule": "G1",
+     "status": "pass",
+     "detail": "all essentials known",
+     "text": "KYC complete: essential facts known before any proposal (NI 31-103 s.13.2)"
+    }
+   ],
+   "sources": []
+  },
+  {
+   "agent": "Market data",
+   "to": "Portfolio",
+   "timestamp": "2026-11-15T04:45:30+00:00",
+   "summary": "31 assets, 2021-11-15 to 2026-11-12, in CAD. Per asset: return, volatility, max drawdown, CVaR 95%, worst 12 months, 2022. Deepest drawdown: SHOP.TO -83%. Most correlated pair: ESGV/SPY (0.99).",
+   "output": {
+    "period": {
+     "start": "2021-11-15",
+     "end": "2026-11-12"
+    },
+    "base_currency": "CAD"
+   },
+   "checks": [],
+   "sources": [
+    {
+     "data": "daily prices, corporate actions",
+     "source": "Yahoo Finance via yfinance (organizers' build script)",
+     "terms": "https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html",
+     "window": "2021-11-15 to 2026-11-12"
+    },
+    {
+     "data": "USD/CAD, Canadian rates and CPI",
+     "source": "Bank of Canada Valet API (FRED DEXCAUS for USD/CAD before the Bank of Canada series starts, if the long build was used)",
+     "terms": "https://www.bankofcanada.ca/terms/",
+     "window": "2021-11-15 to 2026-11-12"
+    },
+    {
+     "data": "U.S. rates, CPI, unemployment",
+     "source": "FRED, Federal Reserve Bank of St. Louis",
+     "terms": "https://fred.stlouisfed.org/legal/",
+     "window": "2021-11-15 to 2026-11-12"
+    }
+   ]
+  },
+  {
+   "agent": "Portfolio",
+   "to": "Guardian",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "2 strategies: 'Broad core: most growth your limits allow' 15%/85% (set by horizon; worst drop -8.6% vs loss limit 15%); 'Income / dividends: more prudent' 5%/95% (set by level; worst drop -9.5% vs loss limit 15%).",
+   "output": [
+    {
+     "key": "core",
+     "flavour": "core",
+     "name": "Broad core: most growth your limits allow",
+     "risk_level": 2,
+     "weights": {
+      "ZST.TO": 0.425,
+      "XBB.TO": 0.425,
+      "XIU.TO": 0.075,
+      "SPY": 0.075
+     },
+     "split": {
+      "growth": 0.15,
+      "defensive": 0.85
+     },
+     "split_range": {
+      "floor": null,
+      "ceiling": 0.15,
+      "liquidity_floor": 0.2,
+      "conflict": false,
+      "conflict_message": null,
+      "set_by": "horizon",
+      "set_by_text": "the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks",
+      "data_ceiling": 0.85
+     },
+     "split_curve": [
+      {
+       "growth": 0.0,
+       "max_drawdown": -0.07932894204664376,
+       "stress_2022": -0.06930802304053352,
+       "return_2022": -0.05363262378524447,
+       "ann_vol": 0.034244193150329616
+      },
+      {
+       "growth": 0.05,
+       "max_drawdown": -0.08103595909961858,
+       "stress_2022": -0.07284873404081083,
+       "return_2022": -0.054950058609168684,
+       "ann_vol": 0.03439877178433147
+      },
+      {
+       "growth": 0.1,
+       "max_drawdown": -0.08362505421003597,
+       "stress_2022": -0.0764315563236877,
+       "return_2022": -0.056335641611437226,
+       "ann_vol": 0.03583929061493646
+      },
+      {
+       "growth": 0.15,
+       "max_drawdown": -0.08624017000337947,
+       "stress_2022": -0.08005592128075745,
+       "return_2022": -0.05778908323510934,
+       "ann_vol": 0.038421381014366755
+      },
+      {
+       "growth": 0.2,
+       "max_drawdown": -0.08888106003917762,
+       "stress_2022": -0.08372125505498618,
+       "return_2022": -0.05931007958167378,
+       "ann_vol": 0.041934696875956155
+      },
+      {
+       "growth": 0.25,
+       "max_drawdown": -0.09207565394866479,
+       "stress_2022": -0.08742697868843685,
+       "return_2022": -0.0608983125145649,
+       "ann_vol": 0.046167126842196135
+      },
+      {
+       "growth": 0.3,
+       "max_drawdown": -0.09632559544632857,
+       "stress_2022": -0.09117250827095835,
+       "return_2022": -0.06255344976758248,
+       "ann_vol": 0.050939738077521016
+      },
+      {
+       "growth": 0.35,
+       "max_drawdown": -0.10094773117745548,
+       "stress_2022": -0.09495725508976816,
+       "return_2022": -0.06427514505816045,
+       "ann_vol": 0.05611487098539367
+      },
+      {
+       "growth": 0.4,
+       "max_drawdown": -0.10558184171290819,
+       "stress_2022": -0.09878062577990188,
+       "return_2022": -0.06606303820542747,
+       "ann_vol": 0.061591144588862966
+      },
+      {
+       "growth": 0.45,
+       "max_drawdown": -0.11022752514596756,
+       "stress_2022": -0.10264202247545984,
+       "return_2022": -0.06791675525301133,
+       "ann_vol": 0.06729508119902217
+      },
+      {
+       "growth": 0.5,
+       "max_drawdown": -0.11488438005688839,
+       "stress_2022": -0.10654084296160327,
+       "return_2022": -0.06983590859652977,
+       "ann_vol": 0.0731734605656837
+      },
+      {
+       "growth": 0.55,
+       "max_drawdown": -0.11955200556823065,
+       "stress_2022": -0.11047648082725015,
+       "return_2022": -0.07182009711569903,
+       "ann_vol": 0.07918744360370693
+      },
+      {
+       "growth": 0.6,
+       "max_drawdown": -0.12423000139987761,
+       "stress_2022": -0.11444832561840956,
+       "return_2022": -0.07386890631101062,
+       "ann_vol": 0.085308356176759
+      },
+      {
+       "growth": 0.65,
+       "max_drawdown": -0.12891796792374688,
+       "stress_2022": -0.11845576299212102,
+       "return_2022": -0.0759819084449127,
+       "ann_vol": 0.09151474503285906
+      },
+      {
+       "growth": 0.7,
+       "max_drawdown": -0.13361550621813556,
+       "stress_2022": -0.1224981748709052,
+       "return_2022": -0.07815866268739824,
+       "ann_vol": 0.0977903369410063
+      },
+      {
+       "growth": 0.75,
+       "max_drawdown": -0.13832221812176804,
+       "stress_2022": -0.1265749395977328,
+       "return_2022": -0.08039871526599673,
+       "ann_vol": 0.10412261980664816
+      },
+      {
+       "growth": 0.8,
+       "max_drawdown": -0.14303770628745693,
+       "stress_2022": -0.1306854320914017,
+       "return_2022": -0.08270159962003265,
+       "ann_vol": 0.11050184807288056
+      },
+      {
+       "growth": 0.85,
+       "max_drawdown": -0.14776157423541858,
+       "stress_2022": -0.1348290240022969,
+       "return_2022": -0.08506683655911051,
+       "ann_vol": 0.11692033790321539
+      },
+      {
+       "growth": 0.9,
+       "max_drawdown": -0.15249342640621666,
+       "stress_2022": -0.1390050838684883,
+       "return_2022": -0.0874939344257698,
+       "ann_vol": 0.12337196164056106
+      },
+      {
+       "growth": 0.95,
+       "max_drawdown": -0.1572328682133255,
+       "stress_2022": -0.14321297727208981,
+       "return_2022": -0.08998238926218538,
+       "ann_vol": 0.12985178065177233
+      },
+      {
+       "growth": 1.0,
+       "max_drawdown": -0.16197950609530232,
+       "stress_2022": -0.14745206699583868,
+       "return_2022": -0.09253168498088493,
+       "ann_vol": 0.13635577535839777
+      }
+     ],
+     "stats": {
+      "ann_return": 0.0397,
+      "ann_vol": 0.0384,
+      "max_drawdown": -0.0862,
+      "cvar_95": 0.0053,
+      "worst_12m": -0.0579,
+      "return_2022": -0.0578,
+      "stress_2022": -0.0801,
+      "stress_2022_drawdown": -0.0862,
+      "prob_loss": 0.0385
+     },
+     "outlook": {
+      "horizon_years": 4.0,
+      "n_scenarios": 2000,
+      "total_invested": 400000.0,
+      "target_amount": null,
+      "replay": {
+       "prob_loss": 0.0175,
+       "prob_target": null,
+       "final_p5": 414383.013,
+       "final_p50": 468030.8324,
+       "final_p95": 531861.9777
+      },
+      "risk_only": {
+       "prob_loss": 0.0385,
+       "prob_target": null,
+       "final_p5": 404464.7132,
+       "final_p50": 456829.7582,
+       "final_p95": 519134.8172
+      },
+      "cash_return_used": 0.0342,
+      "method": "stationary block bootstrap of the strategy's 2021-2026 daily returns, fixed seed",
+      "limits": "Replays past days only: no crisis worse than 2021-2026, no fees or taxes. Not a forecast; 'replay' assumes 2021-2026 average returns repeat, 'risk_only' does not."
+     },
+     "diversification": {
+      "n_holdings": 4,
+      "effective_n_holdings": 2.6846,
+      "asset_classes": {
+       "bonds": 0.85,
+       "equity": 0.15
+      },
+      "n_asset_classes": 2,
+      "companies_top5": [
+       {
+        "name": "AAPL",
+        "weight": 0.0059
+       },
+       {
+        "name": "NVDA",
+        "weight": 0.0046
+       },
+       {
+        "name": "MSFT",
+        "weight": 0.0044
+       },
+       {
+        "name": "GOOGL",
+        "weight": 0.0036
+       },
+       {
+        "name": "AMZN",
+        "weight": 0.003
+       }
+      ],
+      "largest_company": {
+       "name": "AAPL",
+       "weight": 0.0059
+      },
+      "effective_n_companies": 45.6946,
+      "sectors": {
+       "Bonds": 0.85,
+       "Broad market (Canada)": 0.075,
+       "Unknown": 0.049,
+       "Information Technology": 0.015,
+       "Consumer Discretionary": 0.0043,
+       "Communication Services": 0.0036,
+       "Financials": 0.001,
+       "Energy": 0.0008,
+       "Health Care": 0.0008,
+       "Consumer Staples": 0.0004,
+       "ETF remainder (no detail)": 0.0001
+      },
+      "largest_sector": {
+       "name": "Information Technology",
+       "weight": 0.015
+      },
+      "tech_share": 0.015,
+      "look_through_coverage": 0.4994,
+      "currency": {
+       "CAD": 0.925,
+       "USD": 0.075
+      },
+      "avg_correlation": 0.2737,
+      "diversification_ratio": 1.3746,
+      "redundant_pairs": [],
+      "etf_overlaps": [],
+      "checks": [
+       {
+        "rule": "C3",
+        "status": "pass",
+        "detail": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through",
+        "text": "No sector above 40% of the portfolio (⚠ above 30%), counted through the ETFs"
+       },
+       {
+        "rule": "C6",
+        "status": "pass",
+        "detail": "ok",
+        "text": "No two holdings correlated above 0.95 (same bet twice)"
+       },
+       {
+        "rule": "C4",
+        "status": "pass",
+        "detail": "2 asset classes: bonds 85%, equity 15%",
+        "text": "At least 2 asset classes (equity, bonds, gold, crypto)"
+       }
+      ]
+     },
+     "checks": [
+      {
+       "check": "C1",
+       "value": 0.0059,
+       "limit": 0.0308,
+       "status": "pass",
+       "reason": "closest to its cap: AAPL 0.6% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs",
+       "source": "dh.metrics.look_through, profiler company_caps"
+      },
+      {
+       "check": "C2",
+       "value": 0.5,
+       "limit": 0.7,
+       "status": "pass",
+       "reason": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%",
+       "source": "market.countries, dh.holdings"
+      },
+      {
+       "check": "C3",
+       "value": 0.015,
+       "limit": 0.3,
+       "status": "pass",
+       "reason": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through",
+       "source": "diversification.report"
+      },
+      {
+       "check": "C3b",
+       "value": null,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "job sector not given",
+       "source": "profile.employment_sector"
+      },
+      {
+       "check": "C4",
+       "value": 2,
+       "limit": 2,
+       "status": "pass",
+       "reason": "2 asset classes: bonds 85%, equity 15%",
+       "source": "diversification.report"
+      },
+      {
+       "check": "C5",
+       "value": 263.7,
+       "limit": 8,
+       "status": "pass",
+       "reason": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+       "source": "dh.metrics.look_through"
+      },
+      {
+       "check": "C6",
+       "value": 0.0,
+       "limit": 0.85,
+       "status": "pass",
+       "reason": "no near-duplicate holdings",
+       "source": "diversification.report, dh.metrics.overlap"
+      },
+      {
+       "check": "D1",
+       "value": 0.0862,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "worst drop 8.6% vs the 15% the client said they'd accept",
+       "source": "market.strategy_stats"
+      },
+      {
+       "check": "D2",
+       "value": 0.0862,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "worst drop 8.6% vs loss limit 15% = 34,496 $ vs 60,000 $",
+       "source": "market.strategy_stats, profiler loss limit"
+      },
+      {
+       "check": "D3",
+       "value": -0.05793053689968906,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "2022 sell-off drop -8.6%, worst 12 months -5.8%, CVaR 95% 0.53% a day",
+       "source": "market.strategy_stats"
+      },
+      {
+       "check": "E",
+       "value": 0.038,
+       "limit": null,
+       "status": "pass",
+       "reason": "no target given; 4% chance of ending below what was put in (risk-only view)",
+       "source": "market.goal_outlook"
+      },
+      {
+       "check": "F1",
+       "value": "retirement",
+       "limit": null,
+       "status": "pass",
+       "reason": "objective retirement: no extra constraint",
+       "source": "profile.objective"
+      },
+      {
+       "check": "F2",
+       "value": 0.15,
+       "limit": 0.1538,
+       "status": "pass",
+       "reason": "growth 15% vs 15% allowed for a 4-year horizon",
+       "source": "rules.horizon_max_growth (#22)"
+      },
+      {
+       "check": "F3",
+       "value": 0.85,
+       "limit": 0.2,
+       "status": "pass",
+       "reason": "defensive 85% vs 20% needed within 3 years",
+       "source": "profile.withdrawal_share_3y"
+      },
+      {
+       "check": "F4",
+       "value": 5,
+       "limit": 3,
+       "status": "pass",
+       "reason": "knowledge 5/5: single names allowed",
+       "source": "profiler knowledge score"
+      },
+      {
+       "check": "F5",
+       "value": null,
+       "limit": null,
+       "status": "pass",
+       "reason": "no ESG preference",
+       "source": "profile.interests"
+      },
+      {
+       "check": "F6",
+       "value": [],
+       "limit": [],
+       "status": "pass",
+       "reason": "none held",
+       "source": "profile.exclusions, dh.metrics.look_through"
+      }
+     ],
+     "adjustments": [
+      "offered: always offered: broad and simple",
+      "holds: broad Canadian and U.S. stock ETFs, short and aggregate bonds",
+      "split 15% growth, set by the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks; the worst-drop test alone would allow 85%"
+     ],
+     "baskets": {
+      "growth": {
+       "XIU.TO": 0.5,
+       "SPY": 0.5
+      },
+      "defensive": {
+       "ZST.TO": 0.5,
+       "XBB.TO": 0.5
+      }
+     },
+     "pros": [
+      "smallest worst drop of the 2: -8.6%",
+      "held up best in 2022: -5.8%",
+      "4% chance of ending below what you put in (without assuming past returns repeat)",
+      "all 17 diversification and profile checks pass"
+     ],
+     "cons": [],
+     "level": {
+      "rank": 1,
+      "label": "most growth your limits allow",
+      "delta": 0.0,
+      "target_growth": 0.15
+     },
+     "guardian": {
+      "verdict": "pass",
+      "checks": [
+       {
+        "rule": "G2",
+        "status": "pass",
+        "detail": "sum 100.00%",
+        "text": "Weights are valid: no negatives, sum to 100%"
+       },
+       {
+        "rule": "G3",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+       },
+       {
+        "rule": "G4",
+        "status": "pass",
+        "detail": "closest to its cap: AAPL 0.6% vs 3.1%",
+        "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+       },
+       {
+        "rule": "G5",
+        "status": "pass",
+        "detail": "crypto 0% vs cap 0%",
+        "text": "Crypto ≤ crypto cap"
+       },
+       {
+        "rule": "G6",
+        "status": "pass",
+        "detail": "defensive 85% vs floor 85%",
+        "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+       },
+       {
+        "rule": "G7",
+        "status": "pass",
+        "detail": "max drawdown 8.6% vs loss limit 15%",
+        "text": "Historical max drawdown within the client's loss limit"
+       },
+       {
+        "rule": "G8",
+        "status": "pass",
+        "detail": "volatility 3.8% vs target 8%",
+        "text": "Volatility within target (warning only)"
+       },
+       {
+        "rule": "G9",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Requests that break a limit are refused, not quietly applied"
+       },
+       {
+        "rule": "G10",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Exclusions respected through ETFs too (warning: disclose)"
+       },
+       {
+        "rule": "G14",
+        "status": "pass",
+        "detail": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%",
+        "text": "Geography: no country above 70% of the equities (warning: disclose)"
+       },
+       {
+        "rule": "G15",
+        "status": "pass",
+        "detail": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through; job sector not given",
+        "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+       },
+       {
+        "rule": "G16",
+        "status": "pass",
+        "detail": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+        "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+       },
+       {
+        "rule": "G17",
+        "status": "pass",
+        "detail": "worst drop 8.6% vs loss limit 15% = 34,480 $ vs 60,000 $",
+        "text": "Worst drop in dollars within the client's loss limit in dollars"
+       }
+      ]
+     }
+    },
+    {
+     "key": "income",
+     "flavour": "income",
+     "name": "Income / dividends: more prudent",
+     "risk_level": 2,
+     "weights": {
+      "XBB.TO": 0.38,
+      "AGG": 0.285,
+      "ZST.TO": 0.285,
+      "XIU.TO": 0.015,
+      "RY.TO": 0.01,
+      "TD.TO": 0.005,
+      "FTS.TO": 0.005,
+      "ENB.TO": 0.005,
+      "JNJ": 0.005,
+      "PG": 0.005
+     },
+     "split": {
+      "growth": 0.05,
+      "defensive": 0.95
+     },
+     "split_range": {
+      "floor": null,
+      "ceiling": 0.05,
+      "liquidity_floor": 0.2,
+      "conflict": false,
+      "conflict_message": null,
+      "set_by": "level",
+      "set_by_text": "risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit",
+      "data_ceiling": 0.95
+     },
+     "split_curve": [
+      {
+       "growth": 0.0,
+       "max_drawdown": -0.09920851940061515,
+       "stress_2022": -0.07733106402125411,
+       "return_2022": -0.0646506838895401,
+       "ann_vol": 0.04451316568966883
+      },
+      {
+       "growth": 0.05,
+       "max_drawdown": -0.09487752720159237,
+       "stress_2022": -0.07763145735899502,
+       "return_2022": -0.06127176133205703,
+       "ann_vol": 0.04342702302010598
+      },
+      {
+       "growth": 0.1,
+       "max_drawdown": -0.09068592773233408,
+       "stress_2022": -0.07815126818087148,
+       "return_2022": -0.0581694971296689,
+       "ann_vol": 0.042971373845609416
+      },
+      {
+       "growth": 0.15,
+       "max_drawdown": -0.08843925376385653,
+       "stress_2022": -0.07880367580342851,
+       "return_2022": -0.055418191666512184,
+       "ann_vol": 0.04318641984742249
+      },
+      {
+       "growth": 0.2,
+       "max_drawdown": -0.08643365104477108,
+       "stress_2022": -0.07909312926503209,
+       "return_2022": -0.05179917847643856,
+       "ann_vol": 0.043908116720744864
+      },
+      {
+       "growth": 0.25,
+       "max_drawdown": -0.08544145232615274,
+       "stress_2022": -0.07989258633343932,
+       "return_2022": -0.0490360373540728,
+       "ann_vol": 0.04528887512516518
+      },
+      {
+       "growth": 0.3,
+       "max_drawdown": -0.08448159400173638,
+       "stress_2022": -0.08072240672714492,
+       "return_2022": -0.04630479413659838,
+       "ann_vol": 0.04720487805980124
+      },
+      {
+       "growth": 0.35,
+       "max_drawdown": -0.08525103465851314,
+       "stress_2022": -0.08298910472740384,
+       "return_2022": -0.04622242556608758,
+       "ann_vol": 0.049735076971808435
+      },
+      {
+       "growth": 0.4,
+       "max_drawdown": -0.08724084569686319,
+       "stress_2022": -0.08521060257530677,
+       "return_2022": -0.04589177651920262,
+       "ann_vol": 0.05312851951132934
+      },
+      {
+       "growth": 0.45,
+       "max_drawdown": -0.08978556216326083,
+       "stress_2022": -0.0874020353604904,
+       "return_2022": -0.045330839775157505,
+       "ann_vol": 0.05746073748668781
+      },
+      {
+       "growth": 0.5,
+       "max_drawdown": -0.09254037255312253,
+       "stress_2022": -0.08971966413517674,
+       "return_2022": -0.04513337622586677,
+       "ann_vol": 0.06195658695124454
+      },
+      {
+       "growth": 0.55,
+       "max_drawdown": -0.09627552964758801,
+       "stress_2022": -0.09208224937647103,
+       "return_2022": -0.04499960806994541,
+       "ann_vol": 0.06682092609755205
+      },
+      {
+       "growth": 0.6,
+       "max_drawdown": -0.10056344860114241,
+       "stress_2022": -0.09448942939843474,
+       "return_2022": -0.04492957758611271,
+       "ann_vol": 0.07197908617213902
+      },
+      {
+       "growth": 0.65,
+       "max_drawdown": -0.10719705843139771,
+       "stress_2022": -0.09694083610892323,
+       "return_2022": -0.04492331463484078,
+       "ann_vol": 0.07737232523048686
+      },
+      {
+       "growth": 0.7,
+       "max_drawdown": -0.11396207459314378,
+       "stress_2022": -0.09943609510088014,
+       "return_2022": -0.04498083664386232,
+       "ann_vol": 0.0829548055312202
+      },
+      {
+       "growth": 0.75,
+       "max_drawdown": -0.12071370358567624,
+       "stress_2022": -0.10197482574509042,
+       "return_2022": -0.04510214859759032,
+       "ann_vol": 0.08869079993791468
+      },
+      {
+       "growth": 0.8,
+       "max_drawdown": -0.12745149069903905,
+       "stress_2022": -0.10455664128437825,
+       "return_2022": -0.045287243030493696,
+       "ann_vol": 0.09455237390085011
+      },
+      {
+       "growth": 0.85,
+       "max_drawdown": -0.1341749861861894,
+       "stress_2022": -0.10718114892920139,
+       "return_2022": -0.045536100024404,
+       "ann_vol": 0.10051756070806449
+      },
+      {
+       "growth": 0.9,
+       "max_drawdown": -0.1408837452979791,
+       "stress_2022": -0.10984794995462199,
+       "return_2022": -0.04584868720977786,
+       "ann_vol": 0.10656896262452316
+      },
+      {
+       "growth": 0.95,
+       "max_drawdown": -0.14757732831691428,
+       "stress_2022": -0.11255663979860209,
+       "return_2022": -0.046224959770896135,
+       "ann_vol": 0.11269269170087699
+      },
+      {
+       "growth": 1.0,
+       "max_drawdown": -0.15425530058972925,
+       "stress_2022": -0.11530680816161465,
+       "return_2022": -0.046664860455021384,
+       "ann_vol": 0.11887757111610718
+      }
+     ],
+     "stats": {
+      "ann_return": 0.0273,
+      "ann_vol": 0.0434,
+      "max_drawdown": -0.0949,
+      "cvar_95": 0.0058,
+      "worst_12m": -0.0623,
+      "return_2022": -0.0613,
+      "stress_2022": -0.0776,
+      "stress_2022_drawdown": -0.0909,
+      "prob_loss": 0.057
+     },
+     "outlook": {
+      "horizon_years": 4.0,
+      "n_scenarios": 2000,
+      "total_invested": 400000.0,
+      "target_amount": null,
+      "replay": {
+       "prob_loss": 0.0955,
+       "prob_target": null,
+       "final_p5": 388962.8165,
+       "final_p50": 446987.5974,
+       "final_p95": 513667.5766
+      },
+      "risk_only": {
+       "prob_loss": 0.057,
+       "prob_target": null,
+       "final_p5": 397960.4122,
+       "final_p50": 457326.0484,
+       "final_p95": 525546.6794
+      },
+      "cash_return_used": 0.0342,
+      "method": "stationary block bootstrap of the strategy's 2021-2026 daily returns, fixed seed",
+      "limits": "Replays past days only: no crisis worse than 2021-2026, no fees or taxes. Not a forecast; 'replay' assumes 2021-2026 average returns repeat, 'risk_only' does not."
+     },
+     "diversification": {
+      "n_holdings": 10,
+      "effective_n_holdings": 3.2541,
+      "asset_classes": {
+       "bonds": 0.95,
+       "equity": 0.05
+      },
+      "n_asset_classes": 2,
+      "companies_top5": [
+       {
+        "name": "RY.TO",
+        "weight": 0.01
+       },
+       {
+        "name": "TD.TO",
+        "weight": 0.005
+       },
+       {
+        "name": "FTS.TO",
+        "weight": 0.005
+       },
+       {
+        "name": "ENB.TO",
+        "weight": 0.005
+       },
+       {
+        "name": "JNJ",
+        "weight": 0.005
+       }
+      ],
+      "largest_company": {
+       "name": "RY.TO",
+       "weight": 0.01
+      },
+      "effective_n_companies": 5.4444,
+      "sectors": {
+       "Bonds": 0.95,
+       "Broad market (Canada)": 0.015,
+       "Financials": 0.015,
+       "Utilities": 0.005,
+       "Energy": 0.005,
+       "Health Care": 0.005,
+       "Consumer Staples": 0.005
+      },
+      "largest_sector": {
+       "name": "Financials",
+       "weight": 0.015
+      },
+      "tech_share": 0.0,
+      "look_through_coverage": 0.0,
+      "currency": {
+       "CAD": 0.705,
+       "USD": 0.295
+      },
+      "avg_correlation": 0.3687,
+      "diversification_ratio": 1.28,
+      "redundant_pairs": [],
+      "etf_overlaps": [],
+      "checks": [
+       {
+        "rule": "C3",
+        "status": "pass",
+        "detail": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through",
+        "text": "No sector above 40% of the portfolio (⚠ above 30%), counted through the ETFs"
+       },
+       {
+        "rule": "C6",
+        "status": "pass",
+        "detail": "ok",
+        "text": "No two holdings correlated above 0.95 (same bet twice)"
+       },
+       {
+        "rule": "C4",
+        "status": "pass",
+        "detail": "2 asset classes: bonds 95%, equity 5%",
+        "text": "At least 2 asset classes (equity, bonds, gold, crypto)"
+       }
+      ]
+     },
+     "checks": [
+      {
+       "check": "C1",
+       "value": 0.01,
+       "limit": 0.0308,
+       "status": "pass",
+       "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs",
+       "source": "dh.metrics.look_through, profiler company_caps"
+      },
+      {
+       "check": "C2",
+       "value": 0.8,
+       "limit": 0.7,
+       "status": "warn",
+       "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+       "source": "market.countries, dh.holdings"
+      },
+      {
+       "check": "C3",
+       "value": 0.015,
+       "limit": 0.3,
+       "status": "pass",
+       "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through",
+       "source": "diversification.report"
+      },
+      {
+       "check": "C3b",
+       "value": null,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "job sector not given",
+       "source": "profile.employment_sector"
+      },
+      {
+       "check": "C4",
+       "value": 2,
+       "limit": 2,
+       "status": "pass",
+       "reason": "2 asset classes: bonds 95%, equity 5%",
+       "source": "diversification.report"
+      },
+      {
+       "check": "C5",
+       "value": 303.4,
+       "limit": 8,
+       "status": "pass",
+       "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+       "source": "dh.metrics.look_through"
+      },
+      {
+       "check": "C6",
+       "value": 0.0,
+       "limit": 0.85,
+       "status": "pass",
+       "reason": "no near-duplicate holdings",
+       "source": "diversification.report, dh.metrics.overlap"
+      },
+      {
+       "check": "D1",
+       "value": 0.0949,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "worst drop 9.5% vs the 15% the client said they'd accept",
+       "source": "market.strategy_stats"
+      },
+      {
+       "check": "D2",
+       "value": 0.0949,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "worst drop 9.5% vs loss limit 15% = 37,951 $ vs 60,000 $",
+       "source": "market.strategy_stats, profiler loss limit"
+      },
+      {
+       "check": "D3",
+       "value": -0.062284920396835856,
+       "limit": 0.15,
+       "status": "pass",
+       "reason": "2022 sell-off drop -9.1%, worst 12 months -6.2%, CVaR 95% 0.58% a day",
+       "source": "market.strategy_stats"
+      },
+      {
+       "check": "E",
+       "value": 0.057,
+       "limit": null,
+       "status": "pass",
+       "reason": "no target given; 6% chance of ending below what was put in (risk-only view)",
+       "source": "market.goal_outlook"
+      },
+      {
+       "check": "F1",
+       "value": "retirement",
+       "limit": null,
+       "status": "pass",
+       "reason": "objective retirement: no extra constraint",
+       "source": "profile.objective"
+      },
+      {
+       "check": "F2",
+       "value": 0.05,
+       "limit": 0.1538,
+       "status": "pass",
+       "reason": "growth 5% vs 15% allowed for a 4-year horizon",
+       "source": "rules.horizon_max_growth (#22)"
+      },
+      {
+       "check": "F3",
+       "value": 0.95,
+       "limit": 0.2,
+       "status": "pass",
+       "reason": "defensive 95% vs 20% needed within 3 years",
+       "source": "profile.withdrawal_share_3y"
+      },
+      {
+       "check": "F4",
+       "value": 5,
+       "limit": 3,
+       "status": "pass",
+       "reason": "knowledge 5/5: single names allowed",
+       "source": "profiler knowledge score"
+      },
+      {
+       "check": "F5",
+       "value": null,
+       "limit": null,
+       "status": "pass",
+       "reason": "no ESG preference",
+       "source": "profile.interests"
+      },
+      {
+       "check": "F6",
+       "value": [],
+       "limit": [],
+       "status": "pass",
+       "reason": "none held",
+       "source": "profile.exclusions, dh.metrics.look_through"
+      }
+     ],
+     "adjustments": [
+      "offered: single names allowed (knowledge ≥ 3)",
+      "holds: dividend-paying established companies plus the TSX 60, aggregate bonds",
+      "split 5% growth, set by risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit; the worst-drop test alone would allow 95%",
+      "level 2 of 3 (more prudent): growth capped at 5%, 10 points below the top strategy's 15%"
+     ],
+     "baskets": {
+      "growth": {
+       "XIU.TO": 0.35,
+       "RY.TO": 0.15,
+       "TD.TO": 0.1,
+       "FTS.TO": 0.1,
+       "ENB.TO": 0.1,
+       "JNJ": 0.1,
+       "PG": 0.1
+      },
+      "defensive": {
+       "XBB.TO": 0.4,
+       "AGG": 0.3,
+       "ZST.TO": 0.3
+      }
+     },
+     "pros": [
+      "6% chance of ending below what you put in (without assuming past returns repeat)"
+     ],
+     "cons": [
+      "largest worst drop of the 2: -9.5%",
+      "C2: Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+      "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%."
+     ],
+     "level": {
+      "rank": 2,
+      "label": "more prudent",
+      "delta": 0.1,
+      "target_growth": 0.05
+     },
+     "guardian": {
+      "verdict": "warn",
+      "checks": [
+       {
+        "rule": "G2",
+        "status": "pass",
+        "detail": "sum 100.00%",
+        "text": "Weights are valid: no negatives, sum to 100%"
+       },
+       {
+        "rule": "G3",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+       },
+       {
+        "rule": "G4",
+        "status": "pass",
+        "detail": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)",
+        "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+       },
+       {
+        "rule": "G5",
+        "status": "pass",
+        "detail": "crypto 0% vs cap 0%",
+        "text": "Crypto ≤ crypto cap"
+       },
+       {
+        "rule": "G6",
+        "status": "pass",
+        "detail": "defensive 95% vs floor 85%",
+        "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+       },
+       {
+        "rule": "G7",
+        "status": "pass",
+        "detail": "max drawdown 9.5% vs loss limit 15%",
+        "text": "Historical max drawdown within the client's loss limit"
+       },
+       {
+        "rule": "G8",
+        "status": "pass",
+        "detail": "volatility 4.3% vs target 8%",
+        "text": "Volatility within target (warning only)"
+       },
+       {
+        "rule": "G9",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Requests that break a limit are refused, not quietly applied"
+       },
+       {
+        "rule": "G10",
+        "status": "pass",
+        "detail": "ok",
+        "text": "Exclusions respected through ETFs too (warning: disclose)"
+       },
+       {
+        "rule": "G14",
+        "status": "warn",
+        "detail": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+        "text": "Geography: no country above 70% of the equities (warning: disclose)"
+       },
+       {
+        "rule": "G15",
+        "status": "pass",
+        "detail": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given",
+        "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+       },
+       {
+        "rule": "G16",
+        "status": "pass",
+        "detail": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+        "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+       },
+       {
+        "rule": "G17",
+        "status": "pass",
+        "detail": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $",
+        "text": "Worst drop in dollars within the client's loss limit in dollars"
+       }
+      ]
+     }
+    }
+   ],
+   "checks": [],
+   "sources": []
+  },
+  {
+   "agent": "Guardian",
+   "to": "Critic",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "'Broad core: most growth your limits allow': 13 ✔, 0 ⚠, 0 ✘ → approved.",
+   "output": null,
+   "checks": [
+    {
+     "rule": "G2",
+     "status": "pass",
+     "detail": "sum 100.00%",
+     "text": "Weights are valid: no negatives, sum to 100%"
+    },
+    {
+     "rule": "G3",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+    },
+    {
+     "rule": "G4",
+     "status": "pass",
+     "detail": "closest to its cap: AAPL 0.6% vs 3.1%",
+     "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+    },
+    {
+     "rule": "G5",
+     "status": "pass",
+     "detail": "crypto 0% vs cap 0%",
+     "text": "Crypto ≤ crypto cap"
+    },
+    {
+     "rule": "G6",
+     "status": "pass",
+     "detail": "defensive 85% vs floor 85%",
+     "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+    },
+    {
+     "rule": "G7",
+     "status": "pass",
+     "detail": "max drawdown 8.6% vs loss limit 15%",
+     "text": "Historical max drawdown within the client's loss limit"
+    },
+    {
+     "rule": "G8",
+     "status": "pass",
+     "detail": "volatility 3.8% vs target 8%",
+     "text": "Volatility within target (warning only)"
+    },
+    {
+     "rule": "G9",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Requests that break a limit are refused, not quietly applied"
+    },
+    {
+     "rule": "G10",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Exclusions respected through ETFs too (warning: disclose)"
+    },
+    {
+     "rule": "G14",
+     "status": "pass",
+     "detail": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%",
+     "text": "Geography: no country above 70% of the equities (warning: disclose)"
+    },
+    {
+     "rule": "G15",
+     "status": "pass",
+     "detail": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through; job sector not given",
+     "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+    },
+    {
+     "rule": "G16",
+     "status": "pass",
+     "detail": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+     "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+    },
+    {
+     "rule": "G17",
+     "status": "pass",
+     "detail": "worst drop 8.6% vs loss limit 15% = 34,480 $ vs 60,000 $",
+     "text": "Worst drop in dollars within the client's loss limit in dollars"
+    }
+   ],
+   "sources": []
+  },
+  {
+   "agent": "Guardian",
+   "to": "Critic",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "'Income / dividends: more prudent': 12 ✔, 1 ⚠, 0 ✘ → approved with disclosures.",
+   "output": null,
+   "checks": [
+    {
+     "rule": "G2",
+     "status": "pass",
+     "detail": "sum 100.00%",
+     "text": "Weights are valid: no negatives, sum to 100%"
+    },
+    {
+     "rule": "G3",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Only allowed assets (in the universe, not excluded by the client or the profile)"
+    },
+    {
+     "rule": "G4",
+     "status": "pass",
+     "detail": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)",
+     "text": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs"
+    },
+    {
+     "rule": "G5",
+     "status": "pass",
+     "detail": "crypto 0% vs cap 0%",
+     "text": "Crypto ≤ crypto cap"
+    },
+    {
+     "rule": "G6",
+     "status": "pass",
+     "detail": "defensive 95% vs floor 85%",
+     "text": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)"
+    },
+    {
+     "rule": "G7",
+     "status": "pass",
+     "detail": "max drawdown 9.5% vs loss limit 15%",
+     "text": "Historical max drawdown within the client's loss limit"
+    },
+    {
+     "rule": "G8",
+     "status": "pass",
+     "detail": "volatility 4.3% vs target 8%",
+     "text": "Volatility within target (warning only)"
+    },
+    {
+     "rule": "G9",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Requests that break a limit are refused, not quietly applied"
+    },
+    {
+     "rule": "G10",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Exclusions respected through ETFs too (warning: disclose)"
+    },
+    {
+     "rule": "G14",
+     "status": "warn",
+     "detail": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%",
+     "text": "Geography: no country above 70% of the equities (warning: disclose)"
+    },
+    {
+     "rule": "G15",
+     "status": "pass",
+     "detail": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given",
+     "text": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)"
+    },
+    {
+     "rule": "G16",
+     "status": "pass",
+     "detail": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)",
+     "text": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)"
+    },
+    {
+     "rule": "G17",
+     "status": "pass",
+     "detail": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $",
+     "text": "Worst drop in dollars within the client's loss limit in dollars"
+    }
+   ],
+   "sources": []
+  },
+  {
+   "agent": "Critic",
+   "to": "Portfolio",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "3 tool call(s): t1 correlation_between(XIU.TO, SPY) → XIU.TO/SPY 0.68; t2 strategy_checks(core) → 0 warning(s); t3 strategy_checks(income) → 2 warning(s). 1 objection(s) kept (mock).",
+   "output": {
+    "objections": [
+     {
+      "strategy": "income",
+      "evidence": [
+       "t3"
+      ],
+      "claim": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%.",
+      "action": {
+       "type": "disclose"
+      },
+      "id": "K1",
+      "status": "disclosed"
+     }
+    ],
+    "tool_calls": [
+     {
+      "call_id": "t1",
+      "tool": "correlation_between",
+      "args": {
+       "tickers": [
+        "XIU.TO",
+        "SPY"
+       ]
+      },
+      "result": {
+       "pairs": [
+        {
+         "a": "XIU.TO",
+         "b": "SPY",
+         "correlation": 0.684
+        }
+       ],
+       "average": 0.684
+      }
+     },
+     {
+      "call_id": "t2",
+      "tool": "strategy_checks",
+      "args": {
+       "strategy": "core"
+      },
+      "result": {
+       "strategy": "core",
+       "checks": [
+        {
+         "check": "C1",
+         "value": 0.0059,
+         "limit": 0.0308,
+         "status": "pass",
+         "reason": "closest to its cap: AAPL 0.6% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs"
+        },
+        {
+         "check": "C2",
+         "value": 0.5,
+         "limit": 0.7,
+         "status": "pass",
+         "reason": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%"
+        },
+        {
+         "check": "C3",
+         "value": 0.015,
+         "limit": 0.3,
+         "status": "pass",
+         "reason": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through"
+        },
+        {
+         "check": "C3b",
+         "value": null,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "job sector not given"
+        },
+        {
+         "check": "C4",
+         "value": 2,
+         "limit": 2,
+         "status": "pass",
+         "reason": "2 asset classes: bonds 85%, equity 15%"
+        },
+        {
+         "check": "C5",
+         "value": 263.7,
+         "limit": 8,
+         "status": "pass",
+         "reason": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+        },
+        {
+         "check": "C6",
+         "value": 0.0,
+         "limit": 0.85,
+         "status": "pass",
+         "reason": "no near-duplicate holdings"
+        },
+        {
+         "check": "D1",
+         "value": 0.0862,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "worst drop 8.6% vs the 15% the client said they'd accept"
+        },
+        {
+         "check": "D2",
+         "value": 0.0862,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "worst drop 8.6% vs loss limit 15% = 34,496 $ vs 60,000 $"
+        },
+        {
+         "check": "D3",
+         "value": -0.0579,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "2022 sell-off drop -8.6%, worst 12 months -5.8%, CVaR 95% 0.53% a day"
+        },
+        {
+         "check": "E",
+         "value": 0.038,
+         "limit": null,
+         "status": "pass",
+         "reason": "no target given; 4% chance of ending below what was put in (risk-only view)"
+        },
+        {
+         "check": "F1",
+         "value": "retirement",
+         "limit": null,
+         "status": "pass",
+         "reason": "objective retirement: no extra constraint"
+        },
+        {
+         "check": "F2",
+         "value": 0.15,
+         "limit": 0.1538,
+         "status": "pass",
+         "reason": "growth 15% vs 15% allowed for a 4-year horizon"
+        },
+        {
+         "check": "F3",
+         "value": 0.85,
+         "limit": 0.2,
+         "status": "pass",
+         "reason": "defensive 85% vs 20% needed within 3 years"
+        },
+        {
+         "check": "F4",
+         "value": 5,
+         "limit": 3,
+         "status": "pass",
+         "reason": "knowledge 5/5: single names allowed"
+        },
+        {
+         "check": "F5",
+         "value": null,
+         "limit": null,
+         "status": "pass",
+         "reason": "no ESG preference"
+        },
+        {
+         "check": "F6",
+         "value": [],
+         "limit": [],
+         "status": "pass",
+         "reason": "none held"
+        },
+        {
+         "check": "G2",
+         "status": "pass",
+         "reason": "sum 100.00%"
+        },
+        {
+         "check": "G3",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G4",
+         "status": "pass",
+         "reason": "closest to its cap: AAPL 0.6% vs 3.1%"
+        },
+        {
+         "check": "G5",
+         "status": "pass",
+         "reason": "crypto 0% vs cap 0%"
+        },
+        {
+         "check": "G6",
+         "status": "pass",
+         "reason": "defensive 85% vs floor 85%"
+        },
+        {
+         "check": "G7",
+         "status": "pass",
+         "reason": "max drawdown 8.6% vs loss limit 15%"
+        },
+        {
+         "check": "G8",
+         "status": "pass",
+         "reason": "volatility 3.8% vs target 8%"
+        },
+        {
+         "check": "G9",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G10",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G14",
+         "status": "pass",
+         "reason": "Canada 50% of the equities (country of listing); currency CAD 92%, USD 8%"
+        },
+        {
+         "check": "G15",
+         "status": "pass",
+         "reason": "largest sector Information Technology 2% (⚠ above 30%, ✘ above 40%); lower bound, 50% of equity ETFs looked through; job sector not given"
+        },
+        {
+         "check": "G16",
+         "status": "pass",
+         "reason": "263.7 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+        },
+        {
+         "check": "G17",
+         "status": "pass",
+         "reason": "worst drop 8.6% vs loss limit 15% = 34,480 $ vs 60,000 $"
+        }
+       ]
+      }
+     },
+     {
+      "call_id": "t3",
+      "tool": "strategy_checks",
+      "args": {
+       "strategy": "income"
+      },
+      "result": {
+       "strategy": "income",
+       "checks": [
+        {
+         "check": "C1",
+         "value": 0.01,
+         "limit": 0.0308,
+         "status": "pass",
+         "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs"
+        },
+        {
+         "check": "C2",
+         "value": 0.8,
+         "limit": 0.7,
+         "status": "warn",
+         "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+        },
+        {
+         "check": "C3",
+         "value": 0.015,
+         "limit": 0.3,
+         "status": "pass",
+         "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through"
+        },
+        {
+         "check": "C3b",
+         "value": null,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "job sector not given"
+        },
+        {
+         "check": "C4",
+         "value": 2,
+         "limit": 2,
+         "status": "pass",
+         "reason": "2 asset classes: bonds 95%, equity 5%"
+        },
+        {
+         "check": "C5",
+         "value": 303.4,
+         "limit": 8,
+         "status": "pass",
+         "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+        },
+        {
+         "check": "C6",
+         "value": 0.0,
+         "limit": 0.85,
+         "status": "pass",
+         "reason": "no near-duplicate holdings"
+        },
+        {
+         "check": "D1",
+         "value": 0.0949,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "worst drop 9.5% vs the 15% the client said they'd accept"
+        },
+        {
+         "check": "D2",
+         "value": 0.0949,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "worst drop 9.5% vs loss limit 15% = 37,951 $ vs 60,000 $"
+        },
+        {
+         "check": "D3",
+         "value": -0.0623,
+         "limit": 0.15,
+         "status": "pass",
+         "reason": "2022 sell-off drop -9.1%, worst 12 months -6.2%, CVaR 95% 0.58% a day"
+        },
+        {
+         "check": "E",
+         "value": 0.057,
+         "limit": null,
+         "status": "pass",
+         "reason": "no target given; 6% chance of ending below what was put in (risk-only view)"
+        },
+        {
+         "check": "F1",
+         "value": "retirement",
+         "limit": null,
+         "status": "pass",
+         "reason": "objective retirement: no extra constraint"
+        },
+        {
+         "check": "F2",
+         "value": 0.05,
+         "limit": 0.1538,
+         "status": "pass",
+         "reason": "growth 5% vs 15% allowed for a 4-year horizon"
+        },
+        {
+         "check": "F3",
+         "value": 0.95,
+         "limit": 0.2,
+         "status": "pass",
+         "reason": "defensive 95% vs 20% needed within 3 years"
+        },
+        {
+         "check": "F4",
+         "value": 5,
+         "limit": 3,
+         "status": "pass",
+         "reason": "knowledge 5/5: single names allowed"
+        },
+        {
+         "check": "F5",
+         "value": null,
+         "limit": null,
+         "status": "pass",
+         "reason": "no ESG preference"
+        },
+        {
+         "check": "F6",
+         "value": [],
+         "limit": [],
+         "status": "pass",
+         "reason": "none held"
+        },
+        {
+         "check": "G2",
+         "status": "pass",
+         "reason": "sum 100.00%"
+        },
+        {
+         "check": "G3",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G4",
+         "status": "pass",
+         "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)"
+        },
+        {
+         "check": "G5",
+         "status": "pass",
+         "reason": "crypto 0% vs cap 0%"
+        },
+        {
+         "check": "G6",
+         "status": "pass",
+         "reason": "defensive 95% vs floor 85%"
+        },
+        {
+         "check": "G7",
+         "status": "pass",
+         "reason": "max drawdown 9.5% vs loss limit 15%"
+        },
+        {
+         "check": "G8",
+         "status": "pass",
+         "reason": "volatility 4.3% vs target 8%"
+        },
+        {
+         "check": "G9",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G10",
+         "status": "pass",
+         "reason": "ok"
+        },
+        {
+         "check": "G14",
+         "status": "warn",
+         "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+        },
+        {
+         "check": "G15",
+         "status": "pass",
+         "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given"
+        },
+        {
+         "check": "G16",
+         "status": "pass",
+         "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+        },
+        {
+         "check": "G17",
+         "status": "pass",
+         "reason": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $"
+        }
+       ]
+      }
+     }
+    ],
+    "source": "mock",
+    "model": "",
+    "note": "mock mode",
+    "facts_hash": "392ae876ae8bd443"
+   },
+   "checks": [
+    {
+     "rule": "K1",
+     "status": "warn",
+     "text": "income: Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%.",
+     "detail": "disclosed"
+    }
+   ],
+   "sources": []
+  },
+  {
+   "agent": "Explainer",
+   "to": "Guardian",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "client text (1783 characters, template); mock mode",
+   "output": "**Robert, here is what this simulation found.**\n\n**What we looked at.** Daily prices 2021-11-12 to 2026-11-12 (Yahoo Finance via the organizers' starter pack), Bank of Canada USD/CAD; all returns in CAD.\n\n**What we found about you.** Your loss limit is 15.0% (60,000 $): risk level 2 (Cautious). At least 84.6% stays in defensive assets and crypto is capped at 0.0%. Caps on one company are computed for this client and each asset: one company's own worst 2021-2026 drop may cost at most a quarter of the loss limit, and no company above a fifth of what the client can hold in stocks.\n\n**The strategies.** Up to three risk levels, from the most growth your limits allow to the most prudent; the choice is yours.\n- **Broad core: most growth your limits allow**: 15.0% growth, 85.0% defensive, set by the horizon rule, a judgment rule not a data result (decision #22): 4 years → at most 15% in stocks (the worst-drop test alone would allow 85.0%). Worst historical drop -8.6% (your limit 15.0%); in 2022 it returned -5.8%; chance of ending below what you put in, without assuming past returns repeat: 3.9%.\n- **Income / dividends: more prudent**: 5.0% growth, 95.0% defensive, set by risk level 2 of 3 (more prudent): 5% growth, 10 points below the top strategy, a choice offered to the client, not a limit (the worst-drop test alone would allow 95.0%). Worst historical drop -9.5% (your limit 15.0%); in 2022 it returned -6.1%; chance of ending below what you put in, without assuming past returns repeat: 5.7%.\n\n**Limits of this analysis.** These numbers describe 2021–2026 only; they are not predictions. A longer horizon, a different loss limit or new money needed soon would change the answer.\n\nSimulation only, for a fictional persona. Not financial advice; no real transactions.",
+   "checks": [],
+   "sources": []
+  },
+  {
+   "agent": "Guardian",
+   "to": "Client",
+   "timestamp": "2026-11-15T04:45:31+00:00",
+   "summary": "3 ✔, 0 ⚠, 0 ✘ → approved.",
+   "output": null,
+   "checks": [
+    {
+     "rule": "G11",
+     "status": "pass",
+     "detail": "present",
+     "text": "Explanation carries the simulation disclaimer"
+    },
+    {
+     "rule": "G12",
+     "status": "pass",
+     "detail": "every number is one of the computed facts, exactly",
+     "text": "Every % in the explanation matches a computed number"
+    },
+    {
+     "rule": "G13",
+     "status": "pass",
+     "detail": "ok",
+     "text": "Explanation addresses each refused request"
+    }
+   ],
+   "sources": []
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "What is volatility?",
+ "answer": {
+  "answer": "Volatility measures how much an investment's value moves up and down over time. When volatility is high, the value can rise or fall a lot in a short time. When it is low, the ride is smoother. Volatility doesn't tell you which way prices will go, only how bumpy the path tends to be. It's one way to judge whether the ups and downs of a strategy would be comfortable for you, alongside other measures like the worst drop.",
+  "evidence": []
+ },
+ "tool_calls": [],
+ "created": "2026-11-15T15:12:52+00:00"
+}

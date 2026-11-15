@@ -1,0 +1,34 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "NVDA et QQQ, c'est le même pari ?",
+ "answer": {
+  "answer": "Robert, NVDA et QQQ ne sont pas tout à fait le même pari, mais ils en sont proches. Leur corrélation quotidienne est de 0,77 (t1), un peu sous le seuil d'environ 0,8 où l'on parle d'un même pari. En clair, ils montent et baissent souvent ensemble. Par contre, QQQ est un panier de nombreuses entreprises technologiques, alors que NVDA est une seule entreprise : son risque propre est donc plus concentré. Les avoir tous les deux diversifie peu, et c'est à vous de juger si cela vous convient.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "correlation_between",
+   "args": {
+    "tickers": [
+     "NVDA",
+     "QQQ"
+    ]
+   },
+   "result": {
+    "pairs": [
+     {
+      "a": "NVDA",
+      "b": "QQQ",
+      "correlation": 0.766
+     }
+    ],
+    "average": 0.766
+   }
+  }
+ ],
+ "created": "2026-11-15T15:15:12+00:00"
+}

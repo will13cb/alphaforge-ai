@@ -1,0 +1,154 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "analyst-v3",
+ "question": "And with a 10-year horizon?",
+ "answer": {
+  "answer": "With a 10-year horizon instead of 15, your loss limit goes from 40% to 30%, and at least 38.5% of the portfolio has to be in defensive assets, up from 5%. The growth strategy would hold 60% growth assets instead of 95%. Its worst past drop would go from -31.6% to -21.5%, and its chance of ending below what you put in (risk-only view) from 38.2% to 29.3%. The core strategy would drop to 50% growth, with a worst drop of -11.5% and an 8.5% chance of loss. The income strategy would drop to 40% growth, with a worst drop of -8.5% and a 3.9% chance of loss.",
+  "evidence": [
+   "t1"
+  ]
+ },
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 10.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 15,
+    "new": 10.0,
+    "changes": {
+     "horizon_years": {
+      "old": 15,
+      "new": 10.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.4,
+     "defensive_floor": 0.05,
+     "horizon_growth_cap": 1.0,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.95,
+       "max_drawdown": -0.3155,
+       "prob_loss": 0.3815
+      },
+      {
+       "key": "core",
+       "growth": 0.85,
+       "max_drawdown": -0.1478,
+       "prob_loss": 0.1565
+      },
+      {
+       "key": "income",
+       "growth": 0.75,
+       "max_drawdown": -0.1076,
+       "prob_loss": 0.074
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.3,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.6,
+       "max_drawdown": -0.2145,
+       "prob_loss": 0.2925
+      },
+      {
+       "key": "core",
+       "growth": 0.5,
+       "max_drawdown": -0.1149,
+       "prob_loss": 0.085
+      },
+      {
+       "key": "income",
+       "growth": 0.4,
+       "max_drawdown": -0.0849,
+       "prob_loss": 0.0385
+      }
+     ]
+    }
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "what_if_profile",
+   "args": {
+    "field": "horizon_years",
+    "value": 10.0,
+    "also": null
+   },
+   "result": {
+    "field": "horizon_years",
+    "old": 15,
+    "new": 10.0,
+    "changes": {
+     "horizon_years": {
+      "old": 15,
+      "new": 10.0
+     }
+    },
+    "before": {
+     "loss_limit": 0.4,
+     "defensive_floor": 0.05,
+     "horizon_growth_cap": 1.0,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.95,
+       "max_drawdown": -0.3155,
+       "prob_loss": 0.3815
+      },
+      {
+       "key": "core",
+       "growth": 0.85,
+       "max_drawdown": -0.1478,
+       "prob_loss": 0.1565
+      },
+      {
+       "key": "income",
+       "growth": 0.75,
+       "max_drawdown": -0.1076,
+       "prob_loss": 0.074
+      }
+     ]
+    },
+    "after": {
+     "loss_limit": 0.3,
+     "defensive_floor": 0.3846,
+     "horizon_growth_cap": 0.6154,
+     "strategies": [
+      {
+       "key": "growth",
+       "growth": 0.6,
+       "max_drawdown": -0.2145,
+       "prob_loss": 0.2925
+      },
+      {
+       "key": "core",
+       "growth": 0.5,
+       "max_drawdown": -0.1149,
+       "prob_loss": 0.085
+      },
+      {
+       "key": "income",
+       "growth": 0.4,
+       "max_drawdown": -0.0849,
+       "prob_loss": 0.0385
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "created": "2026-11-15T15:11:25+00:00"
+}

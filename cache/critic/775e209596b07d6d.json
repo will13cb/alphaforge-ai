@@ -1,0 +1,436 @@
+{
+ "model": "global.anthropic.claude-opus-5-5",
+ "prompt_version": "critic-v1",
+ "objections": [
+  {
+   "strategy": "core",
+   "claim": "Robert asked for 25% in TSLA, and neither strategy holds any. That is because Tesla's past worst drop was -70.9% and its 2022 return was -62.6%, each far beyond his 15% loss limit. He should be told plainly that this request was turned down, and why.",
+   "evidence": [
+    "t5"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  },
+  {
+   "strategy": "income",
+   "claim": "This strategy is labelled 'more prudent', but its past record was rougher than the core strategy's: worst drop -9.5% vs -8.6%, volatility 4.3% vs 3.8%, and worst 12 months -6.2% vs -5.8%. Only the January-to-October 2022 window was slightly milder (-7.8% vs -8.0%). Its bonds (XBB.TO and AGG, correlation 0.63) carry more interest-rate risk, so the label could mislead a client who is four years from retirement.",
+   "evidence": [
+    "t4",
+    "t3",
+    "t2"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  },
+  {
+   "strategy": "income",
+   "claim": "80% of the stocks are listed in Canada (the warning threshold is 70%). This matches Robert's interest in Canada and dividends, but he should know he is concentrated in one home market.",
+   "evidence": [
+    "t1"
+   ],
+   "action": {
+    "type": "disclose"
+   }
+  }
+ ],
+ "tool_calls": [
+  {
+   "call_id": "t1",
+   "tool": "strategy_checks",
+   "args": {
+    "strategy": "income"
+   },
+   "result": {
+    "strategy": "income",
+    "checks": [
+     {
+      "check": "C1",
+      "value": 0.01,
+      "limit": 0.0308,
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (each company has its own cap, from its worst drop) — counted through the ETFs"
+     },
+     {
+      "check": "C2",
+      "value": 0.8,
+      "limit": 0.7,
+      "status": "warn",
+      "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+     },
+     {
+      "check": "C3",
+      "value": 0.015,
+      "limit": 0.3,
+      "status": "pass",
+      "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through"
+     },
+     {
+      "check": "C3b",
+      "value": null,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "job sector not given"
+     },
+     {
+      "check": "C4",
+      "value": 2,
+      "limit": 2,
+      "status": "pass",
+      "reason": "2 asset classes: bonds 95%, equity 5%"
+     },
+     {
+      "check": "C5",
+      "value": 303.4,
+      "limit": 8,
+      "status": "pass",
+      "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "C6",
+      "value": 0.0,
+      "limit": 0.85,
+      "status": "pass",
+      "reason": "no near-duplicate holdings"
+     },
+     {
+      "check": "D1",
+      "value": 0.0949,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "worst drop 9.5% vs the 15% the client said they'd accept"
+     },
+     {
+      "check": "D2",
+      "value": 0.0949,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "worst drop 9.5% vs loss limit 15% = 37,951 $ vs 60,000 $"
+     },
+     {
+      "check": "D3",
+      "value": -0.0623,
+      "limit": 0.15,
+      "status": "pass",
+      "reason": "2022 sell-off drop -9.1%, worst 12 months -6.2%, CVaR 95% 0.58% a day"
+     },
+     {
+      "check": "E",
+      "value": 0.057,
+      "limit": null,
+      "status": "pass",
+      "reason": "no target given; 6% chance of ending below what was put in (risk-only view)"
+     },
+     {
+      "check": "F1",
+      "value": "retirement",
+      "limit": null,
+      "status": "pass",
+      "reason": "objective retirement: no extra constraint"
+     },
+     {
+      "check": "F2",
+      "value": 0.05,
+      "limit": 0.1538,
+      "status": "pass",
+      "reason": "growth 5% vs 15% allowed for a 4-year horizon"
+     },
+     {
+      "check": "F3",
+      "value": 0.95,
+      "limit": 0.2,
+      "status": "pass",
+      "reason": "defensive 95% vs 20% needed within 3 years"
+     },
+     {
+      "check": "F4",
+      "value": 5,
+      "limit": 3,
+      "status": "pass",
+      "reason": "knowledge 5/5: single names allowed"
+     },
+     {
+      "check": "F5",
+      "value": null,
+      "limit": null,
+      "status": "pass",
+      "reason": "no ESG preference"
+     },
+     {
+      "check": "F6",
+      "value": [],
+      "limit": [],
+      "status": "pass",
+      "reason": "none held"
+     },
+     {
+      "check": "G2",
+      "status": "pass",
+      "reason": "sum 100.00%"
+     },
+     {
+      "check": "G3",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G4",
+      "status": "pass",
+      "reason": "closest to its cap: RY.TO 1.0% vs 3.1% (direct only: no ETF holdings data)"
+     },
+     {
+      "check": "G5",
+      "status": "pass",
+      "reason": "crypto 0% vs cap 0%"
+     },
+     {
+      "check": "G6",
+      "status": "pass",
+      "reason": "defensive 95% vs floor 85%"
+     },
+     {
+      "check": "G7",
+      "status": "pass",
+      "reason": "max drawdown 9.5% vs loss limit 15%"
+     },
+     {
+      "check": "G8",
+      "status": "pass",
+      "reason": "volatility 4.3% vs target 8%"
+     },
+     {
+      "check": "G9",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G10",
+      "status": "pass",
+      "reason": "ok"
+     },
+     {
+      "check": "G14",
+      "status": "warn",
+      "reason": "Canada 80% of the equities (country of listing); currency CAD 70%, USD 30%"
+     },
+     {
+      "check": "G15",
+      "status": "pass",
+      "reason": "largest sector Financials 2% (⚠ above 30%, ✘ above 40%); lower bound, 0% of equity ETFs looked through; job sector not given"
+     },
+     {
+      "check": "G16",
+      "status": "pass",
+      "reason": "303.4 effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as 100 equal lines)"
+     },
+     {
+      "check": "G17",
+      "status": "pass",
+      "reason": "worst drop 9.5% vs loss limit 15% = 37,960 $ vs 60,000 $"
+     }
+    ]
+   }
+  },
+  {
+   "call_id": "t2",
+   "tool": "correlation_between",
+   "args": {
+    "tickers": [
+     "XBB.TO",
+     "AGG",
+     "ZST.TO"
+    ]
+   },
+   "result": {
+    "pairs": [
+     {
+      "a": "XBB.TO",
+      "b": "AGG",
+      "correlation": 0.63
+     },
+     {
+      "a": "XBB.TO",
+      "b": "ZST.TO",
+      "correlation": 0.354
+     },
+     {
+      "a": "AGG",
+      "b": "ZST.TO",
+      "correlation": 0.198
+     }
+    ],
+    "average": 0.394
+   }
+  },
+  {
+   "call_id": "t3",
+   "tool": "portfolio_stats",
+   "args": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    }
+   },
+   "result": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    },
+    "ann_return": 0.0397,
+    "ann_vol": 0.0384,
+    "max_drawdown": -0.0862,
+    "cvar_95": 0.0053,
+    "worst_12m": -0.0579,
+    "return_2022": -0.0578,
+    "stress_2022": -0.0801,
+    "stress_2022_drawdown": -0.0862
+   }
+  },
+  {
+   "call_id": "t4",
+   "tool": "portfolio_stats",
+   "args": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    }
+   },
+   "result": {
+    "weights": {
+     "XBB.TO": 0.38,
+     "AGG": 0.285,
+     "ZST.TO": 0.285,
+     "XIU.TO": 0.015,
+     "RY.TO": 0.01,
+     "TD.TO": 0.005,
+     "FTS.TO": 0.005,
+     "ENB.TO": 0.005,
+     "JNJ": 0.005,
+     "PG": 0.005
+    },
+    "ann_return": 0.0273,
+    "ann_vol": 0.0434,
+    "max_drawdown": -0.0949,
+    "cvar_95": 0.0058,
+    "worst_12m": -0.0623,
+    "return_2022": -0.0613,
+    "stress_2022": -0.0776,
+    "stress_2022_drawdown": -0.0909
+   }
+  },
+  {
+   "call_id": "t5",
+   "tool": "asset_facts",
+   "args": {
+    "tickers": [
+     "TSLA"
+    ]
+   },
+   "result": {
+    "assets": [
+     {
+      "ticker": "TSLA",
+      "name": "Tesla",
+      "asset_class": "equity",
+      "currency": "USD",
+      "sector": "Consumer Discretionary",
+      "country": "United States",
+      "sharpe": 0.3264,
+      "ann_return": 0.0554,
+      "ann_vol": 0.5882,
+      "max_drawdown": -0.7088,
+      "cvar_95": 0.0799,
+      "worst_12m": -0.7088,
+      "return_2022": -0.6264,
+      "stress_2022": -0.3286,
+      "stress_2022_drawdown": -0.4703
+     }
+    ],
+    "limits": "Past returns do not predict future returns; these numbers describe the data window only (see period)."
+   }
+  },
+  {
+   "call_id": "t6",
+   "tool": "look_through",
+   "args": {
+    "weights": {
+     "ZST.TO": 0.425,
+     "XBB.TO": 0.425,
+     "XIU.TO": 0.075,
+     "SPY": 0.075
+    }
+   },
+   "result": {
+    "exposures": [
+     {
+      "name": "ZST.TO",
+      "weight": 0.425,
+      "cap": null
+     },
+     {
+      "name": "XBB.TO",
+      "weight": 0.425,
+      "cap": null
+     },
+     {
+      "name": "XIU.TO",
+      "weight": 0.075,
+      "cap": null
+     },
+     {
+      "name": "AAPL",
+      "weight": 0.0059,
+      "cap": 0.0308
+     },
+     {
+      "name": "NVDA",
+      "weight": 0.0046,
+      "cap": 0.0308
+     },
+     {
+      "name": "MSFT",
+      "weight": 0.0044,
+      "cap": 0.0308
+     },
+     {
+      "name": "GOOGL",
+      "weight": 0.0036,
+      "cap": 0.0308
+     },
+     {
+      "name": "AMZN",
+      "weight": 0.003,
+      "cap": 0.0308
+     },
+     {
+      "name": "AVGO",
+      "weight": 0.002,
+      "cap": null
+     },
+     {
+      "name": "META",
+      "weight": 0.0016,
+      "cap": null
+     }
+    ],
+    "holdings_data": [
+     "SPY"
+    ]
+   }
+  }
+ ],
+ "created": "2026-11-15T15:14:46+00:00"
+}
