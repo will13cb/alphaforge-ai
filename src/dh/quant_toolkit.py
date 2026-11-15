@@ -1879,16 +1879,28 @@ def _bounds(bounds, n):
 
 
 def _solve(fun, n, bnds, cons, jac=None, x0=None, what="optimisation"):
-    x0 = np.repeat(1 / n, n) if x0 is None else x0
-    x0 = np.clip(x0, [b[0] for b in bnds], [b[1] for b in bnds])
-    res = optimize.minimize(fun, x0, jac=jac, method="SLSQP", bounds=bnds, constraints=cons,
-                            options={"maxiter": 1000, "ftol": 1e-12})
-    w = res.x
-    ok = res.success and abs(w.sum() - 1) < 1e-6 and all(c["fun"](w) > -1e-6 if c["type"] == "ineq"
-                                                         else abs(c["fun"](w)) < 1e-6 for c in cons)
-    if not ok:
+    lo, hi = [b[0] for b in bnds], [b[1] for b in bnds]
+    x0 = np.clip(np.repeat(1 / n, n) if x0 is None else x0, lo, hi)
+
+    def feasible(w):
+        return abs(w.sum() - 1) < 1e-6 and all(c["fun"](w) > -1e-6 if c["type"] == "ineq"
+                                               else abs(c["fun"](w)) < 1e-6 for c in cons)
+
+    # SLSQP can stall ("Positive directional derivative for linesearch", iteration limit) depending on the start and
+    # the scipy version: retry from where it stopped with a slightly looser tolerance, then from a random feasible-ish
+    # start. Only a result that satisfies every constraint is accepted; the best one (lowest objective) wins.
+    best, res = None, None
+    starts = [(x0, 1e-12), (None, 1e-10), (np.random.default_rng(0).dirichlet(np.ones(n)), 1e-10)]
+    for start, ftol in starts:
+        start = np.clip(res.x if start is None and res is not None else (x0 if start is None else start), lo, hi)
+        res = optimize.minimize(fun, start, jac=jac, method="SLSQP", bounds=bnds, constraints=cons,
+                                options={"maxiter": 3000, "ftol": ftol})
+        if res.success and feasible(res.x) and (best is None or fun(res.x) < fun(best)):
+            best = res.x
+            break
+    if best is None:
         raise RuntimeError(f"{what} : échec de l'optimiseur ({res.message})")
-    return w
+    return best
 
 
 def _label(w, labels):

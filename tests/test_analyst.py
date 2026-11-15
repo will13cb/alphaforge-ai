@@ -122,7 +122,7 @@ def test_counts_years_attribution_and_french_numbers():
     assert v("9 rules would fail.") == "valid"
     assert v("2 rules would fail.").startswith("replaced: count")
     assert v("In 2022 it fell 26.5%.") == "valid"
-    assert v("In 2019 it fell 26.5%.").startswith("replaced: year")
+    assert v("In 1999 it fell 26.5%.").startswith("replaced: year")   # before any data window (2010 or 2021 start)
     assert v("La pire baisse aurait été de -26,5 %, soit 106 121 $.") == "valid"          # French formats
     assert v("Broad core: 15% in stocks.") == "valid"
     assert v("Broad core: 46% in stocks.").startswith("replaced: number(s) attributed")    # 46% is the income one

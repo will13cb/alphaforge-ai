@@ -46,9 +46,10 @@ class LossDistribution:
     horizon_years: float | None
 
     def exceedance(self, limit: float) -> float:
-        """P(loss deeper than `limit`), limit as a positive fraction (0.15 = 15%)."""
-        if not 0 < limit < 1:
-            raise ValueError("limit must be in (0, 1)")
+        """P(loss deeper than `limit`), limit as a fraction (0.15 = 15%). 0 is a valid client answer ("no loss at
+        all"): the probability of any drop, so every share with risk breaks it and the Guardian blocks, no crash."""
+        if not 0 <= limit < 1:
+            raise ValueError("limit must be in [0, 1)")
         return float(np.mean(-self.samples > limit + 1e-12))
 
     def quantile(self, q: float) -> float:
@@ -149,8 +150,8 @@ def equity_ceiling(port_of: Callable[[float], pd.Series], grid: list[float], lim
     returns at growth share s (built by the Portfolio); growth_of(s) = its real growth share (default s)."""
     if not 0 < alpha < 1:
         raise ValueError("alpha must be in (0, 1): it is a policy choice (decision R1), no default")
-    if not 0 < limit < 1:
-        raise ValueError("limit must be in (0, 1)")
+    if not 0 <= limit < 1:   # 0 = "no loss at all": even 0% growth breaks it → share None, said in the trace
+        raise ValueError("limit must be in [0, 1)")
     growth_of = growth_of or (lambda s: s)
     table, last_ok = [], None
     for s in sorted(grid):
@@ -219,3 +220,4 @@ def _clean(port: pd.Series) -> pd.Series:
     if (r <= -1).any():
         raise ValueError("a return ≤ -100%")
     return r
+

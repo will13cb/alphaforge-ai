@@ -24,6 +24,15 @@ class TestTechnical:
         with pytest.raises(ValueError):
             lm.equity_ceiling(lambda s: mix(df, s), GRID, 0.15, 4, alpha=0.0, model=lm.HistoricalWindow())
 
+    def test_zero_loss_limit_is_a_decision_not_a_crash(self):
+        """A client who accepts no loss at all (max_loss_pct 0): every share with risk breaks it, said, not raised."""
+        df = market()
+        dec = lm.equity_ceiling(lambda s: mix(df, s), GRID, 0.0, 4, alpha=0.10, model=lm.HistoricalWindow())
+        assert dec.share is None and dec.issues[0].code == "A-none"
+        assert lm.HistoricalWindow().distribution(mix(df, .5), 4).exceedance(0.0) == 1.0
+        with pytest.raises(ValueError):
+            lm.equity_ceiling(lambda s: mix(df, s), GRID, 1.0, 4, alpha=0.10, model=lm.HistoricalWindow())
+
     def test_nan_dropped_and_total_loss_refused(self):
         r = market()["EQ"].copy()
         r.iloc[5] = np.nan
@@ -110,3 +119,4 @@ class TestScenarios:
         if regime == "inflation":   # nominal drawdown need not be deeper: the real loss is the risk (A13)
             pytest.skip("nominal measure: inflation risk is not a drawdown, needs a real-terms view")
         assert hit <= calm + 0.02
+

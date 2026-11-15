@@ -67,31 +67,67 @@ def essentials(res: dict, profile: dict) -> None:
     st.markdown(f'<p class="af-muted">Simulated on {period_label()} market data, from the most growth your limits allow '
                 'to the least in stocks. Less in stocks did not always mean smaller past drops: compare them. Past ups and downs, not a forecast.</p>',
                 unsafe_allow_html=True)
-    for s in strategies:
-        stt = s["stats"]
-        with st.container(border=True):
-            st.markdown(f"#### {s['name']}")
-            st.markdown(f"**{pct(s['split']['growth'])} stocks · {pct(s['split']['defensive'])} safer investments**")
-            r = s.get("split_range") or {}
-            if r.get("set_by_text"):  # which constraint set the split (decision #33), as in app/app.py
-                st.markdown(f'<p class="af-muted">Set by {r["set_by_text"]}'
-                            + (f'; the loss test alone would allow {pct(r["data_ceiling"])}.'
-                               if r.get("set_by") != "worst_drop" and r.get("data_ceiling") is not None else ".")
-                            + "</p>", unsafe_allow_html=True)
-            m = st.columns(3)
-            ui.metric(m[0], pct(stt.get("max_drawdown"), 1), f"worst drop, {period_label()}")
-            ui.metric(m[1], pct(stt.get("return_2022"), 1), "result in 2022, a bad year")
-            ui.metric(m[2], pct(stt.get("prob_loss")), "chance of ending below what you put in*")
-            cons = unique(s.get("cons", []))
-            if s.get("pros") or cons:
-                st.markdown("\n".join([f"- **For:** {x}" for x in s.get("pros", [])] + [f"- **Against:** {x}" for x in cons]))
-            said = " ".join(cons).lower()
-            bad = [c for c in s.get("checks", []) if c["status"] != "pass" and c["reason"].lower().rstrip(".") not in said]
+    if strategies:
+        # Side by side, one card per option, the same rows in the same order so they read across (on a phone,
+        # Streamlit stacks the columns). Long text (pros, cons, checks) sits in an expander so the cards line up.
+        st.markdown(CARD_CSS, unsafe_allow_html=True)
+        cols = st.columns(len(strategies), gap="small")
+        for i, (col, s) in enumerate(zip(cols, strategies), 1):
+            with col, st.container(border=True, key=f"af_card_{i}"):
+                card(s, i, len(strategies))
+        st.caption("\\* Without assuming past average returns repeat: only the past swings are replayed.")
+
+
+CARD_CSS = """<style>
+.block-container { max-width: 1240px; }
+[class*="st-key-af_card_"] { border: 1px solid var(--line) !important; background: var(--panel); border-radius: 14px; }
+.af-opt { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--mut); margin-bottom: .2rem; }
+.af-opt-name { font-size: 1.15rem; font-weight: 600; line-height: 1.25; margin-bottom: .7rem; min-height: 2.9rem; }
+.af-split { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--line); }
+.af-split .g { background: var(--acc); } .af-split .d { background: var(--c2); }
+.af-split-l { display: flex; justify-content: space-between; font-size: .85rem; margin: .35rem 0 .8rem 0; }
+.af-split-l b { font-size: 1.05rem; }
+.af-row { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; padding: .45rem 0;
+          border-top: 1px solid var(--line); }
+.af-row .k { color: var(--mut); font-size: .88rem; line-height: 1.3; } .af-row .v { font-weight: 600; font-size: 1.1rem;
+          white-space: nowrap; }
+.af-setby { color: var(--mut); font-size: .82rem; line-height: 1.4; margin-top: .6rem; }
+</style>"""
+
+
+def card(s: dict, i: int, n: int) -> None:
+    """One option: what it holds (bar), three numbers to compare, what set the split, then pros/cons on demand."""
+    stt, g = s["stats"], s["split"]["growth"]
+    gp = round(100 * g)
+    tag = " · most growth" if i == 1 and n > 1 else " · least in stocks" if i == n and n > 1 else ""
+    st.markdown(
+        f'<div class="af-opt">Option {i} of {n}{tag}</div><div class="af-opt-name">{ui.esc(s["name"])}</div>'
+        f'<div class="af-split" role="img" aria-label="{gp}% stocks, {100 - gp}% safer investments">'
+        f'<div class="g" style="width:{gp}%"></div><div class="d" style="width:{100 - gp}%"></div></div>'
+        f'<div class="af-split-l"><span><b>{gp}%</b> stocks</span><span><b>{100 - gp}%</b> safer</span></div>'
+        + "".join(f'<div class="af-row"><span class="k">{ui.esc(k)}</span><span class="v">{ui.esc(v)}</span></div>'
+                  for k, v in [(f"Worst drop, {period_label()}", pct(stt.get("max_drawdown"), 1)),
+                               ("Result in 2022, a bad year", pct(stt.get("return_2022"), 1)),
+                               ("Chance of ending below what you put in*", pct(stt.get("prob_loss")))]),
+        unsafe_allow_html=True)
+    r = s.get("split_range") or {}
+    if r.get("set_by_text"):  # which constraint set the split (decision #33), as in app/app.py
+        st.markdown(f'<div class="af-setby">Why {gp}%: set by {ui.esc(r["set_by_text"])}'
+                    + (f'; the loss test alone would allow {pct(r["data_ceiling"])}.'
+                       if r.get("set_by") != "worst_drop" and r.get("data_ceiling") is not None else ".")
+                    + "</div>", unsafe_allow_html=True)
+    pros, cons = s.get("pros", []), unique(s.get("cons", []))
+    said = " ".join(cons).lower()
+    bad = [c for c in s.get("checks", []) if c["status"] != "pass" and c["reason"].lower().rstrip(".") not in said]
+    if pros or cons or bad:
+        with st.expander(f"Pros and cons ({len(pros)} + {len(cons) + len(bad[:3])})"):
+            if pros:
+                st.markdown("**For**\n" + "\n".join(f"- {x}" for x in pros))
+            if cons:
+                st.markdown("**Against**\n" + "\n".join(f"- {x}" for x in cons))
             for c in bad[:3]:
                 ui.notice(f"{STATUS[c['status']]}: {c['reason'][:1].upper()}{c['reason'][1:]}",
                           "bad" if c["status"] == "fail" else "warn")
-    if strategies:
-        st.caption("\\* Without assuming past average returns repeat: only the past swings are replayed.")
 
 
 def request(res: dict) -> None:

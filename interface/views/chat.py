@@ -15,6 +15,7 @@ import streamlit as st
 
 from interface.core import services
 from interface.ui import components as ui
+from interface.ui.answer_format import readable_markdown
 from interface.ui import theme, voice as voice_ui
 
 S = st.session_state
@@ -52,7 +53,7 @@ def show_answer(t: dict, key: str = "answer") -> None:
     if t.get("status") == "error":
         ui.notice(t["error"], "bad")
         return
-    st.markdown(t["text"])
+    st.markdown(readable_markdown(t["text"]))
     voice_ui.read_aloud(t["text"], key)
     ch = chart_for(t)
     if ch is not None:
@@ -68,7 +69,9 @@ def show_answer(t: dict, key: str = "answer") -> None:
     if calls:
         with st.expander("How this was checked"):
             from dh.agents import analyst
-            st.markdown("\n".join(f"- {analyst.short(c)}" for c in calls))
+            summaries = [analyst.short(c).strip() for c in calls]
+            st.markdown("\n".join(f"- {summary or c.get('tool', 'Check').replace('_', ' ')}"
+                                  for c, summary in zip(calls, summaries)))
             if t.get("note"):
                 st.caption(t["note"])
 
@@ -142,4 +145,5 @@ def render() -> None:
         else:
             chat.append({"question": q.strip(), "status": "pending"})
             st.rerun()
+
 

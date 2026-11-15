@@ -32,7 +32,7 @@ DISCLAIMER_FR = "Simulation seulement, pour un profil fictif. Pas un conseil fin
 from . import critic, grounding, market
 from .rules import UNIVERSE
 
-PROMPT_VERSION = "analyst-v3"
+PROMPT_VERSION = "analyst-v4-readable"
 DEMO_CACHE = ROOT / "cache" / "analyst"     # committed: the demo replays offline
 LOCAL_CACHE = ROOT / ".cache" / "analyst"   # gitignored
 MAX_CALLS = 5
@@ -53,9 +53,17 @@ Rules:
 - Every tool result has a call_id (t1, t2, ...). Cite the call_ids your answer relies on.
 - Quote numbers ONLY as they appear in the results you cite (you may round 0.912 to 0.91 or 0.132 to 13.2%).
   An answer with a number no cited result contains is replaced by code.
-- At most 5 short sentences, plain language, IN THE CLIENT'S LANGUAGE (French or English). Give the numbers; the
-  client decides. Never "buy"/"sell", never a forecast. If a tool returns an error (e.g. an asset we have no data
-  for), say so plainly.
+- Write concise Markdown, IN THE CLIENT'S LANGUAGE (French or English). Start with a direct, short takeaway.
+  Use blank lines and brief bold section labels when useful. Keep paragraphs to one or two short sentences.
+- For a holdings/allocation question, show each holding on its own bullet: ticker, plain-language name if the
+  tool provides it, and percentage. Never pack several holdings into one sentence. Keep each number beside
+  its own asset. Compare strategies with a short table or one bullet per strategy, using their exact names.
+- For a what-if, separate "As asked", "Within your limits", and "What this means" (or French equivalents).
+  Use only sections relevant to the question. A simple concept may need only a short paragraph.
+- Aim for a brief answer, but allow the rows needed to show the requested holdings. Do not repeat all tool data.
+  Do not number lists, calculate new amounts, repeat the disclaimer, or put the answer in a code block.
+- Give the numbers; the client decides. Never "buy"/"sell", never a forecast. If a tool returns an error
+  (e.g. an asset we have no data for), say so plainly.
 - A number written next to an asset or a strategy must come from THAT asset's or strategy's result; counts ("9
   rules") and years must be in the results too. Code checks all of this.
 Answer with JSON only: {{"answer": "<text>", "evidence": ["t1", ...]}}
@@ -154,7 +162,7 @@ def make_tools(res: dict, profile: dict, rets=None, holdings=None) -> list:
             "defensive_floor": lim.get("min_defensive"), "horizon_growth_cap": lim.get("horizon_max_growth"),
             "strategies": [{"key": s["key"], "name": s["name"], "growth": s["split"]["growth"],
                             "max_drawdown": s["stats"].get("max_drawdown"), "return_2022": s["stats"].get("return_2022"),
-                            "prob_loss": s["stats"].get("prob_loss"),
+                            "prob_loss": s["stats"].get("prob_loss"), "weights": dict(s.get("weights") or {}),
                             "warnings": [c["check"] for c in s.get("checks", []) if c["status"] == "warn"]}
                            for s in res.get("strategies") or []]})
 
@@ -428,7 +436,7 @@ def _part_position(r: dict, lang: str) -> str:
         for t, why in (r.get("why") or {}).items():
             out.append(f"Pas de version possible pour {t} : {why}." if fr else f"No version fits for {t}: {why}.")
     out.append("Le choix vous appartient." if fr else "The choice stays yours.")
-    return " ".join(out)
+    return "\n\n".join(out)
 
 
 def _part_profile(r: dict, lang: str, display: dict | None = None) -> str:
@@ -548,15 +556,18 @@ def _part_why(r: dict, lang: str) -> str:
 
 
 HELP = {
-    "en": ("I can check a position (\"what if I put part of my money in Tesla?\", with a percentage), several at once, "
-           "a change to your profile (horizon in years, the loss you accept in %, a target or a monthly amount in $), "
-           "the return your goal needs, an asset's past risk, whether two assets are the same bet, how your strategy "
-           "did in the 2022 sell-off, or why a limit has its value."),
-    "fr": ("Je peux vérifier une position (« et si je mettais une partie de mon argent dans Tesla ? », avec un "
-           "pourcentage), plusieurs à la fois, un changement de profil (horizon en années, perte acceptée en %, cible "
-           "ou versement mensuel en $), le rendement que votre objectif demande, le risque passé d'un actif, si deux "
-           "actifs sont le même pari, le comportement de votre stratégie pendant la baisse de 2022, ou pourquoi une "
-           "limite a sa valeur."),
+    "en": ("Try one of these:\n\n"
+           "- **Your allocation:** “Explain my results.”\n"
+           "- **A holding:** “What if I put part of my portfolio in gold?” Include its percentage.\n"
+           "- **A change:** ask about your horizon, loss limit, target or monthly contribution.\n"
+           "- **A concept or risk:** “What is volatility?” or “How risky is Tesla?”\n\n"
+           "For a position, please give its share of your portfolio as a percentage."),
+    "fr": ("Essayez une de ces questions :\n\n"
+           "- **Votre répartition :** « Explique mes résultats. »\n"
+           "- **Une position :** « Et si je mettais une partie de mon portefeuille en or ? » Précisez le pourcentage.\n"
+           "- **Un changement :** horizon, limite de perte, cible ou versement mensuel.\n"
+           "- **Une notion ou un risque :** « C'est quoi la volatilité ? » ou « Quel est le risque de Tesla ? »\n\n"
+           "Pour une position, précisez sa part du portefeuille en pourcentage."),
 }
 
 
@@ -733,7 +744,7 @@ def _mock(question: str, rec: critic.Recorder, tools: dict, profile: dict | None
         parts.append(_part_results(call("results_overview", {}), lang))
     if not parts:
         return {"answer": (("Je ne suis pas sûr d'avoir compris. " if lang == "fr" else "I'm not sure I understood. ")
-                           + HELP[lang]), "evidence": []}
+                           + "\n\n" + HELP[lang]), "evidence": []}
     return {"answer": "\n\n".join(parts), "evidence": ev}
 
 
@@ -811,7 +822,14 @@ def _part_results(r: dict, lang: str) -> str:
            f"defensive investments.")
     foot = ("*Chance de finir sous le montant investi, sans supposer que les rendements passés se répètent." if fr else
             "*Chance of ending below what you put in, without assuming past returns repeat.")
-    return lim + "\n\n" + head + "\n" + "\n".join(rows) + "\n\n" + foot
+    holdings = []
+    for strategy in r.get("strategies", []):
+        if strategy.get("weights"):
+            holdings.append("**" + strategy["name"] + (" — répartition**" if fr else " — holdings**"))
+            holdings.append("\n".join(f"- **{ticker}:** {_p(weight, lang)}"
+                                      for ticker, weight in strategy["weights"].items()))
+    return lim + "\n\n" + head + "\n" + "\n".join(rows) + "\n\n" + foot + (
+        "\n\n" + "\n\n".join(holdings) if holdings else "")
 
 
 # ---- code enforces -------------------------------------------------------------------------------------
@@ -1101,3 +1119,4 @@ def record_answer(res: dict, question: str, a: dict) -> dict:
                 output={k: a.get(k) for k in ("answer", "evidence", "tool_calls", "status", "source", "model", "note")})
     res.setdefault("followups", []).append(a)
     return a
+

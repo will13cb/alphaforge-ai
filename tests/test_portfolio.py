@@ -176,3 +176,15 @@ def test_levels_are_ordered_by_measured_risk(p, rets):
     ladder = [(s["name"], rl.risk_vector(s)) for s in ss]
     assert not [i for i in rl.check_labels(ladder) if i.code == "C-inverted"]
     assert all(sync.verify(s, rets) == [] for s in ss)
+
+
+
+@pytest.mark.parametrize("p", [AMIRA, ROBERT], ids=["amira", "robert"])
+def test_zero_loss_limit_runs_to_a_fail_with_reasons(p, rets):
+    """max_loss_pct 0 used to stop the whole run (ValueError in the loss model, then a division by a 0% company cap in
+    G4 for an existing portfolio): now nothing fits, the Guardian says why, and the existing portfolio is reviewed."""
+    prof = {**p, "max_loss_pct": 0, "existing_positions": {"TSLA": 20000, "XBB.TO": 80000}}
+    res = run(prof, rets=rets, holdings={}, critic=False)
+    assert res["limits"]["loss_limit"] == 0 and res["verdict"] == "fail" and not res["strategies"]
+    assert any("G7" in c["rule"] for s in res["dropped"] for c in s["guardian"]["checks"] if c["status"] == "fail")
+    assert "could not be reviewed" not in res["trace"].markdown()

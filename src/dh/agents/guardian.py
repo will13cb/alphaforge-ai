@@ -77,7 +77,8 @@ def check_strategy(s: dict, limits: dict, profile: dict, holdings=None) -> list[
     has_lt = bool(holdings) and any(t in holdings for t in w if t in ETFS)
     note = "" if has_lt or not set(w) & ETFS else " (direct only: no ETF holdings data)"
     if singles:
-        k = max(singles, key=lambda k: singles[k] / cap_of(k))  # the company closest to (or over) its cap
+        # the company closest to (or over) its cap; a 0% cap (loss limit 0%, or horizon <= 2 years) = infinitely over
+        k = max(singles, key=lambda k: singles[k] / cap_of(k) if cap_of(k) > 0 else float("inf"))
         over = sorted(t for t, v in singles.items() if v > cap_of(t) + 1e-9)
         out.append(_c("G4", not over, (f"over their cap: {', '.join(f'{t} {singles[t]:.1%} vs {cap_of(t):.1%}' for t in over)}"
                                        if over else f"closest to its cap: {k} {singles[k]:.1%} vs {cap_of(k):.1%}") + note))
@@ -220,3 +221,4 @@ def verdict(checks: list[dict]) -> str:
     """pass | warn | fail (fail = send back to the step that produced it)."""
     st = {c["status"] for c in checks}
     return "fail" if "fail" in st else "warn" if "warn" in st else "pass"
+
