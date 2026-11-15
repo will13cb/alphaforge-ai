@@ -26,30 +26,47 @@ from dh.agents.scenarios import DEMO_LABELS, DEMO_PROFILES
 from dh.agents.trace import ICON
 from dh.personas import DISCLAIMER, PERSONAS, describe
 
-st.set_page_config(page_title="AlphaForge AI", page_icon="🍁", layout="wide")
+st.set_page_config(page_title="AlphaForge AI", page_icon=":material/account_balance:", layout="wide")
 
-# One look for both front ends: the interface's colour tokens and styles (interface/ui/theme.py), plus what a wide,
-# tabbed jury view needs (colours also set in .streamlit/config.toml).
+# One look for both front ends: the interface's colour tokens, light/dark modes and styles (interface/ui/theme.py),
+# plus what a wide, tabbed jury view needs. The mode follows the sidebar switch (session state `dark_mode`).
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
-from interface.ui.theme import CSS as _THEME  # noqa: E402
+from interface.ui import theme  # noqa: E402
 
-st.markdown(_THEME + """
+MODE = theme.mode(st.session_state)
+
+st.markdown(theme.css(MODE) + """
 <style>
-.block-container { max-width: 1320px; padding-top: 2.2rem; }
-.af-eyebrow { color: var(--erable); font-weight: 650; letter-spacing: .06em; text-transform: uppercase;
-              font-size: .78rem; margin-bottom: .2rem; }
-.af-h1 { font-size: 2.1rem; font-weight: 700; color: var(--ink); margin: 0 0 .4rem 0; line-height: 1.2; }
-.af-flow { display: flex; flex-wrap: wrap; gap: 6px; margin: .2rem 0 1rem 0; }
-.af-flow span { font-size: .8rem; padding: 3px 10px; border-radius: 12px; background: #FFF;
-                border: 1px solid var(--saule-l); color: var(--ant); }
-.af-flow span.ai { border-color: var(--erable); color: var(--erable); }
-div[data-testid="stMetric"] { background: #FFF; border: 1px solid var(--saule-l); border-radius: 10px;
+.block-container { max-width: 1320px; padding-top: 2.6rem; }
+.af-h1 { font-size: 2.3rem; font-weight: 500; color: var(--ink); margin: 0 0 .5rem 0; line-height: 1.15;
+         letter-spacing: -0.015em; font-family: """ + theme.palette(MODE)["heading"] + """; }
+.af-flow { display: flex; flex-wrap: wrap; gap: 6px; margin: .3rem 0 1rem 0; }
+.af-flow span { font-size: .8rem; padding: 3px 11px; border-radius: 999px; background: var(--panel);
+                border: 1px solid var(--line); color: var(--mut); }
+.af-flow span.ai { border-color: var(--acc); color: var(--ink); background: var(--sel_bg); }
+div[data-testid="stMetric"] { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
                               padding: .6rem .8rem; }
 div[data-testid="stTabs"] button[role="tab"] p { font-size: 1rem; font-weight: 600; }
-div[data-testid="stVerticalBlockBorderWrapper"] { background: #FFF; border-radius: 12px; }
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p { color: var(--ink); }
+div[data-testid="stTabs"] div[data-baseweb="tab-highlight"] { background: var(--acc); }
+div[data-testid="stVerticalBlockBorderWrapper"] { background: var(--panel); border-radius: 12px; }
+div[data-testid="stMetricValue"] > div { font-size: 1.55rem; overflow: visible; }
+div[data-testid="stMetricLabel"] p { white-space: normal; overflow: visible; font-size: .85rem; color: var(--mut); }
+/* Verdict boxes: the mode's panel with a coloured edge (Streamlit's own pastel fills are unreadable in dark mode) */
+div[data-testid="stAlertContainer"] { background: var(--panel) !important; border: 1px solid var(--line);
+                                     border-left: 4px solid var(--mut); border-radius: 10px; }
+div[data-testid="stAlertContainer"] * { color: var(--ink) !important; }
+div[data-testid="stAlertContainer"]:has([data-testid="stAlertContentSuccess"]) { border-left-color: var(--good); }
+div[data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) { border-left-color: var(--warn); }
+div[data-testid="stAlertContainer"]:has([data-testid="stAlertContentError"]) { border-left-color: var(--bad); }
 </style>""", unsafe_allow_html=True)
+
+
+def chart(ch, **kw):
+    """An engine chart in the current mode (theme.style_chart): same data, the page's colours."""
+    st.altair_chart(theme.style_chart(ch, MODE), theme=None, **kw)
 
 VERDICT = {"pass": ("✔ approved", st.success), "warn": ("⚠ approved with disclosures", st.warning),
            "fail": ("✘ sent back", st.error)}
@@ -186,7 +203,7 @@ except SystemExit as e:
 
 # ---- sidebar ---------------------------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🍁 AlphaForge AI")
+    st.markdown('<div class="af-brand"><span class="mark"></span>AlphaForge AI</div>', unsafe_allow_html=True)
     st.caption("Fictional clients · simulation only")
     key = st.radio("Fictional client", [*DEMO_PROFILES, "free_text"],
                    format_func=lambda k: DEMO_LABELS.get(k, "Describe yourself (free text)"))
@@ -197,6 +214,7 @@ with st.sidebar:
         run_profile.clear()
         st.session_state.pop("ex", None)
     st.divider()
+    st.toggle("Dark mode", key="dark_mode", help="Switch between the light and the dark display.")
     st.caption(f"Extractor and Explainer: `{explainer.model_id()}` · LLM_PROVIDER `{os.getenv('LLM_PROVIDER', 'mock')}`")
     st.caption("Run traces: Amazon S3" if os.getenv("S3_BUCKET") else "Run traces: local copy (S3_BUCKET not set)")
     st.caption(DISCLAIMER)
@@ -215,7 +233,7 @@ LABEL = data.period_label()
 limits, strategies, e = res["limits"], res.get("strategies", []), res.get("explanation", {})
 
 # ---- header ----------------------------------------------------------------------------------------------
-st.markdown('<div class="af-eyebrow">🍁 AlphaForge AI · simulation</div>'
+st.markdown('<div class="af-eyebrow">AlphaForge AI · simulation</div>'
             '<div class="af-h1">An investment analyst that can say no</div>'
             '<div class="af-flow"><span>Profiler · rules</span><span>Market data</span><span>Portfolio · ≤ 3 risk levels'
             '</span><span>Guardian · G1–G17</span><span class="ai">Critic · Claude on Bedrock</span>'
@@ -293,7 +311,7 @@ with tab_s:
             m[1].metric("Chance of a loss*", pct(stt.get("prob_loss"), 0))
             st.markdown("<small>**More growth, deeper worst drop** (past data, not a forecast)</small>",
                         unsafe_allow_html=True)
-            st.altair_chart(pc.split_curve_chart(pc.split_curve_data(s), limits, s, title=False), width="stretch")
+            chart(pc.split_curve_chart(pc.split_curve_data(s), limits, s, title=False), width="stretch")
             g = s.get("guardian", {})
             gl, gbox = VERDICT[g.get("verdict", "pass")]
             gbox(f"Guardian: {gl}")
@@ -309,18 +327,18 @@ with tab_s:
                 st.markdown("\n".join(f"- {a}" for a in s.get("adjustments", [])))
             cons = unique(s.get("cons", []))
             if s.get("pros") or cons:
-                st.markdown("\n".join([f"- ➕ {x}" for x in s.get("pros", [])] + [f"- ➖ {x}" for x in cons]))
+                st.markdown("\n".join([f"- **+** {x}" for x in s.get("pros", [])] + [f"- **−** {x}" for x in cons]))
     if strategies:
         st.caption(f"* Chance of ending below what was put in, 'risk only' view: the {LABEL} swings without assuming "
                    "their average return repeats. Simulation, not a forecast.")
-        st.altair_chart(market_charts.growth_chart(growth_df({s["name"]: s["weights"] for s in strategies})),
+        chart(market_charts.growth_chart(growth_df({s["name"]: s["weights"] for s in strategies})),
                         width="stretch")
         for s in strategies:
             df = pc.outcome_frame(s)
             if df is not None:
                 st.markdown(f"<small>**{s['name']}**</small>",
                             unsafe_allow_html=True)
-                st.altair_chart(market_charts.outcome_chart(df), theme=None, height=230)  # Streamlit theme squashed its rows
+                chart(market_charts.outcome_chart(df), height=230)  # Streamlit theme squashed its rows
     for s in res.get("dropped", []):
         st.error(f"'{s['name']}' dropped by the Guardian: "
                  + ", ".join(f"{c['rule']} {c['detail']}" for c in s["guardian"]["checks"] if c["status"] == "fail"))

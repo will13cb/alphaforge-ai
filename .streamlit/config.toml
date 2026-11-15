@@ -2,10 +2,10 @@
 # from the repo root (the Makefile targets run there).
 [theme]
 base = "light"                      # light whatever the OS theme (a dark-mode Mac broke the colours)
-primaryColor = "#B5432A"            # Érable: primary action, selection
-backgroundColor = "#F7F9FB"         # Neige
+primaryColor = "#16161A"            # ink: primary action, selection (theme.py light palette)
+backgroundColor = "#F6F4F0"         # cream background
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#26313B"
+textColor = "#16161A"
 font = "sans serif"
 
 [client]
