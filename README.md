@@ -1,74 +1,115 @@
-# AlphaForge AI : un analyste en placement qui sait dire non, et qui montre pourquoi
+# AlphaForge AI
+
+### Un analyste en placement qui sait dire non, et qui montre pourquoi.
 
 **Robert, 59 ans, veut mettre 25 % de son portefeuille dans Tesla.** Il accepte de perdre au plus 15 %.
-AlphaForge AI calcule que la pire baisse de Tesla sur 2021-2026 a été de −70,9 % : à 25 %, Tesla seule aurait coûté
-−17,7 % du portefeuille, plus que toute sa limite de perte. Tesla entre dans ses limites jusqu'à 3,1 %.
+AlphaForge AI calcule que la pire baisse de Tesla sur 2021-2026 a été de **−70,9 %** : à 25 %, Tesla seule aurait
+coûté **−17,7 %** du portefeuille, plus que toute sa limite de perte. Tesla entre dans ses limites jusqu'à **3,1 %**.
 L'outil lui montre la règle, le nombre et la source, puis lui laisse la décision.
 
-> **Essayer maintenant :** https://alphaforge-ai-wj.streamlit.app/ · en français par défaut, bouton Français ⇄ English
+> **▶ Essayer l'application : https://alphaforge-ai-wj.streamlit.app/** · français par défaut, bouton Français ⇄ English
 >
-> **Livrables :** [fiche d'une page](deliverables/ONE_PAGER.md) · [documentation technique](deliverables/TECHNICAL_DOC.md)
-> · [script de la vidéo](deliverables/VIDEO_SCRIPT.md) · [architecture](aws/architecture.md)
+> [Fiche d'une page](deliverables/ONE_PAGER.md) · [Documentation technique](deliverables/TECHNICAL_DOC.md) ·
+> [Script de la vidéo](deliverables/VIDEO_SCRIPT.md) · [Architecture complète](aws/architecture.md) ·
+> *English: [`README.en.md`](README.en.md)*
 
-Datathon PolyFinances 2026 (Polytechnique Montréal) · défi **AlphaForge AI** de la **Banque Nationale × AWS** ·
-équipe William Caron-Bastarache et Joud Katbe · *English: [`README.en.md`](README.en.md)*
+Datathon PolyFinances 2026 (Polytechnique Montréal) · défi **AlphaForge AI**, **Banque Nationale × AWS** ·
+équipe William Caron-Bastarache et Joud Katbe
 
 *Simulation seulement : profils fictifs, aucune transaction réelle, pas un conseil financier.*
 
 ---
 
-## Le problème
+## En 30 secondes
 
-Un investisseur voit tous les prix, mais pas ce qu'un portefeuille signifie **pour lui** : combien il peut perdre, de
-combien de temps il dispose, si une action à la mode lui convient. Une cote de risque générique ne le
-lui dit pas, et un assistant conversationnel laissé à lui-même risque de répondre par un « oui » poli ou un chiffre inventé. AlphaForge AI fait
-ce que ferait un bon conseiller canadien : il établit le profil, propose ce qui convient, refuse ce qui ne convient pas,
-et **justifie chaque nombre**.
-
-## Ce qui nous distingue
-
-| | En pratique |
+| | |
 |---|---|
-| **Des agents qui enquêtent, du code qui fait respecter** | Quatre agents Strands sur Amazon Bedrock (Claude Opus 5.5) choisissent quoi vérifier et comment l'expliquer. Mais chaque limite et chaque nombre viennent du code : le Gardien applique 17 règles calquées sur les obligations canadiennes de connaissance du client (Règlement 31-103), et il s'exécute toujours. |
-| **Un Critique qui vérifie avant d'objecter** | Le Critique appelle jusqu'à 6 outils (corrélations, part de risque de chaque placement, crise de 2022…) et formule au plus 3 objections, chacune appuyée par un résultat obtenu. S'il propose une correction, tout le calcul est relancé et le Gardien revérifie; si la correction enfreint une limite, l'original reste. |
-| **Aucun nombre inventé** | L'Explicateur n'écrit jamais un chiffre : il place des repères que le code remplit avec les valeurs calculées. Les nombres du Critique et de l'Analyste doivent venir des outils qu'ils citent. Un texte qui échoue est remplacé par un gabarit vérifié, et la trace le dit. |
-| **Des limites propres à chaque client, et expliquées** | Pas de table de profils types : la limite de perte, le plancher défensif et le plafond de chaque société sont calculés pour le client, chacun avec sa raison écrite. Chaque stratégie dit quelle contrainte a fixé sa répartition. |
-| **Honnête sur ses limites** | Nous avons testé un optimiseur de Markowitz et une stratégie protégée (CPPI), puis les avons écartés, preuves à l'appui : les pondérations « optimales » changeaient avec la période et n'ont pas battu l'équipondération hors échantillon. Aucun rendement passé n'est présenté comme une prévision. |
-| **Utile au vrai client** | Questions guidées ou description libre, revue du portefeuille qu'on détient déjà (frais en $, mouvements en $), recherche d'obligations détenues jusqu'à l'échéance, application entièrement en français ou en anglais (interface, résultats et textes de Claude), voix facultative. |
+| **Le problème** | Un investisseur voit tous les prix, mais pas ce qu'un portefeuille signifie *pour lui* : combien il peut perdre, de combien de temps il dispose, si l'action à la mode lui convient. Un assistant conversationnel laissé à lui-même répond par un « oui » poli ou un chiffre inventé. |
+| **Notre réponse** | Une équipe d'agents qui fait ce que ferait un bon conseiller canadien : établir le profil, proposer jusqu'à **3 stratégies** qui respectent ses limites, refuser ce qui ne convient pas, et **justifier chaque nombre**. |
+| **Le principe** | **Les agents enquêtent et argumentent, le code fait respecter.** Quatre agents Strands sur Amazon Bedrock (Claude Opus 5.5) choisissent quoi vérifier et comment l'expliquer; chaque limite et chaque nombre viennent du code, et un Gardien de **17 règles** s'exécute toujours. |
+| **La preuve** | **16/16** profils de test piégés passent (`make scenarios`) · **400+** tests hors ligne (`make test`) · chaque exécution laisse une trace complète dans **Amazon S3**. |
+
+## Comment ça fonctionne
+
+```mermaid
+flowchart TB
+    subgraph A["① Comprendre le client"]
+        direction LR
+        IN["Client<br/>questions guidées · texte libre<br/>voix · portefeuille actuel"]
+        EXT["Extracteur<br/>lit le texte libre,<br/>demande ce qui manque"]
+        PR["Profileur<br/>limites calculées pour lui,<br/>chacune avec sa raison"]
+        IN --> EXT --> PR
+        IN --> PR
+    end
+    subgraph B["② Construire et vérifier"]
+        direction LR
+        MD["Données de marché<br/>31 actifs en CAD<br/>2021-2026"]
+        PF["Portefeuille<br/>jusqu'à 3 stratégies,<br/>répartition justifiée"]
+        GU{{"Gardien<br/>17 règles · ✔ ⚠ ✘<br/>toujours exécuté"}}
+        CR["Critique<br/>enquête avec des outils,<br/>≤ 3 objections appuyées"]
+        MD --> PF --> GU --> CR
+        CR -- "correction → tout est recalculé" --> PF
+    end
+    subgraph C["③ Expliquer et répondre"]
+        direction LR
+        EX["Explicateur<br/>mots simples, aucun<br/>chiffre tapé par le modèle"]
+        UI["Écran du client<br/>limites · stratégies côte à côte<br/>explication · activité en direct"]
+        AN["Analyste<br/>« Et si je mettais 10 %<br/>dans Tesla ? »"]
+        EX --> UI --> AN
+    end
+    PR --> MD
+    CR --> EX
+    AN -- "relance tout le pipeline" --> PR
+    S3[("Amazon S3<br/>trace de chaque exécution")]
+    UI -.-> S3
+
+    classDef agent fill:#dbeafe,stroke:#1d4ed8,color:#0b1b3f
+    classDef code fill:#fef3c7,stroke:#b45309,color:#3b2405
+    classDef guard fill:#fde68a,stroke:#92400e,color:#3b2405,stroke-width:2px
+    classDef aws fill:#dcfce7,stroke:#15803d,color:#052e16
+    classDef io fill:#f3f4f6,stroke:#6b7280,color:#111827
+    class EXT,CR,EX,AN agent
+    class PR,MD,PF code
+    class GU guard
+    class S3 aws
+    class IN,UI io
+    style A fill:#f9fafb,stroke:#d1d5db
+    style B fill:#f9fafb,stroke:#d1d5db
+    style C fill:#f9fafb,stroke:#d1d5db
+```
+
+**Bleu :** agents Strands sur Amazon Bedrock (Claude Opus 5.5) · **Jaune :** code déterministe, où se prennent les
+décisions · **Vert :** AWS · Diagramme détaillé (outils, contrôles, chemins d'erreur) : [`aws/architecture.md`](aws/architecture.md)
+
+Un agent décide *à l'intérieur* de son étape, jamais de l'étape suivante : l'ordre est fixé par `pipeline.py`, pour que
+le Gardien ne puisse jamais être contourné. Si un agent échoue ou qu'AWS ne répond pas, une version déterministe prend
+le relais et la trace le dit.
 
 ## Visite de deux minutes
 
 Dans l'[application](https://alphaforge-ai-wj.streamlit.app/) :
 
-1. **Accueil → « Essayer avec un client fictif »**, puis lancer l'analyse. *Vos limites* : chaque limite avec sa raison.
-2. **Vos résultats** : jusqu'à trois stratégies côte à côte, leur pire baisse passée, leur comportement en 2022, ce qui a
-   fixé leur répartition, et les contrôles réussis ou à savoir.
-3. **Activité** : chaque relais entre agents, les appels d'outils du Critique, les verdicts du Gardien, l'endroit où la
-   preuve a été enregistrée (Amazon S3).
-4. **Assistant** : cliquer « Et si je mettais 10 % dans Tesla ? ». L'Analyste relance tout le pipeline avec cette position
-   et répond avec les nombres obtenus.
-5. **« J'ai déjà un portefeuille »** : saisir ses placements (ou « Essayer un portefeuille fictif ») pour obtenir une
-   critique chiffrée et la reconstruction vers une stratégie qui convient.
+1. **Accueil → « Essayer avec un client fictif »**, puis **Lancer l'analyse**. Le graphe du pipeline se remplit en
+   direct, agent par agent.
+2. **Vos résultats** : vos limites avec leurs raisons, puis jusqu'à trois stratégies **côte à côte** (pire baisse
+   passée, année 2022, chance de finir sous la mise, ce qui a fixé la répartition).
+3. **Activité** : chaque relais entre agents, les appels d'outils du Critique, les verdicts du Gardien, et l'endroit
+   où la preuve a été enregistrée (Amazon S3).
+4. **Assistant** : « Et si je mettais 10 % dans Tesla ? ». L'Analyste relance tout le pipeline avec cette position et
+   répond avec les nombres obtenus.
+5. **« J'ai déjà un portefeuille »** : saisir ses placements (ou « Essayer un portefeuille fictif ») pour une critique
+   chiffrée et la reconstruction, en dollars, vers une stratégie qui convient.
 
-## Comment ça fonctionne
+## Ce qui nous distingue
 
-![Architecture d'AlphaForge AI](aws/architecture.png)
-
-*Jaune : là où le code décide. Bleu : les agents Strands. Détails : [`aws/architecture.md`](aws/architecture.md).*
-
-| Étape | Rôle | Qui décide |
-|---|---|---|
-| **Extracteur** | lit la situation décrite en mots libres et remplit le profil; ne garde un nombre que s'il figure dans le texte; demande ce qui manque | agent (Bedrock) + contrôles du code |
-| **Profileur** | transforme le profil en limites : niveau de risque, perte maximale (en % et en $), plancher défensif, plafond par société et pour la crypto, chacune avec sa raison | code |
-| **Données de marché** | 31 actifs en CAD : volatilité, pire baisse, CVaR, crise de 2022, corrélations | code |
-| **Portefeuille** | jusqu'à 3 stratégies à des niveaux de risque différents, répartition calculée et justifiée, contrôles de diversification à travers les FNB | code |
-| **Gardien** | 17 règles : ✔ réussi, ⚠ à divulguer, ✘ la stratégie est retirée, avec la raison | code |
-| **Critique** | enquête avec 11 outils, ≤ 3 objections appuyées, une correction recalculée par stratégie | agent (Bedrock) + code |
-| **Explicateur** | rédige la réponse en mots simples; le Gardien vérifie le texte (avertissement, chaque nombre tracé, chaque demande expliquée) | agent (Bedrock) + code |
-| **Analyste** | répond aux questions de suivi; ses scénarios relancent tout le pipeline | agent (Bedrock) + code |
-
-Un agent décide *à l'intérieur* de son étape, jamais de l'étape suivante : l'ordre est fixé par `pipeline.py`, pour que
-le Gardien ne puisse jamais être contourné.
+| | En pratique |
+|---|---|
+| **Aucun nombre inventé** | L'Explicateur n'écrit jamais un chiffre : il place des repères (`{n7}`) que le code remplit avec les valeurs calculées. Les nombres du Critique et de l'Analyste doivent venir des outils qu'ils citent. Un texte qui échoue est remplacé par un gabarit vérifié, et la trace le dit. |
+| **Un Critique qui vérifie avant d'objecter** | Jusqu'à 6 appels d'outils (corrélations, part de risque de chaque placement, crise de 2022…) et au plus 3 objections, chacune appuyée par un résultat. Une correction relance tout le calcul et le Gardien revérifie; si elle enfreint une limite, l'original reste. |
+| **Des limites propres à chaque client** | Pas de table de profils types : limite de perte (en % et en $), plancher défensif, plafond par société, calculés pour le client, chacun avec sa raison écrite, et chaque score situé sur son échelle de 1 à 5. Chaque stratégie dit quelle contrainte a fixé sa répartition. |
+| **Calqué sur la réglementation canadienne** | Les règles du Gardien reprennent les obligations de connaissance du client et de convenance (Règlement 31-103). Elles s'en inspirent, ce n'est pas un test de conformité légale. |
+| **Utile au vrai client** | Questions guidées ou description libre, revue du portefeuille qu'on détient déjà (frais en $, mouvements en $), recherche d'obligations détenues jusqu'à l'échéance, application entièrement en français ou en anglais (interface, résultats et textes de Claude), voix facultative. |
+| **Honnête sur ses choix** | Nous avons testé un optimiseur de Markowitz et une stratégie protégée (CPPI), puis les avons écartés, preuves à l'appui : les pondérations « optimales » changeaient avec la période et ne battaient pas l'équipondération hors échantillon. Aucun rendement passé n'est présenté comme une prévision. |
 
 ## AWS : un vrai rôle pour chaque service
 
@@ -76,7 +117,7 @@ le Gardien ne puisse jamais être contourné.
 |---|---|
 | **Amazon Bedrock** (Claude Opus 5.5) | fait raisonner les quatre agents : Extracteur, Critique, Explicateur, Analyste |
 | **Strands Agents SDK** | donne à chaque agent ses outils déterministes et sa boucle d'appels, plafonnée et tracée |
-| **Amazon S3** | conserve la trace complète de chaque exécution (profil, limites, stratégies, contrôles, texte) pour l'audit, et fournit les données à l'application hébergée |
+| **Amazon S3** | conserve la trace complète de chaque exécution (profil, limites, stratégies, contrôles, texte) et fournit les données à l'application hébergée |
 | **Amazon Transcribe et Amazon Polly** | voix facultative dans l'interface guidée : dicter sa situation, écouter la réponse |
 
 Les réponses de Claude pour les clients de démonstration sont enregistrées dans le dépôt (`cache/`) : l'application
