@@ -58,7 +58,7 @@ def _holding_sectors(path: str | None = None) -> dict[str, str]:
         df = pd.read_csv(p, usecols=["holding", "sector"])
     except (FileNotFoundError, ValueError):
         return {}
-    return dict(zip(df.holding, df.sector.fillna("Unknown")))
+    return dict(zip(df.holding, df.sector.astype("object").fillna("Unknown")))
 
 
 def _universe_col(col: str) -> dict[str, str]:

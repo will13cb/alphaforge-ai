@@ -1,6 +1,6 @@
 """Rebuild the starter dataset with a LONGER history (decision #31), same assets, same files, same format.
 
-    make data-long                      # default start 2004-11-18 (GLD's first day: every ETF but ZST/ESGV exists)
+    make data-long                      # default: harness.toml [data] start (2010-01-04), else 2004-11-18 (GLD's first day)
     make data-long START=2007-01-02     # or another start
     .venv/bin/python scripts/build_long_data.py --start 2004-11-18 --out data/raw
 
@@ -26,6 +26,15 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL = ROOT / "Datathon2026Infos" / "alphaforge_starter" / "build_dataset.py"
+
+
+def harness_start() -> str:
+    """harness.toml [data] start: the window the team agreed on (decision #47), "" if none."""
+    import tomllib
+    try:
+        return tomllib.loads((ROOT / "harness.toml").read_text()).get("data", {}).get("start", "") or ""
+    except (OSError, ValueError):
+        return ""
 
 
 def load_official():
@@ -69,7 +78,8 @@ def verified_get(url: str) -> bytes:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--start", default="2004-11-18", help="first day, YYYY-MM-DD (default: GLD's first trading day)")
+    ap.add_argument("--start", default=harness_start() or "2004-11-18",
+                    help="first day, YYYY-MM-DD (default: harness.toml [data] start, else GLD's first trading day)")
     ap.add_argument("--end", default=None, help="last day, YYYY-MM-DD (default: the official script's END)")
     ap.add_argument("--out", default=str(ROOT / "data" / "raw"))
     a = ap.parse_args(argv)

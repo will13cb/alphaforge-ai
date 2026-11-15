@@ -8,7 +8,7 @@ objecting, and returns at most 3 objections, each citing the tool calls behind i
                  (the client, their limits, that strategy's own weights and stats), else dropped
     2. allowed?  the fix can only keep or lower risk with assets already held (`portfolio.apply_action`)
     3. once      the Portfolio applies at most one fix per strategy, every number is recomputed (`portfolio.revise`)
-    4. Guardian  re-checks the revised strategy; if it fails or breaks the loss limit, the original stays
+    4. Guardian  re-checks the revised strategy (G7 = the loss rule, simulated); if it fails, the original stays
 
 Shown in the trace only (decision #30). Modes, like the Explainer (#23):
 - `bedrock`: committed demo cache → local cache → Strands agent (BEDROCK_CRITIC_MODEL_ID, else the Explainer's
@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 
 from ..data import ROOT
 from ..metrics import look_through as _look_through
-from . import guardian, market
+from . import grounding, guardian, market
 from .diversification import MAX_PAIR_CORR
 from .rules import CORR_WARN, DEFENSIVE
 
@@ -159,7 +159,7 @@ def make_tools(strategies: list[dict], limits: dict, holdings: dict) -> list:
                               "holdings_data": sorted(t for t in weights if t in holdings)})
 
     def strategy_checks(strategy: str) -> dict:
-        """The rule checks already run on one strategy (C-F checks and Guardian G1-G17), with values and limits.
+        """The rule checks already run on one strategy (C-F checks and Guardian G1-G18), with values and limits.
 
         Args:
             strategy: the strategy key from FACTS, e.g. "growth".
@@ -338,7 +338,14 @@ def validate(raw: list[dict], calls: list[dict], strategies: list[dict], facts_:
             pool += _facts_pool(facts_, o["strategy"])
             missing = [t for t in _claim_numbers(o.get("claim", "")) if not _backed(t, pool)]
             o["status"] = f"dropped: unbacked number(s) {', '.join(missing)}" if missing else "valid"
-            if not missing:
+            typed_sources = [by_id[e]["result"] for e in o["evidence"]]
+            if facts_:
+                typed_sources += [facts_.get("client"), facts_.get("limits"),
+                                  next((s for s in facts_.get("strategies", []) if s.get("key") == o["strategy"]), {})]
+            issues = grounding.problems(o.get("claim", ""), typed_sources)
+            if not missing and issues:
+                o["status"] = "dropped: metric mismatch: " + "; ".join(issues)
+            if not missing and not issues:
                 o["claim"] = _sharpen(o.get("claim", ""), pool)
         if not isinstance(o.get("action"), dict) or o["action"].get("type") not in ("merge", "trim", "shift", "disclose"):
             o["action"] = {"type": "disclose"}
@@ -513,10 +520,10 @@ def add_to_trace(res: dict, profile: dict, provider: str | None = None, rets=Non
             else:
                 g = guardian.check_strategy(new, limits, profile, holdings)
                 v = guardian.verdict(g)
-                dd, lim = abs(new["stats"]["max_drawdown"]), limits["loss_limit"]
-                if v == "fail" or dd > lim + 1e-9:
-                    why = ", ".join(f"{x['rule']} {x['detail']}" for x in g if x["status"] == "fail") or \
-                        f"worst drop {dd:.1%} > loss limit {lim:.0%}"
+                lim = limits["loss_limit"]
+                if v == "fail" or any(x["status"] == "fail" for x in new.get("checks", [])):   # G7 is the loss rule (simulated on the revised weights, R1/R8): no second test
+                    why = "; ".join([f"{x['rule']} {x['detail']}" for x in g if x["status"] == "fail"]
+                                    + [f"{x['check']} {x['reason']}" for x in new.get("checks", []) if x["status"] == "fail"])
                     o["status"] = f"kept, justified: the fix would break {why}"
                 else:
                     new["guardian"] = dict(verdict=v, checks=g)
@@ -525,8 +532,8 @@ def add_to_trace(res: dict, profile: dict, provider: str | None = None, rets=Non
                     o["status"] = f"revised: {how}"
                     later.append(("Portfolio", "Guardian",
                                   f"'{new['name']}' recomputed on the Critic's objection {o['id']} ({how}): "
-                                  f"{new['split']['growth']:.0%} growth, worst drop {new['stats']['max_drawdown']:.1%} "
-                                  f"vs loss limit {lim:.0%}", dict(output=new)))
+                                  f"{new['split']['growth']:.0%} growth, observed worst drop "
+                                  f"{new['stats']['max_drawdown']:.1%}, loss limit {lim:.0%}", dict(output=new)))
                     later.append(("Guardian", "Explainer", f"'{new['name']}' (revised): "
                                   + describe_checks("Portfolio", g, v), dict(checks=g)))
         if not o["status"].startswith("revised"):

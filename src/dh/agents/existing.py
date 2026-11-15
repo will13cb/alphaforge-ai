@@ -91,7 +91,8 @@ def measure(pos: dict[str, float], rets: pd.DataFrame, fx_rets: pd.Series | None
 def assess(label: str, w: dict, profile: dict, limits: dict, rets: pd.DataFrame, holdings: dict) -> dict:
     """Same numbers and checks as `requests._version`, plus the raw checks and stats (for the Critic's tools)."""
     st = market.strategy_stats(w, rets=rets)
-    s = {"weights": w, "stats": st}
+    from .portfolio import final_risk
+    s = {"weights": w, "stats": st, "risk": final_risk(w, profile, limits, rets)}
     chk = ck.run(s, profile, limits, rets=rets, holdings=holdings)
     g = guardian.check_strategy(s, limits, profile, holdings)
     cap = profile.get("capital")
@@ -100,7 +101,7 @@ def assess(label: str, w: dict, profile: dict, limits: dict, rets: pd.DataFrame,
     pick = lambda st_: ([{"id": c["check"], "reason": c["reason"]} for c in chk if c["status"] == st_]
                         + [{"id": c["rule"], "reason": c["detail"]} for c in g if c["status"] == st_])
     return market._round({
-        "label": label, "weights": w, "stats": st, "checks": chk, "guardian_checks": g,
+        "label": label, "weights": w, "stats": st, "risk": s["risk"], "checks": chk, "guardian_checks": g,
         "max_drawdown": st["max_drawdown"], "drawdown_cad": round(cap * dd) if cap else None,
         "loss_limit": lim, "loss_limit_cad": round(cap * lim) if cap else None,
         "return_2022": st["return_2022"], "ann_vol": st["ann_vol"],

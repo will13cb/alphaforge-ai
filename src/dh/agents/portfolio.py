@@ -3,11 +3,16 @@
 Up to 3 strategies, each defined by WHAT IT HOLDS (a growth basket and a defensive basket). Its stocks/bonds split is
 COMPUTED from the client and the data (decision #17), never looked up in a table:
 
-    ceiling  = largest growth share (0–100%, 5% steps) whose worst historical drop (data window) ≤ the client's loss limit,
-               and ≤ 1 − defensive floor (money needed within 3 years, never 100% growth)
-    floor    = smallest growth share with ≥ 50% chance at the target (goal_outlook, risk-only view), if a target is set
-    conflict = floor > ceiling → say so, with the options
-    result   = each strategy at its ceiling
+    ceiling  = scanning growth shares up from 0% (5% steps), the last one before the first whose SIMULATED drawdown over
+               the client's horizon breaks the loss limit with a probability above rules.LOSS_ALPHA (10%): stationary
+               bootstrap of the data window's days, central assumption (cash + 3% on growth). Also ≤ 1 − defensive
+               floor (horizon rule, money needed within 3 years, never 100% growth). Audit A1, decisions R1-R2.
+               The observed worst drop of the window is still computed and SHOWN, never used as a guarantee.
+    range    = the same rule on 3-year sub-windows (R2): how much the ceiling depends on the window.
+    goal     = dh.risk.goals status under named assumptions (zero premium / central / replay), if a target is set; a
+               minimum share only under the central assumption and never above the ceiling (audit A2, R3-R4).
+    result   = each strategy at its ceiling; levels 2-3 share level 1's defensive basket and must be safer on worst
+               drop and chance of loss, else they are dropped (inverted) or flagged (mixed) (audit A3, R5).
 
     from dh.agents.profiler import derive_limits
     from dh.agents import portfolio
@@ -27,16 +32,23 @@ import pandas as pd
 from .. import data, metrics
 from ..data import period_label
 from ..holdings import holdings as load_holdings
+from ..risk import goals as rg
+from ..risk import levels as rl
+from ..risk import loss_model as lm
+from ..risk import sync
 from . import checks as ck
 from . import diversification as dv
 from . import market
-from .rules import (BEGINNER_MAX_KNOWLEDGE, CRYPTO, DEFENSIVE, DIVIDEND_PAYERS, EQUITY_ETFS, EXCLUSIONS, GOAL_MIN_PROB,
-                    MAX_COUNTRY_EQUITY, STOCKS)
+from .rules import (BEGINNER_MAX_KNOWLEDGE, CENTRAL_PREMIUM, CRYPTO, DEFENSIVE, DIVIDEND_PAYERS, EQUITY_ETFS, EXCLUSIONS,
+                    GOAL_LOW_PROB, GOAL_MIN_PROB, LOSS_ALPHA, MAX_COUNTRY_EQUITY, SENSITIVITY_STEP_YEARS,
+                    SENSITIVITY_YEARS, STOCKS)
 
 MAX_STRATEGIES = 3
 STEP = 0.05                   # growth-share grid for the split search
 ROUND_TO = 0.005              # P9: weights in 0.5% steps
-N_SEARCH, N_FINAL = 500, 2000  # goal_outlook scenarios while searching the floor / for the final strategy
+N_SEARCH, N_FINAL = 500, 2000  # goal scenarios while searching the minimum share / for the final strategy
+N_LOSS, N_LOSS_FINAL, N_RANGE = 1000, 2000, 1000  # loss-model scenarios: ceiling scan / final check (G7) / range
+MIN_HORIZON_YEARS = 0.25       # the loss model needs a horizon: money needed "now" is simulated over 3 months
 
 # ---- A. strategies = what they hold (team choices, see notes/system-design.md block A) ------------
 STRATEGY_DEFS = {
@@ -144,6 +156,8 @@ class Strategy(TypedDict, total=False):
     adjustments: list[str]
     pros: list[str]
     cons: list[str]
+    risk: dict                       # simulated loss test on the FINAL weights (G7/D2), R1
+    stamps: dict                     # dh.risk.sync: which weights/data each section was computed on (A6)
 
 
 # ---- helpers ---------------------------------------------------------------------------------------
@@ -180,11 +194,11 @@ def crypto_decision(g: dict, dfn: dict, profile: dict, limits: dict, rets: pd.Da
         return False, "crypto left out: not allowed for this profile"
     no_goal = {**profile, "target_amount": None}  # only the ceilings are compared: skip the goal search
     without = _norm({t: w for t, w in g.items() if t not in CRYPTO})
-    c_with = split_search(g, dfn, no_goal, limits, rets, holdings)["ceiling"]
-    c_without = split_search(without, dfn, no_goal, limits, rets, holdings)["ceiling"]
+    c_with = split_search(g, dfn, no_goal, limits, rets, holdings, with_range=False)["ceiling"]
+    c_without = split_search(without, dfn, no_goal, limits, rets, holdings, with_range=False)["ceiling"]
     if c_with + 1e-9 < c_without:
         return False, (f"crypto left out: with it your loss limit {limits['loss_limit']:.0%} allows only {c_with:.0%} "
-                       f"in growth assets, without it {c_without:.0%} ({period_label(rets)} data)")
+                       f"in growth assets, without it {c_without:.0%} (loss test, {period_label(rets)} data)")
     return True, (f"crypto kept (≤ {limits['max_crypto']:.1%}): you asked for it, your profile allows it, and the growth "
                   f"ceiling stays {c_with:.0%} with it vs {c_without:.0%} without ({period_label(rets)} data)")
 
@@ -326,58 +340,134 @@ def build(g: dict, dfn: dict, share: float, limits: dict, holdings: dict,
 
 # ---- B. the split, computed (decision #17) ----------------------------------------------------------
 
+def cash_daily(rets: pd.DataFrame, index: pd.Index) -> float:
+    """Average daily return of cash (ZST.TO) on these days: the same cash `market.goal_outlook` uses. 0 if absent."""
+    if "ZST.TO" not in rets:
+        return 0.0
+    z = rets["ZST.TO"].reindex(index).dropna()
+    return float(z.mean()) if len(z) else 0.0
+
+
+def loss_model(cash: float, n: int = N_LOSS, seed: int = 0) -> lm.StationaryBootstrapLoss:
+    """The loss model of decision R1: block bootstrap over the client's horizon, central assumption."""
+    return lm.StationaryBootstrapLoss(n_scenarios=n, seed=seed, assumption=rg.central(), cash_daily=cash)
+
+
+def horizon_of(profile: dict) -> float:
+    return max(float(profile.get("horizon_years") or 0.0), MIN_HORIZON_YEARS)
+
+
 def split_search(g: dict, dfn: dict, profile: dict, limits: dict, rets: pd.DataFrame,
-                 holdings: dict) -> dict:
-    """Curve of worst drop per growth share, then ceiling, floor and conflict."""
+                 holdings: dict, with_range: bool = True) -> dict:
+    """Ceiling (simulated loss test, R1), its range over sub-windows (R2), goal status (R3-R4), and the observed curve."""
     max_share = round(1 - limits["min_defensive"], 4)
-    curve, ceiling, best = [], None, None
     grid = [round(i * STEP, 4) for i in range(int(round(1 / STEP)) + 1)]
+    built: dict[float, tuple] = {}
+
+    def at(s: float) -> tuple[dict, list, pd.Series]:
+        if s not in built:
+            w, notes = build(g, dfn, s, limits, holdings, enforce_floor=s <= max_share + 1e-9)
+            built[s] = (w, notes, metrics.portfolio_returns(rets[list(w)], w))
+        return built[s]
+
+    def port_at(s: float) -> pd.Series:
+        return at(s)[2]
+
+    def growth_at(s: float) -> float:
+        return sum(v for t, v in at(s)[0].items() if t not in DEFENSIVE)
+    cash = cash_daily(rets, port_at(0.0).index)
+    horizon, limit = horizon_of(profile), limits["loss_limit"]
+    dec = lm.equity_ceiling(port_at, grid, limit, horizon, LOSS_ALPHA, loss_model(cash), max_share, growth_at)
+    sim = {r["share"]: r for r in dec.table}
+
+    curve = []
     for s in grid:
-        w, notes = build(g, dfn, s, limits, holdings, enforce_floor=s <= max_share + 1e-9)
-        st = market.strategy_stats(w, rets=rets)
+        st = market.strategy_stats(at(s)[0], rets=rets)
+        q = sim.get(s)
         curve.append({"growth": s, "max_drawdown": st["max_drawdown"], "stress_2022": st["stress_2022"],
-                      "return_2022": st["return_2022"], "ann_vol": st["ann_vol"]})
-        if s <= max_share + 1e-9 and abs(st["max_drawdown"]) <= limits["loss_limit"] + 1e-9:
-            ceiling, best = s, (w, st, notes)
-    if best is None:  # even 0% growth breaks the loss limit: take the safest point and say so
-        s = 0.0
-        w, notes = build(g, dfn, s, limits, holdings)
-        ceiling, best = s, (w, market.strategy_stats(w, rets=rets), notes + ["even 0% growth exceeds the loss limit"])
+                      "return_2022": st["return_2022"], "ann_vol": st["ann_vol"],
+                      "exceedance": q["exceedance"] if q else None,
+                      "sim_drop": q["alpha_drawdown"] if q else None})
+    if dec.share is None:  # even 0% growth breaks the loss test: take the safest point and say so (G7 will block)
+        ceiling = 0.0
+        w, notes, _ = at(0.0)
+        best = (w, market.strategy_stats(w, rets=rets),
+                notes + [(f"even 0% growth: {dec.table[0]['exceedance']:.0%} chance of a drop deeper than "
+                          f"{limit:.0%} over {horizon:g} years (more than {LOSS_ALPHA:.0%})")])
+    else:
+        ceiling = dec.share
+        w, notes, _ = at(ceiling)
+        best = (w, market.strategy_stats(w, rets=rets), notes)
 
-    floor = None
+    rng = None
+    if with_range:
+        wc = lm.window_ceilings(port_at, grid, limit, horizon, LOSS_ALPHA, lambda: loss_model(cash, N_RANGE),
+                                SENSITIVITY_YEARS, SENSITIVITY_STEP_YEARS, max_share, growth_at)
+        vals = [v for v in [*wc["by_window"].values(), dec.share] if v is not None]   # the full window counts too
+        rng = {"by_window": {f"{a} to {b}": v for (a, b), v in wc["by_window"].items()},
+               "full_window": dec.share, "range": (min(vals), max(vals)) if vals else None,
+               "unstable": bool(vals) and max(vals) - min(vals) > 2 * STEP + 1e-9}
+
+    goal = goal_assessment(port_at, growth_at, grid, ceiling, cash, profile)
+    set_by, set_by_text, data_ceiling = what_set_the_split(dec, ceiling, max_share, limits, rets, horizon)
+    conflict = goal is not None and goal["status"] in (rg.GoalStatus.ONLY_FAVOURABLE.value,
+                                                       rg.GoalStatus.LOW_PROBABILITY.value,
+                                                       rg.GoalStatus.IMPOSSIBLE.value)
+    msg = goal_message(goal, ceiling, set_by_text, rets) if conflict else None
+    return {"curve": curve, "ceiling": ceiling, "floor": goal["min_share"] if goal else None, "best": best,
+            "conflict": conflict, "conflict_message": msg, "liquidity_floor": limits.get("liquidity_floor", 0.0),
+            "max_share": max_share, "set_by": set_by, "set_by_text": set_by_text, "data_ceiling": data_ceiling,
+            "exceedance": sim[ceiling]["exceedance"] if ceiling in sim else None, "alpha": LOSS_ALPHA,
+            "horizon_years": horizon, "range": rng, "goal": goal}
+
+
+def goal_assessment(port_at, growth_at, grid: list[float], ceiling: float, cash: float, profile: dict) -> dict | None:
+    """dh.risk.goals on this strategy's baskets: curves under zero premium (0% only), central and replay, up to the
+    ceiling; the status and, when it applies, the smallest share that reaches the goal. None without a target."""
     target, capital = profile.get("target_amount"), profile.get("capital")
-    if target and capital:
-        for s in grid:
-            w, _ = build(g, dfn, s, limits, holdings)
-            o = market.goal_outlook(w, capital=capital, horizon_years=profile["horizon_years"],
-                                    monthly_contribution=profile.get("monthly_contribution") or 0.0,
-                                    target_amount=target, n_scenarios=N_SEARCH, rets=rets)
-            if (o["risk_only"]["prob_target"] or 0) >= GOAL_MIN_PROB:
-                floor = s
-                break
-    set_by, set_by_text, data_ceiling = what_set_the_split(curve, ceiling, max_share, limits, rets)
-    conflict = bool(target and capital) and (floor is None or floor > ceiling)
-    msg = None
-    if conflict:
-        need = "more than 100%" if floor is None else f"about {floor:.0%}"
-        msg = (f"Your goal needs {need} in growth assets for a {GOAL_MIN_PROB:.0%} chance, but {set_by_text} allows at "
-               f"most {ceiling:.0%}. Options: a longer horizon, a lower target, larger contributions, or accepting a "
-               f"larger loss.")
-    return {"curve": curve, "ceiling": ceiling, "floor": floor, "best": best, "conflict": conflict,
-            "conflict_message": msg, "liquidity_floor": limits.get("liquidity_floor", 0.0), "max_share": max_share,
-            "set_by": set_by, "set_by_text": set_by_text, "data_ceiling": data_ceiling}
+    if not (target and capital):
+        return None
+    shares = [s for s in grid if s <= ceiling + 1e-9]
+    kw = {"cash_daily": cash, "capital": capital, "horizon_years": horizon_of(profile), "target": target,
+          "monthly_contribution": profile.get("monthly_contribution") or 0.0, "n_scenarios": N_SEARCH,
+          "growth_of": growth_at}
+    central = rg.central()
+    curves = {rg.ZERO_PREMIUM.name: rg.probability_curve(port_at, [0.0], rg.ZERO_PREMIUM, **kw),
+              central.name: rg.probability_curve(port_at, shares, central, **kw),
+              rg.FAVOURABLE.name: rg.probability_curve(port_at, shares, rg.FAVOURABLE, **kw)}
+    a = rg.classify(curves, {c: x for c, x in ((rg.ZERO_PREMIUM.name, rg.ZERO_PREMIUM), (central.name, central),
+                                              (rg.FAVOURABLE.name, rg.FAVOURABLE))},
+                    ceiling, GOAL_MIN_PROB, GOAL_LOW_PROB)
+    return rg.explanation_facts(a)
 
 
-def what_set_the_split(curve: list[dict], ceiling: float, max_share: float, limits: dict,
-                       rets: pd.DataFrame) -> tuple[str, str, float | None]:
-    """Which constraint decided the growth share (decision #33): the client's worst-drop test on the data, or a
-    rule (horizon, withdrawals, safety net, a lower risk level). Also the share the worst-drop test ALONE would allow,
-    so the trace can say "the data would allow 100%; the horizon rule sets 60%" instead of "the data decided"."""
-    ok = [c["growth"] for c in curve if abs(c["max_drawdown"]) <= limits["loss_limit"] + 1e-9]
-    data_ceiling = max(ok) if ok else None
-    if data_ceiling is not None and data_ceiling + 1e-9 < max_share and abs(ceiling - data_ceiling) < 1e-9:
-        return "worst_drop", (f"the worst-drop test (more growth would have lost more than your "
-                              f"{limits['loss_limit']:.0%} limit in {period_label(rets)})"), data_ceiling
+def goal_message(goal: dict, ceiling: float, set_by_text: str, rets: pd.DataFrame) -> str:
+    """Plain words for a goal that does not fit (never "more than 100%": the ceiling is the most we propose)."""
+    best = goal["best_probability_by_assumption"]
+    c, f = best.get("central") or 0.0, best.get("favourable") or 0.0
+    lab = period_label(rets)
+    opts = "Options: a longer horizon, a lower target, larger contributions, or accepting a larger loss (your choice)."
+    if goal["status"] == rg.GoalStatus.ONLY_FAVOURABLE.value:
+        return (f"Within your limits (at most {ceiling:.0%} in growth assets, set by {set_by_text}), your goal is "
+                f"reached with at least a {GOAL_MIN_PROB:.0%} chance only if {lab} returns repeat ({f:.0%}); with our "
+                f"central assumption ({CENTRAL_PREMIUM:.0%} a year more than cash on growth assets) the best chance is "
+                f"{c:.0%}. {opts}")
+    if goal["status"] == rg.GoalStatus.LOW_PROBABILITY.value:
+        return (f"Within your limits (at most {ceiling:.0%} in growth assets, set by {set_by_text}), the best chance of "
+                f"reaching your goal is {c:.0%} with our central assumption, below {GOAL_MIN_PROB:.0%}. {opts}")
+    return (f"Within your limits (at most {ceiling:.0%} in growth assets, set by {set_by_text}), your goal is out of "
+            f"reach: at most {max(c, f):.0%} chance, even if {lab} returns repeat. {opts}")
+
+
+def what_set_the_split(dec: lm.CeilingDecision, ceiling: float, max_share: float, limits: dict,
+                       rets: pd.DataFrame, horizon: float) -> tuple[str, str, float | None]:
+    """Which constraint decided the growth share (decision #33): the client's loss test (simulated, R1), or a rule
+    (horizon, withdrawals, safety net, a lower risk level). Also the share the loss test ALONE would allow."""
+    data_ceiling = dec.loss_only
+    if data_ceiling is None or (data_ceiling + 1e-9 < max_share and abs(ceiling - data_ceiling) < 1e-9):
+        return "worst_drop", (f"the loss test (at most a {LOSS_ALPHA:.0%} chance of a drop deeper than your "
+                              f"{limits['loss_limit']:.0%} limit over {horizon:g} years, in simulations built from "
+                              f"{period_label(rets)} days)"), data_ceiling
     src = limits.get("min_defensive_source", "safety")
     text = limits.get("min_defensive_why") or "the defensive floor"
     return src, text, data_ceiling
@@ -386,9 +476,10 @@ def what_set_the_split(curve: list[dict], ceiling: float, max_share: float, limi
 # ---- assemble ----------------------------------------------------------------------------------------
 
 def fix_diversification(w: dict[str, float], rep: dict, limits: dict, rets: pd.DataFrame,
-                        holdings: dict) -> tuple[dict[str, float], list[str]]:
+                        holdings: dict, profile: dict | None = None) -> tuple[dict[str, float], list[str]]:
     """On a C6 ✘ (two holdings correlated >= 0.95) keep the larger one; on a C3 ✘ (a sector above 40%) move the
-    excess from that sector's single stocks to the broad core ETF. Undone if the worst drop then breaks the loss limit."""
+    excess from that sector's single stocks to the broad core ETF. Undone if the result fails the loss test (simulated,
+    R1; observed worst drop when no profile is given)."""
     new, notes = dict(w), []
     for p in rep.get("redundant_pairs", []):
         a, b = p["a"], p["b"]
@@ -411,47 +502,77 @@ def fix_diversification(w: dict[str, float], rep: dict, limits: dict, rets: pd.D
     if not notes:
         return w, []
     new = round_weights({t: v for t, v in new.items() if v > 1e-9})
-    dd = abs(market.strategy_stats(new, rets=rets)["max_drawdown"])
-    if dd > limits.get("loss_limit", limits["max_drawdown"]) + 1e-9:
+    lim = limits.get("loss_limit", limits["max_drawdown"])
+    if profile is not None:
+        breaks = final_risk(new, profile, limits, rets, n=N_LOSS)["exceedance"] > LOSS_ALPHA + 1e-9
+    else:
+        breaks = abs(market.strategy_stats(new, rets=rets)["max_drawdown"]) > lim + 1e-9
+    if breaks:
         return w, [n + " — undone: it would break the loss limit" for n in notes]
     return new, notes
 
 
+def final_risk(w: dict[str, float], profile: dict, limits: dict, rets: pd.DataFrame, n: int | None = None,
+               seed: int = 1) -> dict:
+    """The loss test on the FINAL weights (after rounding, caps, diversification fixes, Critic): a fresh simulation
+    (other seed, more paths) of the weights actually proposed, not of the grid point the ceiling was read from.
+    G7 / D2 read it. `tolerance` = 2 standard errors of the estimated probability at alpha (sampling noise)."""
+    n = N_LOSS_FINAL if n is None else n
+    port = metrics.portfolio_returns(rets[list(w)], w)
+    cash = cash_daily(rets, port.index)
+    growth = sum(v for t, v in w.items() if t not in DEFENSIVE)
+    horizon, limit = horizon_of(profile), limits.get("loss_limit", limits["max_drawdown"])
+    d = loss_model(cash, n, seed).distribution(port, horizon, growth_share=growth)
+    return {"exceedance": d.exceedance(limit), "alpha": LOSS_ALPHA,
+            "tolerance": round(2 * (LOSS_ALPHA * (1 - LOSS_ALPHA) / n) ** 0.5, 4), "loss_limit": limit,
+            "drop_1_in_10": d.quantile(LOSS_ALPHA), "drop_1_in_20": d.quantile(0.05), "horizon_years": horizon,
+            "n_scenarios": n, "premium": CENTRAL_PREMIUM, "growth_share": growth, "evidence": "simulated",
+            "method": (f"stationary block bootstrap of {period_label(rets)} daily returns over {horizon:g} years, "
+                       f"average = cash + {CENTRAL_PREMIUM:.0%} a year on the growth part")}
+
+
 def assemble(key: str, why: str, g: dict, dfn: dict, notes: list[str], profile: dict, limits: dict,
-             rets: pd.DataFrame, holdings: dict) -> Strategy:
-    """The whole calculation for one strategy from its baskets: split search (ceiling, goal floor), build, the
-    diversification fixes, stats, goal outlook, checks C-F. Used by `propose` and again by `revise` (Critic, #30)."""
-    sr = split_search(g, dfn, profile, limits, rets, holdings)
-    w, st, build_notes = sr["best"]
-    stats = dict(st)
+             rets: pd.DataFrame, holdings: dict, with_range: bool = True) -> Strategy:
+    """The whole calculation for one strategy from its baskets: split search (ceiling, range, goal), build, the
+    diversification fixes, then EVERY number on the final weights (stats, outlook, loss test, diversification, checks),
+    each section stamped with those weights (dh.risk.sync, audit A6). Used by `propose`, `levels` and `revise`."""
+    sr = split_search(g, dfn, profile, limits, rets, holdings, with_range)
+    w, _, build_notes = sr["best"]
+    rep = dv.report(w, rets=rets, holdings=holdings)
+    w2, fixes = fix_diversification(w, rep, limits, rets, holdings, profile)
+    if w2 is not w:
+        w = w2
+        rep = dv.report(w, rets=rets, holdings=holdings)
+    build_notes = build_notes + fixes
+    # From here on, every section describes `w` (the final weights): computed once, then stamped.
+    stats = dict(market.strategy_stats(w, rets=rets))
     outlook = None
     if profile.get("capital"):
         outlook = market.goal_outlook(w, capital=profile["capital"], horizon_years=profile["horizon_years"],
                                       monthly_contribution=profile.get("monthly_contribution") or 0.0,
                                       target_amount=profile.get("target_amount"), n_scenarios=N_FINAL, rets=rets)
         stats["prob_loss"] = outlook["risk_only"]["prob_loss"]
-    rep = dv.report(w, rets=rets, holdings=holdings)
-    w2, fixes = fix_diversification(w, rep, limits, rets, holdings)
-    if w2 is not w:  # re-measure what changed
-        w = w2
-        stats = dict(market.strategy_stats(w, rets=rets), **({"prob_loss": stats["prob_loss"]} if "prob_loss" in stats else {}))
-        rep = dv.report(w, rets=rets, holdings=holdings)
-    build_notes = build_notes + fixes
+    risk = {**final_risk(w, profile, limits, rets), "ceiling_range": sr["range"]}
     growth = round(sum(v for t, v in w.items() if t not in DEFENSIVE), 4)
-    return Strategy(
+    rng = (sr["range"] or {}).get("range")
+    s = Strategy(
         key=key, flavour=key, name=STRATEGY_DEFS[key]["name"], risk_level=limits["risk_level"], weights=w,
         split={"growth": growth, "defensive": round(1 - growth, 4)},
         split_range={k: sr[k] for k in ("floor", "ceiling", "liquidity_floor", "conflict", "conflict_message",
-                                        "set_by", "set_by_text", "data_ceiling")},
+                                        "set_by", "set_by_text", "data_ceiling", "exceedance", "alpha",
+                                        "horizon_years", "range", "goal")},
         split_curve=sr["curve"], stats=market._round(stats), outlook=market._round(outlook) if outlook else None,
-        diversification={**rep, "checks": dv.check(rep)},
-        checks=ck.run({"weights": w, "stats": stats, "outlook": outlook, "diversification": rep}, profile, limits,
-                      rets=rets, holdings=holdings),
+        diversification={**rep, "checks": dv.check(rep)}, risk=market._round(risk),
         adjustments=[f"offered: {why}", f"holds: {STRATEGY_DEFS[key]['why']}",
                      f"split {growth:.0%} growth, set by {sr['set_by_text']}"
-                     + (f"; the worst-drop test alone would allow {sr['data_ceiling']:.0%}"
-                        if sr["set_by"] != "worst_drop" and sr["data_ceiling"] is not None else "")] + notes + build_notes,
+                     + (f"; the loss test alone would allow {sr['data_ceiling']:.0%}"
+                        if sr["set_by"] != "worst_drop" and sr["data_ceiling"] is not None else "")
+                     + (f"; on 3-year sub-windows the loss test gives {rng[0]:.0%} to {rng[1]:.0%}" if rng else "")]
+        + notes + build_notes,
         baskets={"growth": g, "defensive": dfn}, pros=[], cons=[])
+    s = sync.stamp(s, ("stats", "outlook", "diversification", "risk"), rets, "portfolio.assemble")
+    s["checks"] = ck.run(s, profile, limits, rets=rets, holdings=holdings)
+    return sync.stamp(s, "checks", rets, "checks.run")
 
 
 def propose(profile: dict, limits: dict, rets: pd.DataFrame | None = None, holdings=None) -> list[Strategy]:
@@ -502,11 +623,15 @@ def level_limits(limits: dict, level: dict | None) -> dict:
 
 
 def levels(flavours: list, profile: dict, limits: dict, rets: pd.DataFrame, holdings: dict) -> list[Strategy]:
+    """Levels 2-3 use level 1's DEFENSIVE basket (only the growth basket and the share change, decision R5), then the
+    ladder is checked on measured risk (worst drop, chance of loss: dh.risk.levels): a level that is not safer than
+    the one above is dropped (inverted) or kept with the disagreement stated (mixed). Audit A3."""
     if not flavours:
         return []
     order = sorted(flavours, key=lambda f: FLAVOUR_ORDER.index(f[0]))
     top = assemble(*order[0], profile, limits, rets, holdings)
     ref = top["split"]["growth"]
+    top_dfn = top["baskets"]["defensive"]
     out: list[Strategy] = []
     used: dict[str, int] = {}
     for i, (rank, label, delta) in enumerate(LEVELS):
@@ -515,13 +640,29 @@ def levels(flavours: list, profile: dict, limits: dict, rets: pd.DataFrame, hold
         if rank > 1 and target < MIN_LEVEL_GROWTH - 1e-9:
             break
         lvl = {"rank": rank, "label": label, "delta": delta, "target_growth": target}
-        key, why, g, dfn, notes = f
-        lv_notes = [] if rank == 1 else [f"option {rank} of 3 ({label}): growth capped at {target:.0%}, "
-                                         f"{delta * 100:.0f} points below the top strategy's {ref:.0%}"]
-        s = top if rank == 1 else assemble(key, why, g, dfn, notes + lv_notes, profile, level_limits(limits, lvl),
-                                           rets, holdings)
+        key, why, g, _, notes = f
+        lv_notes = [] if rank == 1 else [(f"level {rank} of 3 ({label}): growth capped at {target:.0%}, "
+                                          f"{delta * 100:.0f} points below the top strategy's {ref:.0%}, same "
+                                          "defensive basket")]
+        s = top if rank == 1 else assemble(key, why, g, top_dfn, notes + lv_notes, profile,
+                                           level_limits(limits, lvl), rets, holdings, with_range=False)
         if any(abs(s["split"]["growth"] - o["split"]["growth"]) < MIN_LEVEL_GAP - 1e-9 for o in out):
             continue  # not a different risk level: skip it
+        if out:
+            prev = out[-1]
+            issues = rl.check_labels([(prev["name"], rl.risk_vector(prev)), (label, rl.risk_vector(s))])
+            codes = {x.code for x in issues}
+            if "C-inverted" in codes:
+                out[0]["adjustments"] = out[0]["adjustments"] + [(
+                    f"level {rank} ({STRATEGY_DEFS[key]['name']}) left out: it is not safer than '{prev['name']}' "
+                    "on worst drop and chance of loss")]
+                continue
+            if "C-mixed" in codes:
+                per = next(x for x in issues if x.code == "C-mixed").evidence["per_dimension"]
+                lvl = {**lvl, "contradiction": per}
+                s = {**s, "adjustments": s["adjustments"] + [
+                    "risk measures disagree with the level above: "
+                    + ", ".join(f"{d} {v}" for d, v in per.items() if v) + " (shown as an alternative)"]}
         used[key] = used.get(key, 0) + 1
         s = {**s, "key": key if used[key] == 1 else f"{key}-{rank}", "flavour": key, "level": lvl,
              "name": f"{STRATEGY_DEFS[key]['name']}: {label}"}
@@ -536,11 +677,16 @@ def describe(strategies: list[Strategy], limits: dict) -> str:
     parts = []
     for s in strategies:
         r = s["split_range"]
+        rk = s.get("risk") or {}
         part = (f"'{s['name']}' {s['split']['growth']:.0%}/{s['split']['defensive']:.0%} "
-                f"(set by {r.get('set_by', '?')}; worst drop {s['stats']['max_drawdown']:.1%} vs loss limit "
-                f"{limits['loss_limit']:.0%}")
+                f"(set by {r.get('set_by', '?')}; observed worst drop {s['stats']['max_drawdown']:.1%}"
+                + (f", simulated chance of a drop deeper than {limits['loss_limit']:.0%} over "
+                   f"{rk['horizon_years']:g} years {rk['exceedance']:.0%} (allowed {rk['alpha']:.0%})"
+                   if "exceedance" in rk else f" vs loss limit {limits['loss_limit']:.0%}"))
+        if (r.get("goal") or {}).get("status"):
+            part += f"; goal: {r['goal']['status'].replace('_', ' ')}"
         if r["floor"] is not None:
-            part += f"; goal floor {r['floor']:.0%}"
+            part += f", minimum growth for the goal {r['floor']:.0%}"
         part += ")"
         parts.append(part)
     s = f"{len(strategies)} strateg{'y' if len(strategies) == 1 else 'ies'}: " + "; ".join(parts) + "."
@@ -611,7 +757,8 @@ def revise(s: Strategy, action: dict, profile: dict, limits: dict, rets: pd.Data
     why = next((a[len("offered: "):] for a in s.get("adjustments", []) if a.startswith("offered: ")), "")
     kept = [a for a in s.get("adjustments", [])[2:] if a.startswith(("left out", "crypto", "loss limit", "SPY replaced",
                                                                    "level "))]
-    new = assemble(s.get("flavour", s["key"]), why, g, dfn, kept + [f"Critic: {note}"], profile, lim, rets, holdings)
+    new = assemble(s.get("flavour", s["key"]), why, g, dfn, kept + [f"Critic: {note}"], profile, lim, rets, holdings,
+                   with_range=(s.get("level") or {}).get("rank", 1) == 1)
     if new["weights"] == s["weights"]:
         return None, "the recalculation gives the same weights"
     new.update({k: s[k] for k in ("key", "name", "level") if k in s})

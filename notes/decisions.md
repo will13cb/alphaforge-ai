@@ -881,7 +881,7 @@ in a backtest). Numbers: `results.csv` experiments `cadusa-persona-strategies` (
 direct only, which affects C1, not the splits, worst drops or volatilities), `dividend-coverage`, `cadusa-evidence`.
 
 **Extended (Sun Nov 15, same research mode):** dividends reach the rest of the architecture.
-- Guardian **G18** (⚠ only, same implementation as F7): a single company held whose dividend is not covered. The rule
+- Guardian **G19** (⚠ only, same implementation as F7; renumbered on risk integration): a single company held whose dividend is not covered. The rule
   exists only in research mode (the demo keeps 17 rules).
 - **F1** (income objective) counts bonds, dividend payers covered on 3 years (`fundamentals.covered_payers`) and
   dividend ETFs (sub_class `factor_dividend`), instead of the fixed `DIVIDEND_PAYERS` list.
@@ -937,3 +937,55 @@ holds. Its own example, XSP.TO, is not in the starter pack.
 - **One default model:** `dh.llm.DEFAULT_MODEL_ID` (Opus 5.5, verified) used by `ask` and every agent (was Nova Lite in `ask`).
 - **Cost:** strategy names and the Critic prompt are in the cached facts → the Critic and Explainer demo caches no
   longer match. **Re-run `make warm` (valid AWS keys) and commit `cache/` before Sun 23:59.**
+
+## 46. Quantitative audit fixes R0-R10 (Sun Nov 15, Joud with Claude, `claude/nice-volta-4dwcp4`)
+
+Audit of the theory behind each tool (anomalies A1-A16, root causes and tests in `notes/risk-architecture.md`).
+New package `src/dh/risk/` (contracts, loss_model, goals, levels, kyc_validation, frontier, sync, controls); the
+agents call it, it never imports them (tested). Approved by Joud on the recommendations; **Will to review before any
+merge** (most edits are in agent files).
+
+- **R1 ceiling (A1).** The growth ceiling no longer comes from the one drawdown of 2021-2026: scanning up from 0%, it
+  is the last share before P(drawdown over the client's horizon > loss limit) > 10%, stationary block bootstrap,
+  average = cash + 3% on the growth part (central assumption), the same random paths for every share. The horizon
+  rule (#22) stays. On known-parameter markets the realised breach rate falls from 39-71% to 15-24% for alpha = 10%:
+  better, still above alpha (5 years cannot pin down a tail), so the range is shown.
+- **R2 range.** The same rule on 3-year sub-windows, one year apart; the full-window ceiling is part of the range.
+- **R3 central premium.** 3% a year over cash on growth assets (order of magnitude of the long-run equity premium over
+  bills, Dimson-Marsh-Staunton; verify the current edition before quoting). An assumption, labelled as such.
+- **R4 goals (A2).** Status instead of a floor in the risk-only view: reachable without equity / needs equity (smallest
+  share, central, ≤ ceiling) / only if 2021-2026 repeats / insufficient (< 50%) / impossible (< 25%). Never "more than
+  100%": the old message came from a view with no premium, where more stocks only add variance.
+- **R5 levels (A3).** Levels 2-3 use level 1's defensive basket; a level not safer on worst drop AND chance of loss is
+  dropped, a mixed one is flagged. Robert's "more prudent" was riskier (−9.5% / 5.7% vs −8.6% / 3.9%); now −7.7% / 1.8%.
+- **R6 KYC (A4).** Bet options on a common A grid (0 to 4.8, the most the +40/−10 bet can express without a negative
+  guaranteed return); consistency on option ranks (gap ≤ 0.3); the most cautious answer everywhere = A ≥ 4.8,
+  consistent, no longer flagged.
+- **R7 loss question (A8).** "Largest drop from a high point, at any time while invested": the measure the loss rule
+  uses (drawdown over the horizon), instead of "in one year" compared with a 5-year drawdown.
+- **R8 controls (A7).** G7 = D2 = the loss rule, simulated again on the FINAL weights (other seed, 2000 paths, 2 standard
+  errors of tolerance); G17 (G7 × capital) merged into it; D1 shows the observed drop, never blocks; G18 checks that every
+  section describes the final weights (A6, `dh.risk.sync`). The Critic and the request side-by-side use the same rule.
+- **R9 inflation.** Goal chances also in today's dollars (Bank of Canada 2% target).
+- **R10 frontier (A5).** One measure on the chart: arithmetic mean (the optimiser's); an optimiser failure leaves the
+  chart without a frontier instead of raising.
+- **A10.** `metrics.max_drawdown` counts a loss on day 1 (was missed; quant_toolkit already did).
+
+**Effect on the personas (results.csv, commit after c019584):** Amira 95% → 40% growth (her 40% limit over 15 years:
+a growth-tilted portfolio breaks it in more than 10% of simulated paths above that); Mateo 60% → 55%, two strategies
+(the third was not safer than the second); Robert unchanged at 15%, his second level now really safer. Robert's TSLA
+numbers (#28) are unchanged. Run time: Amira ~10 s (was ~4.5 s).
+
+**R0 timing:** integrated on Nov 15 before the 23:59 submission freeze under the user's explicit merge authorization. Final deliverables and cached explanations must be regenerated on the integrated code and final dataset.
+
+## 47. History from 2010 (Sun Nov 15, Will)
+
+**Decision (Will):** the team's window starts 2010-01-04. `harness.toml [data] start = "2010-01-04"` is the one place it
+is set: `make data-long` builds from it (organizers' script, unchanged), the hosted app's fallback rebuild
+(`dh.bootstrap.build_start`) uses it, and `dh.data` drops anything earlier. With the 2021-2026 starter pack it changes
+nothing. Covers the 2020 crash and 2022; not 2008 (use `START=2004-11-18` for that).
+
+**Not done by this commit:** the data itself (built on Will's laptop: `make data-long`, then `make data-up` so the host
+downloads it from S3); `results.csv`, the cached agent answers (`make warm`) and the deliverables' numbers are still on
+2021-2026 and must be regenerated on the new data before they are quoted. Assets that did not exist in 2010 start later
+(ZST.TO, ESGV with their stand-ins; SHOP.TO 2015, BTC 2014, ETH 2017 without).

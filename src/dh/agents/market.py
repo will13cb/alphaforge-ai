@@ -205,7 +205,8 @@ def strategy_stats(weights: dict[str, float], rets: pd.DataFrame | None = None) 
 
 def goal_outlook(weights: dict[str, float], *, capital: float, horizon_years: float, monthly_contribution: float = 0.0,
                  target_amount: float | None = None, n_scenarios: int = 2000, seed: int = 0,
-                 rets: pd.DataFrame | None = None) -> dict:
+                 rets: pd.DataFrame | None = None, premium: float | None = None,
+                 inflation: float | None = None) -> dict:
     """Range of simulated outcomes for a strategy over the profile's horizon (contract §1 goal fields).
 
     Stationary block bootstrap of the strategy's own daily history (no distribution assumed, fixed seed: same inputs,
@@ -213,9 +214,16 @@ def goal_outlook(weights: dict[str, float], *, capital: float, horizon_years: fl
     - "replay": the data window's days as they were, including that period's (strong) average return;
     - "risk_only": same days with the average return replaced by cash (ZST.TO's average): keeps the swings, drops
       the historical drift. This is the one to lead with: it does not assume past returns repeat (#9).
-    Each gives prob_loss (share ending below the total invested, the "risk of ruin" of contract §2), prob_target
-    (None without target_amount) and final_p5 / final_p50 / final_p95 in CAD.
+    - "central" (decision R3): same days, average = cash + growth share × `premium` (rules.CENTRAL_PREMIUM, 3% a year
+      on the growth part only). The view the goal is sized with (dh.risk.goals): risk_only has no premium, so more
+      stocks can only add variance there (audit A2).
+    Each gives prob_loss (share ending below the total invested; NOT a risk of ruin), prob_target (None without
+    target_amount), prob_target_real (the target in today's dollars, `inflation` a year, decision R9) and
+    final_p5 / final_p50 / final_p95 in nominal CAD.
     """
+    from .rules import CENTRAL_PREMIUM, DEFENSIVE, INFLATION
+    premium = CENTRAL_PREMIUM if premium is None else premium
+    inflation = INFLATION if inflation is None else inflation
     all_rets = _rets(rets, None)
     port = metrics.portfolio_returns(all_rets[list(weights)], weights).dropna()
     cash = all_rets["ZST.TO"].reindex(port.index).dropna().mean() if "ZST.TO" in all_rets else 0.0
@@ -224,23 +232,35 @@ def goal_outlook(weights: dict[str, float], *, capital: float, horizon_years: fl
     every = max(1, round(ppy / 12))
     target = target_amount if target_amount else max(capital, 1.0)  # placeholder when no target; prob_target dropped
 
-    def run(r: pd.Series) -> dict:
-        paths = qt.bootstrap_paths(r, n_periods=n, n_scenarios=n_scenarios, seed=seed)
+    base = qt.bootstrap_paths(port, n_periods=n, n_scenarios=n_scenarios, seed=seed)  # drawn once for all views
+
+    def run(shift: float) -> dict:
+        """The views differ only by a constant daily shift of the mean: same days, same paths (fixed seed)."""
+        paths = base + shift
         g = qt.goal_probability(paths, initial=capital, target=target, contribution=monthly_contribution,
                                 contribution_every=every)
+        real = qt.goal_probability(paths, initial=capital, target=target, contribution=monthly_contribution,
+                                   contribution_every=every, inflation=inflation,
+                                   periods_per_year=max(1, round(ppy))) if target_amount else None
         q = g["richesse_finale_quantiles"]
         return {"prob_loss": g["probabilite_sous_total_investi"],
                 "prob_target": g["probabilite_atteinte"] if target_amount else None,
+                "prob_target_real": real["probabilite_atteinte"] if real else None,
                 "final_p5": q["p5"], "final_p50": q["p50"], "final_p95": q["p95"]}
+
+    growth = sum(w for t, w in weights.items() if t not in DEFENSIVE) / (sum(weights.values()) or 1.0)
 
     total = capital + monthly_contribution * len(range(0, n, every))
     lab = data.period_label(port.to_frame())
     return {"horizon_years": horizon_years, "n_scenarios": n_scenarios, "total_invested": total,
-            "target_amount": target_amount, "replay": run(port), "risk_only": run(port - port.mean() + cash),
-            "cash_return_used": float((1 + cash) ** ppy - 1),
+            "target_amount": target_amount, "replay": run(0.0), "risk_only": run(cash - port.mean()),
+            "central": run(cash - port.mean() + growth * premium / ppy),
+            "cash_return_used": float((1 + cash) ** ppy - 1), "premium_used": premium, "growth_share": growth,
+            "inflation_used": inflation,
             "method": f"stationary block bootstrap of the strategy's {lab} daily returns, fixed seed",
             "limits": f"Replays past days only: no crisis worse than {lab}, no fees or taxes. Not a forecast; "
-                      f"'replay' assumes {lab} average returns repeat, 'risk_only' does not."}
+                      f"'replay' assumes {lab} average returns repeat, 'risk_only' assumes no premium over cash, "
+                      f"'central' a {premium:.0%} premium on the growth part (an assumption, not an estimate)."}
 
 
 def correlations(tickers=None, rets: pd.DataFrame | None = None, top: int = 5) -> dict:

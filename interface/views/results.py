@@ -3,15 +3,16 @@ Every number is read from the engine's result; nothing is computed here."""
 
 from __future__ import annotations
 
-from dh.data import period_label
-
 import re
 
 import pandas as pd
 import streamlit as st
 
+from dh.agents.profiler import SCALE_NOTE
+from dh.data import period_label
 from interface.core import services
 from interface.ui import components as ui
+from interface.ui.explanation import format_explanation
 from interface.ui import voice as voice_ui
 
 S = st.session_state
@@ -44,16 +45,18 @@ def essentials(res: dict, profile: dict) -> None:
     name = profile.get("name") or "you"
     st.subheader(f"Your limits, {name}" if name != "You" else "Your limits")
     c = st.columns(3)
-    ui.metric(c[0], pct(lim.get("loss_limit")), "the largest drop we plan for"
+    ui.metric(c[0], pct(lim.get("loss_limit")), "loss threshold used in the simulations"
               + (f" (about {money(lim.get('loss_limit_cad'))})" if lim.get("loss_limit_cad") else ""))
     ui.metric(c[1], pct(lim.get("min_defensive")), "at least, kept in safer investments")
     ui.metric(c[2], pct(lim.get("horizon_max_growth")), "at most in stocks, given your horizon")
     st.write("")
     with st.expander("Why these limits?"):
-        st.markdown("\n".join(f"{i}. {r}" for i, r in enumerate(lim.get("reasons", []), 1)) or "–")
+        st.caption(SCALE_NOTE)
+        st.markdown("\n".join(f"{i}. {r}" for i, r in
+                              enumerate(lim.get("reasons_plain") or lim.get("reasons", []), 1)) or "–")
         caps = services.caps_shown(res, profile)
         if caps:
-            st.markdown("**At most in one company** (counted through the funds too): "
+            st.markdown("**Largest share of the portfolio any one company may take** (counted through the funds too): "
                         + ", ".join(f"{t} {v}" for t, v in caps.items()))
 
     st.subheader(f"{len(strategies)} way{'s' if len(strategies) != 1 else ''} to invest within these limits")
@@ -68,7 +71,7 @@ def essentials(res: dict, profile: dict) -> None:
             r = s.get("split_range") or {}
             if r.get("set_by_text"):  # which constraint set the split (decision #33), as in app/app.py
                 st.markdown(f'<p class="af-muted">Set by {r["set_by_text"]}'
-                            + (f'; the worst-drop test alone would allow {pct(r["data_ceiling"])}.'
+                            + (f'; the loss test alone would allow {pct(r["data_ceiling"])}.'
                                if r.get("set_by") != "worst_drop" and r.get("data_ceiling") is not None else ".")
                             + "</p>", unsafe_allow_html=True)
             m = st.columns(3)
@@ -109,7 +112,8 @@ def request(res: dict) -> None:
             with cols[1]:
                 ui.card("A version that fits your limits", "")
                 ui.metric(st, pct(f.get("max_drawdown"), 1), f"worst drop, about {money(f.get('drawdown_cad'))}")
-                ui.notice("Within your limits.", "good")
+                ui.notice("Within the checked limits." if f.get("verdict") != "fail" else "This adjusted version still breaks a checked limit; see the evidence.",
+                          "good" if f.get("verdict") != "fail" else "bad")
     if c.get("summary"):
         st.markdown(c["summary"])
     st.caption("The choice stays yours: this only shows what each version would have done.")
@@ -176,8 +180,8 @@ def explanation(res: dict) -> None:
     e = res.get("explanation") or {}
     if not e.get("text"):
         return
-    st.subheader("In plain words")
-    st.markdown(e["text"])
+    st.header("Your investment summary")
+    st.markdown(format_explanation(e["text"], res.get("strategies")))
     voice_ui.read_aloud(e["text"], "results_explanation")
     src = {"bedrock": "Claude on Amazon Bedrock (live)", "cache (explainer)": "Claude on Amazon Bedrock (saved answer)",
            "template": "a fixed template (no AI model)"}.get(e.get("source"), e.get("source", ""))
@@ -236,6 +240,9 @@ def render() -> None:
     else:
         ui.notice(f"<b>{ui.esc(lab)}.</b> Below: your limits, the strategies that respect them, and why.", tone, safe=True)
     st.title("Your investment overview")
+    if st.button("See how this analysis was built →"):
+        S.goto = "Activity"
+        st.rerun()
     overview, summary, evidence = st.tabs(["Strategies & limits", "Plain-language summary", "Checks & holdings"])
     with overview:
         essentials(res, profile)

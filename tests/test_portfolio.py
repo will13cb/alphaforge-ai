@@ -15,6 +15,8 @@ def fewer_scenarios(monkeypatch):
     """goal_outlook is the slow part (Joud's bootstrap); the method is the same with fewer paths."""
     monkeypatch.setattr(portfolio, "N_SEARCH", 100)
     monkeypatch.setattr(portfolio, "N_FINAL", 200)
+    for k in ("N_LOSS", "N_LOSS_FINAL", "N_RANGE"):       # the loss model (R1): same method, fewer paths
+        monkeypatch.setattr(portfolio, k, 300)
 
 
 @pytest.fixture(scope="module")
@@ -45,19 +47,26 @@ def propose(profile, rets):
 
 @pytest.mark.parametrize("p", [AMIRA, MATEO, ROBERT], ids=["amira", "mateo", "robert"])
 def test_ceiling_respects_loss_limit_and_is_the_largest(p, rets):
+    """Decision R1: scanning up, every share up to the ceiling keeps P(drop deeper than the loss limit over the
+    horizon) ≤ alpha, and the next scanned share breaks it (unless the horizon rule or the floor stopped first). The
+    final weights pass the same rule in a fresh simulation (G7 = D2)."""
     lim = derive_limits(p)
     ss = propose(p, rets)
     assert 1 <= len(ss) <= 3
     for s in ss:
-        assert abs(s["stats"]["max_drawdown"]) <= lim["loss_limit"] + 1e-9
+        rk = s["risk"]
+        assert rk["exceedance"] <= rk["alpha"] + rk["tolerance"] + 1e-9
         assert sum(s["weights"].values()) == pytest.approx(1.0)
         assert set(s["weights"]) <= set(lim["allowed_assets"])
         if s["level"]["rank"] != 1:  # lower levels stop below the ceiling on purpose (#32)
             assert s["split"]["growth"] <= s["level"]["target_growth"] + 1e-9
             continue
         ceil = s["split_range"]["ceiling"]
-        above = [c for c in s["split_curve"] if ceil < c["growth"] <= 1 - lim["min_defensive"] + 1e-9]
-        assert all(abs(c["max_drawdown"]) > lim["loss_limit"] for c in above)  # the next step up breaks the limit
+        scanned = [c for c in s["split_curve"] if c["exceedance"] is not None]
+        assert all(c["exceedance"] <= rk["alpha"] + 1e-9 for c in scanned if c["growth"] <= ceil + 1e-9)
+        nxt = [c for c in scanned if c["growth"] > ceil + 1e-9]
+        if s["split_range"]["set_by"] == "worst_drop":
+            assert nxt and nxt[0]["exceedance"] > rk["alpha"]   # the next step up breaks the rule
 
 
 def test_liquidity_floor_is_hard(rets):
@@ -150,6 +159,20 @@ def test_strategies_are_different_risk_levels(p, rets):
     assert len({s["key"] for s in ss}) == len(ss) and len({s["name"] for s in ss}) == len(ss)
     for s in ss:
         assert s["split"]["defensive"] >= lim["min_defensive"] - 1e-9
-        assert abs(s["stats"]["max_drawdown"]) <= lim["loss_limit"] + 1e-9
+        assert s["risk"]["exceedance"] <= s["risk"]["alpha"] + s["risk"]["tolerance"] + 1e-9
         assert s["split_range"]["set_by"] in ("worst_drop", "horizon", "liquidity", "safety", "level")
         assert any(a.startswith("split ") and "set by" in a for a in s["adjustments"])
+
+
+@pytest.mark.parametrize("p", [AMIRA, MATEO, ROBERT], ids=["amira", "mateo", "robert"])
+def test_levels_are_ordered_by_measured_risk(p, rets):
+    """Audit A3, decision R5: a 'more prudent' level never has a deeper worst drop AND a higher chance of loss than the
+    level above (inverted levels are dropped), all levels share level 1's defensive basket, and every section of
+    every strategy describes its final weights (A6)."""
+    from dh.risk import levels as rl
+    from dh.risk import sync
+    ss = propose(p, rets)
+    assert all(s["baskets"]["defensive"] == ss[0]["baskets"]["defensive"] for s in ss)
+    ladder = [(s["name"], rl.risk_vector(s)) for s in ss]
+    assert not [i for i in rl.check_labels(ladder) if i.code == "C-inverted"]
+    assert all(sync.verify(s, rets) == [] for s in ss)

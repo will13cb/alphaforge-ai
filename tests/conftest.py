@@ -18,3 +18,11 @@ def _traces_stay_in_the_test(monkeypatch, tmp_path):
 
     monkeypatch.delenv("S3_BUCKET", raising=False)
     monkeypatch.setattr(tracestore, "LOCAL_DIR", tmp_path / "traces")
+
+
+@pytest.fixture(autouse=True)
+def _fewer_loss_paths(monkeypatch):
+    """The Portfolio's loss model (decision R1) with fewer simulated paths in tests: same method, faster suite."""
+    from dh.agents import portfolio
+    for k in ("N_LOSS", "N_LOSS_FINAL", "N_RANGE"):
+        monkeypatch.setattr(portfolio, k, 300)

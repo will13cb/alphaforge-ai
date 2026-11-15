@@ -13,7 +13,7 @@ Team: William Caron-Bastarache, Joud Katbe.
 
 A client's profile goes in. The pipeline works out their limits (each with a written reason), builds up to three
 strategies at different risk levels, sets each stocks/bonds split as the strictest of the client's constraints (a
-stated horizon rule, money needed soon, the worst historical drop vs their loss limit) and says which one decided,
+stated horizon rule, money needed soon, a simulated chance of exceeding their loss threshold over their horizon) and says which one decided,
 checks everything against explicit rules, and explains the result in plain language, tying
 every number to the data.
 
@@ -31,9 +31,9 @@ Example: Robert (59, about 4 years before he needs the money, accepts at most a 
 |---|---|---|---|---|
 | 1 | Profiler | rules | tolerance, capacity, knowledge, loss limit (also in $), defensive floor (horizon, withdrawals), per-company and crypto caps, each with a reason | built |
 | 2 | Market data | deterministic | per-asset return, volatility, worst drop, CVaR, 2022, correlations, goal outlook | built |
-| 3 | Portfolio | rules + data | up to 3 strategies at different risk levels (#32); split = strictest of horizon rule, withdrawals and the worst-drop test, with the one that decided (#33); diversification checks C–F | built |
+| 3 | Portfolio | rules + data | up to 3 strategies at different risk levels (#32); split = strictest of horizon rule, withdrawals and the simulated loss test, with the one that decided (#33); diversification checks C–F | built |
 | 5 | Explainer | Strands agent, Claude Opus 5.5 on Bedrock | client text from pre-formatted facts; checks its own draft with the Guardian's rules (tool) | built |
-| all | Guardian | rules G1–G17 | ✔ / ⚠ / ✘ at each step; ✘ on the profile → ask; on a strategy → dropped; on a Critic fix → original kept; on the text → template | built |
+| all | Guardian | rules including G7 (simulated loss) and G18 (consistency) | ✔ / ⚠ / ✘ at each step; ✘ on the profile → ask; on a strategy → dropped; on a Critic fix → original kept; on the text → template | built |
 | all | Trace store | Amazon S3 | every run as JSON in `s3://$S3_BUCKET/traces/` (local fallback) | built |
 | 0 | Free-text extractor | Strands agent, tool `check_profile` | `profile` fields from a description; every number must be in the client's text; missing essentials asked (#29) | built, Bedrock answers cached |
 | 4 | Critic | Strands agent with tools | investigates (11 tools incl. risk contributions, ≤ 6 calls), ≤ 3 backed objections, one recomputed fix per strategy, Guardian re-check (#30, #40) | built, Bedrock answers cached |
@@ -55,7 +55,7 @@ trace (steps, numbers, verdicts, never the model's raw reasoning).
 
 | Built | In progress |
 |---|---|
-| Profiler, market data, Portfolio (computed split, per-company caps, checks C–F, request side by side), Guardian G1–G17, Strands agents on Bedrock (Opus 5.5): free-text extractor, Critic, Explainer (demo texts cached for offline replay), Analyst (app follow-ups), S3 trace store, demo app, `propose` / `explain` / `extract` / `ask` CLI, offline tests, 16 test profiles | Re-save the Bedrock demo caches on the final data (`make warm`); Streamlit Cloud deployment to confirm; AgentCore hosting not deployed; ETF holdings for QQQ / ESGV / XIU (SPY loaded); KYC bets screens in the interface |
+| Profiler, market data, Portfolio (computed split, per-company caps, checks C–F, request side by side), Guardian loss and consistency controls, Strands agents on Bedrock (Opus 5.5): free-text extractor, Critic, Explainer (demo texts cached for offline replay), Analyst (app follow-ups), review of a portfolio the client already holds (labelled stand-ins, fees, rebuild in $), guided interface (optional voice: Amazon Transcribe + Polly), S3 trace store, demo app, `propose` / `explain` / `extract` / `ask` CLI, offline tests, 16 test profiles | Re-save the Bedrock demo caches on the final data (`make warm`); AgentCore hosting not deployed; ETF holdings for QQQ / ESGV / XIU (SPY loaded); KYC bets screens in the interface |
 
 Per-branch details: [`notes/branches/`](notes/branches/).
 
@@ -76,6 +76,12 @@ make app          # the demo (jury view) on http://localhost:8501: limits, strat
 make ui           # guided interface (client view) on http://localhost:8502: same engine, step-by-step questions
 make warm         # with Bedrock: fill every demo cache in one run (DRY=1 lists the calls)
 ```
+
+**Both views include a Light / Dark appearance switch and live analysis hand-offs.** Clients can inspect their
+completed run in Activity; judges can inspect Activity & evidence, including checks, sources, explanation origin,
+and the actual S3/local storage outcome. Activity also lists and searches the currently enabled product universe.
+
+**Risk model (release integration).** The growth ceiling uses a stationary block bootstrap over the client's horizon, with a stated 3% annual premium on growth assets above cash and a 10% model exceedance threshold. A fresh simulation checks the final weights. These are scenario assumptions, not a calibrated guarantee of future losses. G17 is folded into G7; G18 checks result consistency; research-mode dividend warnings use G19. See `notes/risk-architecture.md`.
 
 **Two front ends, one engine.** `make app` is the demo: it shows everything the agents did (limits with reasons,
 strategies and what set each split, Guardian checks, the Explainer's text, follow-ups, the full trace) and saves
@@ -106,7 +112,7 @@ set LLM_PROVIDER=mock && .venv\Scripts\python -m pytest -q
 
 AWS credentials come from your AWS profile (`aws configure`), not from this repo. LLM calls go through
 `dh.llm.ask` (cached in `.cache/llm/`), except the Strands Explainer, which caches its own answers; the three
-personas' Opus texts are committed in `cache/explainer/`, so `LLM_PROVIDER=mock` replays the demo without AWS.
+personas' Opus texts are committed in `cache/explainer/`, matching facts replay without AWS; otherwise offline mode uses an explicitly labelled deterministic fallback. Run `make warm` on the final code and dataset before recording.
 
 ## Deploy (Streamlit Community Cloud)
 
@@ -125,6 +131,7 @@ rebuilding it with the organizers' script (`src/dh/bootstrap.py`).
    AWS_SECRET_ACCESS_KEY = "…"
    AWS_SESSION_TOKEN = "…"
    LLM_PROVIDER = "bedrock"
+   AF_VOICE_ENABLED = "0"   # "1" turns on voice in the guided interface (Amazon Transcribe + Polly, audio via S3 voice/)
    ```
    After the event account closes, set `LLM_PROVIDER = "mock"` and remove the AWS keys: the app rebuilds the data
    itself and replays the cached Claude answers (offline mode, said on screen).
@@ -146,7 +153,7 @@ Sources, dates, processing and terms: [`data/README.md`](data/README.md). Data f
 `make scenarios` runs 16 fictional profiles (the brief's three personas plus trap cases: a beginner asking for
 100% Bitcoin, a short horizon with high risk appetite, no emergency fund, an invented number in the explanation…)
 against their expected verdicts, and `make scenarios LOG=1` logs the pass rate to [`results.csv`](results.csv).
-It tests the rules, not real portfolios ([decision #7](notes/decisions.md)). `make test` runs 211 offline tests
+It tests the rules, not real portfolios ([decision #7](notes/decisions.md)). `make test` runs the regression suite (release verification: 375 passed, 1 skipped with rebuilt starter data)
 (synthetic data, faked AWS), including the Portfolio's split search, the Explainer's fallback when its text
 breaks a rule, and each agent's controls (an unbacked number dropped, a Critic fix that breaks a limit reverted).
 

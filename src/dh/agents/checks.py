@@ -147,6 +147,11 @@ def effective_n(w: dict, holdings: dict) -> float:
 
 
 def c5_concentration(w: dict, holdings: dict) -> dict:
+    unknown = sorted(t for t in w if t in EQUITY_ETFS and sum(holdings.get(t, {}).values()) < .999)
+    if unknown:
+        return _c("C5", None, MIN_EFFECTIVE_N, "warn",
+                  "effective holdings not fully assessed: issuer holdings missing or incomplete for " + ", ".join(unknown)
+                  + "; no assumed holding count is treated as verified", "dh.metrics.look_through")
     n = effective_n(w, holdings)
     return _c("C5", round(n, 1), MIN_EFFECTIVE_N, _status(warn=n < MIN_EFFECTIVE_N),
               f"{n:.1f} effective holdings (1/Σw² through the ETFs; an ETF without holdings data counts as "
@@ -173,21 +178,35 @@ def c6_duplicates(w: dict, rep: dict, holdings: dict, rets: pd.DataFrame | None)
 
 # ---- D. risk vs the client --------------------------------------------------------------------------
 
-def d1_tolerance(stats: dict, profile: dict) -> dict:
-    tol = (profile.get("max_loss_pct") or 0) / 100
+def d1_tolerance(stats: dict, profile: dict, limits: dict | None = None) -> dict:
+    """OBSERVED worst drop of the data window vs the client's loss limit: shown, never blocks (decision R8). It is one
+    past event, already used to read the history; the blocking loss rule is D2/G7 (simulated, final weights)."""
+    lim = (limits or {}).get("loss_limit", (profile.get("max_loss_pct") or 0) / 100)
     dd = abs(stats.get("max_drawdown", 0.0))
-    st = _status(fail=dd > tol + 1e-9, warn=dd > TOLERANCE_CLOSE * tol)
-    return _c("D1", round(dd, 4), tol, st, f"worst drop {dd:.1%} vs the {tol:.0%} the client said they'd accept"
-              + (" (close to it)" if st == "warn" else ""), "market.strategy_stats")
+    st = _status(warn=dd > TOLERANCE_CLOSE * lim)
+    return _c("D1", round(dd, 4), lim, st, f"observed worst drop {dd:.1%} ({period_label()}) vs your {lim:.0%} loss "
+              "limit: what happened, not a guarantee" + (" (close to it or above)" if st == "warn" else ""),
+              "market.strategy_stats")
 
 
-def d2_capacity(stats: dict, limits: dict, profile: dict) -> dict:
-    dd = abs(stats.get("max_drawdown", 0.0))
+def d2_capacity(stats: dict, limits: dict, profile: dict, risk: dict | None = None) -> dict:
+    """THE loss rule (one implementation; the Guardian's G7 calls it, decision R8). With `risk` (portfolio.final_risk,
+    the final weights simulated over the client's horizon): P(drop deeper than the loss limit) ≤ alpha + sampling
+    tolerance. Without it (hand-made strategies, no data): the observed worst drop vs the limit, labelled as such."""
     lim = limits.get("loss_limit", limits["max_drawdown"])
     cap = profile.get("capital")
+    money = f" ({cap * lim:,.0f} $ on {cap:,.0f} $)" if cap else ""
+    if risk and risk.get("exceedance") is not None:
+        p, a, tol = risk["exceedance"], risk["alpha"], risk.get("tolerance", 0.0)
+        return _c("D2", round(p, 4), a, _status(fail=p > a + tol + 1e-9),
+                  f"{p:.0%} chance of a drop deeper than your {lim:.0%} loss limit{money} over "
+                  f"{risk['horizon_years']:g} years (simulated, allowed {a:.0%}); 1 in 10 paths drops "
+                  f"{abs(risk['drop_1_in_10']):.1%} or more", "portfolio.final_risk (dh.risk.loss_model)")
+    dd = abs(stats.get("max_drawdown", 0.0))
     money = f" = {cap * dd:,.0f} $ vs {cap * lim:,.0f} $" if cap else ""
     return _c("D2", round(dd, 4), lim, _status(fail=dd > lim + 1e-9),
-              f"worst drop {dd:.1%} vs loss limit {lim:.0%}{money}", "market.strategy_stats, profiler loss limit")
+              f"observed worst drop {dd:.1%} vs loss limit {lim:.0%}{money} (no simulation for this strategy)",
+              "market.strategy_stats, profiler loss limit")
 
 
 def d3_stress(stats: dict, limits: dict) -> dict:
@@ -208,11 +227,14 @@ def e_goal(outlook: dict | None, profile: dict) -> dict:
         return _c("E", None, GOAL_MIN_PROB, "pass", "no capital given: no goal simulation", "market.goal_outlook")
     ro = outlook["risk_only"]
     if profile.get("target_amount"):
-        p = ro["prob_target"]
+        ce = outlook.get("central") or ro      # the view the goal is sized with (R3); risk_only on old outlooks
+        p, real = ce["prob_target"], ce.get("prob_target_real")
         return _c("E", round(p, 3), GOAL_MIN_PROB, _status(warn=p < GOAL_MIN_PROB),
-                  f"{p:.0%} chance of reaching {profile['target_amount']:,.0f} $ without assuming past returns "
-                  f"repeat ({outlook['replay']['prob_target']:.0%} if {period_label()} repeated); {ro['prob_loss']:.0%} chance "
-                  "of ending below what was put in", "market.goal_outlook")
+                  f"{p:.0%} chance of reaching {profile['target_amount']:,.0f} $ with our central assumption"
+                  + (f" ({real:.0%} in today's dollars)" if real is not None else "")
+                  + f"; {ro['prob_target']:.0%} if stocks earn no more than cash, {outlook['replay']['prob_target']:.0%}"
+                  f" if {period_label()} returns repeat; {ro['prob_loss']:.0%} chance of ending below what was put in",
+                  "market.goal_outlook")
     return _c("E", round(ro["prob_loss"], 3), None, "pass",
               f"no target given; {ro['prob_loss']:.0%} chance of ending below what was put in (risk-only view)",
               "market.goal_outlook")
@@ -299,7 +321,8 @@ def run(strategy: dict, profile: dict, limits: dict, rets: pd.DataFrame | None =
     st = strategy.get("stats", {})
     return [c1_company(w, limits, holdings), c2_geography(w, holdings), c3_sector(rep), c3b_job_sector(rep, profile),
             c4_classes(rep), c5_concentration(w, holdings), c6_duplicates(w, rep, holdings, rets),
-            d1_tolerance(st, profile), d2_capacity(st, limits, profile), d3_stress(st, limits),
+            d1_tolerance(st, profile, limits), d2_capacity(st, limits, profile, strategy.get("risk")),
+            d3_stress(st, limits),
             e_goal(strategy.get("outlook"), profile), *f_profile(w, profile, limits, holdings),
             *([f7] if data_extra() and (f7 := f7_dividends(w)) is not None else [])]
 

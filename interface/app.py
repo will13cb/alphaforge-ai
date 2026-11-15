@@ -22,6 +22,7 @@ from dh import bootstrap  # noqa: E402
 from dh.data import period_label  # noqa: E402
 from dh.personas import DISCLAIMER  # noqa: E402
 from interface.core import services, voice  # noqa: E402
+from interface.ui import activity
 from interface.ui import components as ui  # noqa: E402
 from interface.ui import theme, voice as voice_ui  # noqa: E402
 from interface.views import chat, holdings_input, profile, results  # noqa: E402
@@ -29,7 +30,7 @@ from interface.views import chat, holdings_input, profile, results  # noqa: E402
 st.set_page_config(page_title="AlphaForge AI", page_icon=":material/account_balance:", layout="centered")
 S = st.session_state
 st.markdown(theme.css(theme.mode(S), S.get("large_text", False)), unsafe_allow_html=True)  # before any widget: the switch applies at once
-SECTIONS = ["Welcome", "Your profile", "Your results", "Assistant"]
+SECTIONS = ["Welcome", "Your profile", "Your results", "Activity", "Assistant"]
 
 
 def welcome() -> None:
@@ -116,7 +117,7 @@ def sidebar() -> str:
     return sec
 
 
-SHORT = ["Start", "Profile", "Results", "Assistant"]
+SHORT = ["Start", "Profile", "Results", "Activity", "Assistant"]
 
 
 def mobile_nav(sec: str) -> None:
@@ -152,7 +153,7 @@ def main() -> None:
     mobile_nav(sec)
     try:
         {"Welcome": welcome, "Your profile": profile.render, "Your results": results.render,
-         "Assistant": chat.render}[sec]()
+         "Assistant": chat.render, "Activity": activity.render}[sec]()
     except Exception:  # noqa: BLE001 — last boundary (st.rerun is a BaseException, not caught here)
         services.logger().exception("page %s", sec)
         ui.notice("Something went wrong while showing this page. Your answers are kept; please try again, or go "

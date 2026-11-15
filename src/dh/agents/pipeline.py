@@ -20,11 +20,11 @@ def data_columns() -> list[str]:
 
 
 def run(profile: dict, strategy: dict | None = None, explanation: str | None = None, holdings=None,
-        propose: bool = True, rets=None, drops: dict | None = None, critic: bool = True) -> dict:
+        propose: bool = True, rets=None, drops: dict | None = None, critic: bool = True, on_step=None) -> dict:
     """holdings=None → real issuer holdings (dh.holdings); pass {} to force "direct only".
     rets=None → starter data (dh.data.returns()); tests pass synthetic returns.
     drops = each asset's worst drop for the company caps (#24): None → from `rets` if given, else the market data."""
-    tr = Trace()
+    tr = Trace(on_step=on_step)
     if profile.get("requested_positions"):   # "10% in XSP": measured with its stand-in (SPY), labelled (#42)
         from .. import standins
         try:

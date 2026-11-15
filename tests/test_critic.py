@@ -155,7 +155,8 @@ def test_mock_critic_in_the_pipeline(p, rets):
     assert all(not o["status"].startswith("dropped") for o in c["objections"]), c["objections"]  # mock is always backed
     lim = res["limits"]
     for s in res["strategies"]:
-        assert s["guardian"]["verdict"] != "fail" and abs(s["stats"]["max_drawdown"]) <= lim["loss_limit"] + 1e-9
+        assert s["guardian"]["verdict"] != "fail"
+        assert s["risk"]["exceedance"] <= s["risk"]["alpha"] + s["risk"]["tolerance"] + 1e-9   # G7, simulated (R1)
         assert sum(v for t, v in s["weights"].items() if t in DEFENSIVE) >= lim["min_defensive"] - 1e-9
 
 

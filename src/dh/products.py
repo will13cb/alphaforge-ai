@@ -143,7 +143,7 @@ def asset_groups(universe: pd.DataFrame) -> dict[str, frozenset]:
     """Asset groups from the universe's columns. On the starter's 31 this equals rules.py's sets exactly
     (tests/test_products.py); rules.py adds a catalogue's groups to its own when the catalogue is in `extra`."""
     u = universe.copy()
-    sub = u["sub_class"] if "sub_class" in u.columns else pd.Series(np.nan, index=u.index)
+    sub = u["sub_class"].astype("object") if "sub_class" in u.columns else pd.Series(np.nan, index=u.index, dtype="object")
     u["sub"] = sub.fillna(u.ticker.map(STARTER_SUB_CLASS))
     commodity = u.asset_class == "etf_commodity"
     gold = commodity & ((u["sub"] == "gold") | (u.sector.astype(str).str.lower().str.startswith("gold")))

@@ -244,6 +244,12 @@ div[data-testid="stChatInput"] textarea {{ color: var(--ink) !important; }}
   div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssistant"]) {{ margin-right: 0; }}
   div[data-testid="stBottom"] > div {{ padding-bottom: env(safe-area-inset-bottom); }}
 }}
+/* Recorded activity uses the same accessible palette as the rest of the app. */
+.af-event {{ border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 1rem; margin: .6rem 0; overflow-wrap: anywhere; }}
+.af-event-head {{ font-weight: 600; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; }}
+.af-event-time {{ color: var(--mut); font-size: .8rem; }}
+.af-flow {{ display: flex; flex-wrap: wrap; gap: .5rem; }}
+.af-flow span {{ border: 1px solid var(--line); border-radius: 6px; padding: .35rem .6rem; }}
 </style>
 """
     return base + ("""<style>
@@ -251,6 +257,12 @@ html { font-size:19px; }
 .stApp p,.stApp li,.stApp label,.stApp input,.stApp textarea,.stApp button p {
     font-size:1.08rem!important; line-height:1.65!important;
 }
+/* Recorded activity uses the same accessible palette as the rest of the app. */
+.af-event {{ border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 1rem; margin: .6rem 0; overflow-wrap: anywhere; }}
+.af-event-head {{ font-weight: 600; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; }}
+.af-event-time {{ color: var(--mut); font-size: .8rem; }}
+.af-flow {{ display: flex; flex-wrap: wrap; gap: .5rem; }}
+.af-flow span {{ border: 1px solid var(--line); border-radius: 6px; padding: .35rem .6rem; }}
 </style>""" if large else "")
 
 
@@ -296,3 +308,13 @@ def style_chart(chart, mode: str = "light"):
     except Exception:  # noqa: BLE001 — a chart keeps its engine colours rather than breaking the page
         return chart
 
+
+
+def apply_theme() -> str:
+    """Use the current accessible theme in the jury app as well as the guided app."""
+    import streamlit as st
+    with st.sidebar:
+        st.toggle("Dark mode", key="dark_mode")
+    current = mode(st.session_state)
+    st.markdown(css(current, st.session_state.get("large_text", False)), unsafe_allow_html=True)
+    return current

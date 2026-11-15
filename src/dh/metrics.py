@@ -64,12 +64,13 @@ def sharpe(returns, periods: float | None = None, rf: float = 0.0) -> float:
 
 
 def max_drawdown(returns) -> float:
-    """Most negative peak-to-trough drop of the compounded curve (e.g. -0.23)."""
+    """Most negative peak-to-trough drop of the compounded curve (e.g. -0.23). The starting value (1) counts as a
+    peak, so a loss on the first day is counted (audit A10: it was missed; same convention as dh.quant_toolkit)."""
     r = _r(returns)
     if not len(r):
         return 0.0
     equity = np.cumprod(1 + r)
-    return float((equity / np.maximum.accumulate(equity) - 1).min())
+    return float(min(0.0, (equity / np.maximum.accumulate(np.maximum(equity, 1.0)) - 1).min()))
 
 
 def summary(rets: pd.DataFrame, rf: float = 0.0) -> pd.DataFrame:

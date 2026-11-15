@@ -18,7 +18,6 @@ import altair as alt
 import pandas as pd
 
 from .. import data, metrics
-from .. import quant_toolkit as qt
 from . import market
 
 STRESS_START, STRESS_END = market.STRESS_2022["rate_hikes_2022"]
@@ -141,33 +140,35 @@ def correlation_chart(df: pd.DataFrame, size: int | None = None) -> alt.Chart:
 
 def risk_return_data(strategies: dict[str, dict[str, float]] | None = None, rets: pd.DataFrame | None = None,
                      frontier_points: int = 20) -> pd.DataFrame:
-    """One row per asset, per strategy and per point of the long-only historical frontier: ann_return (CAGR),
-    ann_vol, kind. Frontier weights come from mean/covariance, but every point's return and volatility is
-    recomputed with dh.metrics, so the whole chart uses the same measures as the trace.
+    """One row per asset, per strategy and per point of the long-only historical frontier: ann_return, ann_vol, kind.
+    ONE return measure for the whole chart (decision R10, audit A5): the arithmetic mean of daily returns × days per
+    year, the measure the Markowitz frontier is optimised in (it is linear in the weights; CAGR is not, and plotting
+    CAGR made the frontier bend back and show dominated points). Built by dh.risk.frontier, which also checks it;
+    if the optimiser fails, the chart has no frontier instead of raising.
     The frontier is a picture of the data window (hindsight), not how strategies are built (decision #1)."""
+    from ..risk import frontier as fr
+    from ..risk.contracts import ReturnMeasure
     rets = _rets(rets).dropna()
+    am = ReturnMeasure.ARITHMETIC
     meta = market._meta()
     cls = meta["asset_class"].reindex(rets.columns) if meta is not None else pd.Series(index=rets.columns, dtype=object)
     rows = [{"name": t, "kind": "asset", "group": cls[t] if pd.notna(cls[t]) else "asset",
-             "ann_return": metrics.ann_return(rets[t]), "ann_vol": metrics.ann_vol(rets[t])} for t in rets.columns]
-    ppy = metrics.periods_per_year(rets)
-    ef = qt.efficient_frontier(rets.mean() * ppy, rets.cov() * ppy, n_points=frontier_points)
-    w_cols = list(rets.columns)
-    for i, row in ef["frontiere"].iterrows():
-        w = {t: float(row[t]) for t in w_cols if row[t] > 1e-6}
-        port = metrics.portfolio_returns(rets[list(w)], w)
+             "ann_return": fr.measure_of(rets[t], am), "ann_vol": metrics.ann_vol(rets[t])} for t in rets.columns]
+    f = fr.frontier(rets, am, n_points=frontier_points)
+    for i, row in f.points.iterrows():
         rows.append({"name": f"frontier {i + 1}", "kind": "frontier", "group": "frontier",
-                     "ann_return": metrics.ann_return(port), "ann_vol": metrics.ann_vol(port)})
+                     "ann_return": float(row["ret"]), "ann_vol": float(row["vol"])})
     for name, w in (strategies or {}).items():
         port = metrics.portfolio_returns(rets[list(w)], w)
         rows.append({"name": name, "kind": "strategy", "group": "strategy",
-                     "ann_return": metrics.ann_return(port), "ann_vol": metrics.ann_vol(port)})
+                     "ann_return": fr.measure_of(port, am), "ann_vol": metrics.ann_vol(port)})
     return pd.DataFrame(rows)
 
 
 def risk_return_chart(df: pd.DataFrame, height: int = 380) -> alt.Chart:
     enc = dict(x=alt.X("ann_vol:Q", title="Volatility (annualised)", axis=alt.Axis(format=".0%")),
-               y=alt.Y("ann_return:Q", title=f"Return per year ({data.period_label()})", axis=alt.Axis(format=".0%")),
+               y=alt.Y("ann_return:Q", title=f"Average yearly return, arithmetic ({data.period_label()})",
+                       axis=alt.Axis(format=".0%")),
                tooltip=["name", alt.Tooltip("ann_return:Q", format=".1%"), alt.Tooltip("ann_vol:Q", format=".1%")])
     front = alt.Chart(df[df.kind == "frontier"].sort_values("ann_vol")).mark_line(color="gray", strokeDash=[5, 3]).encode(**enc)
     assets = df[df.kind == "asset"]
@@ -180,7 +181,8 @@ def risk_return_chart(df: pd.DataFrame, height: int = 380) -> alt.Chart:
         layers += alt.Chart(strat).mark_point(shape="diamond", size=200, filled=True, color="black").encode(**enc)
         layers += alt.Chart(strat).mark_text(align="left", dx=9, fontWeight="bold").encode(text="name", **enc)
     return _caption(layers.properties(height=height), f"Risk and return of each asset, {data.period_label()}",
-                    "Dashed: best historical mixes (hindsight, unstable; not used to build strategies).")
+                    "Dashed: best historical mixes by average return (hindsight, unstable; not used to build "
+                    "strategies). Average return ≠ growth per year: volatile assets grow less than their average.")
 
 
 # ---- 5. 2022 -------------------------------------------------------------------------------------

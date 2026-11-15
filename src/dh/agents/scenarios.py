@@ -17,17 +17,17 @@ AMIRA = dict(name="Amira", age=26, horizon_years=15, objective="growth", capital
              emergency_fund_months=6, income_stability="stable", withdrawal_share_3y=0.0,
              loss_reaction="buy_more", max_loss_pct=40, knowledge_level="intermediate", years_experience=4,
              products_held=["etfs", "stocks", "crypto"], interests=["ai", "crypto"], exclusions=[],
-             kyc_bets={"bet_small": 0.08, "bet_large": 0.10, "bet_savings": 0.065}, ev_answer_pct=10)
+             kyc_bets={"bet_small": 0.083, "bet_large": 0.103, "bet_savings": 0.063}, ev_answer_pct=10)
 MATEO = dict(name="Mateo", age=41, horizon_years=10, objective="growth", capital=150_000, monthly_contribution=800,
              emergency_fund_months=6, income_stability="stable", withdrawal_share_3y=0.0,
              loss_reaction="hold", max_loss_pct=25, knowledge_level="intermediate", years_experience=8,
              products_held=["etfs"], interests=["esg"], exclusions=["fossil_fuels"],
-             kyc_bets={"bet_small": 0.06, "bet_large": 0.06, "bet_savings": 0.045}, ev_answer_pct=10)
+             kyc_bets={"bet_small": 0.055, "bet_large": 0.056, "bet_savings": 0.044}, ev_answer_pct=10)
 ROBERT = dict(name="Robert", age=59, horizon_years=4, objective="retirement", capital=400_000, monthly_contribution=0,
               emergency_fund_months=12, income_stability="stable", withdrawal_share_3y=0.2,
               loss_reaction="hold", max_loss_pct=15, knowledge_level="advanced", years_experience=20,
               products_held=["stocks", "etfs", "bonds"], interests=["dividends", "canada"], exclusions=["crypto"],
-              kyc_bets={"bet_small": 0.04, "bet_large": 0.02, "bet_savings": 0.035}, ev_answer_pct=10)
+              kyc_bets={"bet_small": 0.046, "bet_large": 0.0, "bet_savings": 0.038}, ev_answer_pct=10)
 # KYC answers (dh.kyc, decision #40): fictional, chosen to match each story (Joud's examples on optimisation-markowitz).
 
 # The profiles the app and the CLI (`python -m dh propose|explain`) run. One definition, so the same profile gives the
@@ -83,8 +83,8 @@ SCENARIOS = [
          profile=_p(AMIRA, requested_positions={"NVDA": 0.50}), expect=dict(risk_level=5, refused=["NVDA"])),
     dict(id="amira-nvda-lookthrough", note="12% NVDA direct passes alone, but QQQ+SPY push it over 15%",
          profile=AMIRA, strategy=AMIRA_TECH, holdings=HOLDINGS_DEMO, expect=dict(verdict="fail", failed=["G4"])),
-    dict(id="mateo-esg-ok", note="ESG-tilted balanced strategy passes", profile=MATEO, strategy=MATEO_OK,
-         expect=dict(risk_level=3, verdict="pass")),
+    dict(id="mateo-esg-ok", note="ESG-tilted strategy accepted with incomplete ETF holdings disclosed", profile=MATEO, strategy=MATEO_OK,
+         expect=dict(risk_level=3, verdict="warn", warned=["G16"])),
     dict(id="mateo-xom", note="excluded fossil-fuel stock slipped into the strategy", profile=MATEO,
          strategy=_p(MATEO_OK, weights={**MATEO_OK["weights"], "FTS.TO": 0.0, "XOM": 0.05}),
          expect=dict(verdict="fail", failed=["G3"])),
@@ -92,7 +92,7 @@ SCENARIOS = [
          strategy=MATEO_OK, holdings=HOLDINGS_DEMO, expect=dict(verdict="warn", warned=["G10"])),
     dict(id="robert-tsla-refused", note="the brief's test: challenge the hyped request",
          profile=_p(ROBERT, requested_positions={"TSLA": 0.25}), strategy=ROBERT_OK, explanation=ROBERT_TEXT,
-         expect=dict(risk_level=2, refused=["TSLA"], verdict="pass")),
+         expect=dict(risk_level=2, refused=["TSLA"], verdict="warn", warned=["G16"])),
     dict(id="robert-tsla-applied", note="strategy quietly gives him the 25% TSLA anyway",
          profile=_p(ROBERT, requested_positions={"TSLA": 0.25}),
          strategy=_p(ROBERT_OK, weights={"XBB.TO": 0.30, "ZST.TO": 0.20, "GLD": 0.05, "XIU.TO": 0.20, "TSLA": 0.25}),

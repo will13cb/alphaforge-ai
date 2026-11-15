@@ -22,7 +22,8 @@ RULES = {
     "G4": "Each company ≤ its own cap (from its worst drop and the client's limits, #24), counted through ETFs",
     "G5": "Crypto ≤ crypto cap",
     "G6": "Defensive share ≥ defensive floor (money needed within 3 years, never 100% growth)",
-    "G7": "Historical max drawdown within the client's loss limit",
+    "G7": "Loss rule: chance of a drop deeper than the loss limit over the horizon ≤ 10% (simulated, final weights; "
+          "in % and $)",
     "G8": "Volatility within target (warning only)",
     "G9": "Requests that break a limit are refused, not quietly applied",
     "G10": "Exclusions respected through ETFs too (warning: disclose)",
@@ -32,18 +33,19 @@ RULES = {
     "G14": "Geography: no country above 70% of the equities (warning: disclose)",
     "G15": "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)",
     "G16": "Concentration: at least 8 effective holdings through the ETFs (warning: disclose)",
-    "G17": "Worst drop in dollars within the client's loss limit in dollars",
+    "G18": "Consistency: every number shown describes the final weights and data (dh.risk.sync)",
 }
+# G17 (worst drop in $ vs limit in $) was G7 times the capital: merged into G7 (decision R8, audit A7).
 
 
 def research_mode() -> bool:
-    """harness.toml [data] extra set (decision #41): G18 exists only then, so the demo's rule list is unchanged."""
+    """harness.toml [data] extra set (decision #41): G19 exists only then, G18 remains the result-consistency rule in every mode."""
     from ..data import load_config
     return bool(load_config().extra)
 
 
 if research_mode():
-    RULES["G18"] = "Dividends of single companies held are covered by their last 3 years' earnings (warning: disclose)"
+    RULES["G19"] = "Dividends of single companies held are covered by their last 3 years' earnings (warning: disclose)"
 
 
 def _c(rule, ok, detail, warn=False):
@@ -88,9 +90,10 @@ def check_strategy(s: dict, limits: dict, profile: dict, holdings=None) -> list[
     d = sum(v for k, v in w.items() if k in DEFENSIVE)
     out.append(_c("G6", d >= limits["min_defensive"] - 1e-9, f"defensive {d:.0%} vs floor {limits['min_defensive']:.0%}"))
 
-    if "max_drawdown" in st:
-        dd, lim = abs(st["max_drawdown"]), limits.get("loss_limit", limits["max_drawdown"])
-        out.append(_c("G7", dd <= lim + 1e-9, f"max drawdown {dd:.1%} vs loss limit {lim:.0%}"))
+    if "max_drawdown" in st or s.get("risk"):
+        from . import checks
+        d2 = checks.d2_capacity(st, limits, profile, s.get("risk"))   # one implementation of the loss rule (R8)
+        out.append(dict(rule="G7", status=d2["status"], detail=d2["reason"], text=RULES["G7"]))
     if "ann_vol" in st:
         out.append(_c("G8", st["ann_vol"] <= limits["target_vol"] + 1e-9,
                       f"volatility {st['ann_vol']:.1%} vs target {limits['target_vol']:.0%}", warn=True))
@@ -103,16 +106,20 @@ def check_strategy(s: dict, limits: dict, profile: dict, holdings=None) -> list[
     via = sorted(k for k, v in eff.items() if k in excl and k not in w and v > 0)
     out.append(_c("G10", not via, "ok" if not via else f"held through ETFs: {', '.join(via)}", warn=True))
     out += _portfolio_checks(s, limits, profile, holdings)
+    if s.get("stamps"):   # strategies the Portfolio built carry stamps; hand-made ones (scenarios) do not
+        from ..risk import sync
+        stale = [i for i in sync.verify(s) if i.severity == "block"]
+        out.append(_c("G18", not stale, "every section describes the final weights" if not stale else
+                      "; ".join(i.message for i in stale)))
     return out
 
 
 def _portfolio_checks(s: dict, limits: dict, profile: dict, holdings: dict) -> list[dict]:
-    """G14-G17: the Portfolio's C/D checks (checks.py), so there is one implementation of each rule."""
+    """G14-G16: the Portfolio's C checks (checks.py), so there is one implementation of each rule."""
     from . import checks
     from . import diversification as dv
     w = s["weights"]
     rep = s.get("diversification") or dv.report(w, holdings=holdings, correlations=False)
-    st = s.get("stats", {})
     c2, c3, c3b, c5 = (checks.c2_geography(w, holdings), checks.c3_sector(rep), checks.c3b_job_sector(rep, profile),
                        checks.c5_concentration(w, holdings))
     out = [dict(rule="G14", status=c2["status"], detail=c2["reason"], text=RULES["G14"])]
@@ -120,13 +127,10 @@ def _portfolio_checks(s: dict, limits: dict, profile: dict, holdings: dict) -> l
                                                                    else "pass")
     out.append(dict(rule="G15", status=worst, detail=f"{c3['reason']}; {c3b['reason']}", text=RULES["G15"]))
     out.append(dict(rule="G16", status=c5["status"], detail=c5["reason"], text=RULES["G16"]))
-    if "max_drawdown" in st and profile.get("capital"):
-        d2 = checks.d2_capacity(st, limits, profile)
-        out.append(dict(rule="G17", status=d2["status"], detail=d2["reason"], text=RULES["G17"]))
-    if "G18" in RULES and research_mode():  # same implementation as F7; ⚠ only: earnings understate some cash flows
+    if "G19" in RULES and research_mode():
         f7 = checks.f7_dividends(w)
         if f7 is not None:
-            out.append(dict(rule="G18", status=f7["status"], detail=f7["reason"], text=RULES["G18"]))
+            out.append(dict(rule="G19", status=f7["status"], detail=f7["reason"], text=RULES["G19"]))
     return out
 
 

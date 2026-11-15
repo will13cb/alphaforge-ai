@@ -42,7 +42,19 @@ only after it passed `validation`; a Python traceback never reaches the screen.
 
 Tests: `tests/test_interface_*.py` (`make test`). Test report: `interface/TESTING.md`.
 
-## Next: voice
+## Optional voice assistance
 A voice conversation with the assistant (speak your situation or a question, hear the answer): microphone input
 (`st.audio_input`) → speech-to-text (Amazon Transcribe) → the same Extractor / Analyst, checked by the same code →
-the text answer read aloud (Amazon Polly). Not built yet: it needs AWS after the event account closes.
+the text answer read aloud (Amazon Polly). Implemented, disabled by default. Enable with `AF_VOICE_ENABLED=1`; see `aws/voice-accessibility.md` for permissions and cleanup.
+
+## Live activity and evidence
+
+Both front ends share a Dark mode switch in the sidebar. During analysis, real `Trace.step` hand-offs update a
+live status panel. The completed panel collapses; the client Activity page and jury Activity & evidence tab keep
+the record, checks, outputs, source references, explanation origin and actual storage outcome available to inspect
+and download. A saved jury session result is labelled as saved; only Re-run starts fresh activity.
+
+The Activity page lists the universe currently loaded through `dh.data`, with ticker/name/class search. It
+automatically reflects enabled additions from Joud’s ingestion work. It does not claim an unconfigured product
+catalogue is loaded or that every available product is selected by the portfolio engine. No ingestion or S3 data
+upload is triggered by visiting this page.

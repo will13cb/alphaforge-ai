@@ -1,8 +1,10 @@
+> **Release update:** G7/D2 now uses a horizon bootstrap on final weights (10% model exceedance threshold, cash + 3% growth premium assumption); G18 checks consistency, research G19 dividends. Activity and optional Transcribe/Polly speech are integrated. Refresh the rendered PNG before presenting it.
+
 # Architecture: what runs today (updated Sun Nov 15, evening; decisions #14, #30, #40)
 
 **Strands agents for the steps that decide, a fixed pipeline for the orchestration, models on Amazon Bedrock, every
-run's trace kept on Amazon S3.** The pipeline runs locally (two Streamlit apps and a CLI), and the apps are ready for
-Streamlit Community Cloud, reading the starter data from S3 at first start (`src/dh/bootstrap.py`). Bedrock AgentCore Runtime
+run's trace kept on Amazon S3.** The two Streamlit apps run locally and on Streamlit Community Cloud, which reads the
+data from S3 at first start (`src/dh/bootstrap.py`); a CLI runs the same pipeline. Bedrock AgentCore Runtime
 was planned "if working by Sunday midday" (#14) and is **not deployed**. "Agents investigate and argue, code enforces."
 Dashed = not built / not deployed. Keep this in sync with what actually runs: the jury compares it to the demo.
 
@@ -14,11 +16,14 @@ flowchart TB
         direction LR
         P0["Fictional personas<br/>Amira · Mateo · Robert"]
         Q["Guided questions<br/>checked with the engine's own limits"]
+        VO["Voice, optional<br/>speak, hear the answer"] --> T
+        H["'I already have a portfolio'<br/>holdings line by line or in words"]
         T["Free text"] --> EXT["Extractor · Strands agent<br/>tool: check_profile<br/>missing facts → ask, don't guess"]
     end
 
     O{{"Orchestrator · pipeline.py<br/>fixed order · one round · Guardian always runs"}}
     P0 --> O
+    H --> O
     Q --> O
     EXT --> O
 
@@ -27,17 +32,18 @@ flowchart TB
         direction TB
         PR["1 · Profiler<br/>tolerance · capacity · knowledge → limits, each with its reason<br/>loss limit · defensive floor · per-company and crypto caps<br/>KYC bets → A: cross-check only · expected-value question"]
         MD["2 · Market data<br/>31 assets in CAD · vol · worst drop · CVaR · correlations<br/>2022 stress (2008 / 2020 when covered) · goal outlook"]
-        PF["3 · Portfolio<br/>up to 3 strategies = 3 risk levels<br/>split computed: largest growth share whose worst drop ≤ loss limit,<br/>capped by horizon, liquidity, safety net · says which one set it<br/>crypto only if asked + allowed + the data agrees"]
+        PF["3 · Portfolio<br/>up to 3 strategies = 3 risk levels<br/>split computed: largest growth share meeting the simulated horizon loss rule,<br/>capped by horizon, liquidity, safety net · says which one set it<br/>crypto only if asked + allowed + the data agrees"]
         CK["Checks C–F<br/>companies & sectors through the ETFs · geography ·<br/>duplicates · drawdown in % and $ · goal · profile fit"]
+        EXR["Existing portfolio review<br/>same checks C–F and Guardian · fees in $ ·<br/>labelled stand-ins for funds without data ·<br/>rebuild into the first strategy, moves in $"]
         RQ["Request side by side<br/>'as asked' vs 'what fits', same checks<br/>pros & cons from the numbers only"]
     end
 
-    GU{{"Guardian · rules G1–G17<br/>modelled on NI 31-103 KYC / suitability<br/>✔ pass · ⚠ disclose · ✘ block"}}
+    GU{{"Guardian · loss + consistency controls<br/>modelled on NI 31-103 KYC / suitability<br/>✔ pass · ⚠ disclose · ✘ block"}}
 
     %% ---------- Strands agents ----------
     subgraph AG["Strands agents · tools capped, traced"]
         direction TB
-        CR["4 · Critic<br/>investigates before objecting · ≤ 6 tool calls<br/>≤ 3 objections, each backed by a tool result<br/>fix menu: merge · trim · shift · disclose"]
+        CR["4 · Critic<br/>investigates before objecting · ≤ 6 tool calls<br/>≤ 3 objections, numbers backed by tools or facts<br/>fix menu: merge · trim · shift · disclose"]
         EX["5 · Explainer<br/>writes ids, never numbers ({n7})<br/>self-checks with G11–G13"]
         AN["Analyst · follow-up questions<br/>what-ifs re-run the whole pipeline"]
     end
@@ -53,6 +59,9 @@ flowchart TB
     CR -- "one fix per strategy:<br/>tighten an input, rerun the whole calculation" --> PF
     CR -- "objections not fixed → cons" --> RQ
     RQ --> EX
+    PF -- "first strategy = rebuild target" --> EXR
+    EXR -- "section 'the portfolio you already have'" --> EX
+    CR -. "reviews it too, disclose only" .-> EXR
     EX --> GU2{{"Guardian G11–G13<br/>disclaimer · every number traced ·<br/>every request answered"}}
     GU2 -- "✘ → deterministic template, said in the trace" --> UI
     GU2 -- "✔" --> UI["Apps: limits & reasons · strategies & charts ·<br/>explanation · Analyst · trace"]
@@ -70,19 +79,21 @@ flowchart TB
     %% ---------- AWS ----------
     subgraph AWS["AWS (slide 7)"]
         BR["Amazon Bedrock<br/>Claude Opus 5.5 · us-east-1"]
-        S3[("Amazon S3<br/>traces/: one JSON per run<br/>raw/: starter data for the hosted app")]
+        S3[("Amazon S3<br/>traces/: one JSON per run<br/>raw/: data for the hosted app<br/>voice/: audio, deleted once transcribed")]
+        TP["Amazon Transcribe · Amazon Polly<br/>speech → text · text → speech<br/>optional (AF_VOICE_ENABLED)"]
         AC["Bedrock AgentCore Runtime<br/>planned, NOT deployed"]
     end
     AG -. "models" .-> BR
     EXT -. "model" .-> BR
     TR -- "every run (local copy if S3 is unreachable)" --> S3
     O -. "not deployed" .-> AC
-    HOST["Streamlit Community Cloud<br/>hosted apps · ready, deploy to confirm"]
+    HOST["Streamlit Community Cloud<br/>the hosted apps"]
     UI -. "hosted on" .-> HOST
     S3 -. "raw/ data at first start" .-> HOST
+    VO -. "audio" .-> TP
 
     style AC stroke-dasharray: 5 5
-    style HOST stroke-dasharray: 5 5
+    style TP stroke-dasharray: 5 5
     style O fill:#fde68a,stroke:#b45309,color:#000
     style GU fill:#fde68a,stroke:#b45309,color:#000
     style GU2 fill:#fde68a,stroke:#b45309,color:#000
@@ -103,8 +114,9 @@ limit or a number).
 | Agents that decide | Which tools to call, and when they're done | **Strands Agents** on Bedrock: Extractor, Critic, Explainer, Analyst. Tool calls capped and traced; demo answers cached and committed (`cache/`) so the demo replays without AWS |
 | Deterministic steps | The numbers and the rules | Plain Python: Profiler, market data, Portfolio, checks C–F, request side by side, Guardian. The agents call them as tools |
 | Model | The LLM | **Amazon Bedrock**: `global.anthropic.claude-opus-5-5` (Claude Opus 5.5), us-east-1, text and tool use verified 2026-11-14 (`make bedrock-check`). Critic/Analyst model switchable with `BEDROCK_CRITIC_MODEL_ID` |
-| Hosting | Where the pipeline runs | **Locally**: demo app (`make app`), guided interface (`make ui`), CLI (`python -m dh explain`). **Streamlit Community Cloud**: ready (`requirements.txt`, README steps), data from `s3://$S3_BUCKET/raw/` (`make data-up`) at first start; deployment to confirm. Bedrock AgentCore Runtime: **not deployed** |
-| Traces and data | Where runs and data are kept | **Amazon S3**: `raw/` holds the starter CSVs for the hosted app (`make data-up`); `traces/` every run from both apps and the CLI (`dh.tracestore`, #25); local copy in `outputs/traces/` if S3 is unreachable; `make backup` pulls them into git before the account closes |
+| Hosting | Where the pipeline runs | **Streamlit Community Cloud** (the hosted apps) and **locally**: demo app (`make app`), guided interface (`make ui`), CLI (`python -m dh explain`). Data from `s3://$S3_BUCKET/raw/` (`make data-up`) at first start. Bedrock AgentCore Runtime: **not deployed** |
+| Traces and data | Where runs and data are kept | **Amazon S3**: `traces/` every run from both apps and the CLI (`dh.tracestore`, #25; local copy if S3 is unreachable); `raw/` the data for the hosted app; `voice/` audio for transcription, deleted once done |
+| Voice (optional) | Speak instead of type | **Amazon Transcribe** (speech → text, English or French Canada) and **Amazon Polly** (the answer read aloud), in the guided interface, off unless `AF_VOICE_ENABLED=1` |
 
 | Component | LLM? | Output |
 |---|---|---|
@@ -114,9 +126,10 @@ limit or a number).
 | Portfolio | no | up to 3 strategies = 3 risk levels (#32), split computed and says what set it (#17, #22, #33) |
 | Checks C–F | no | one shape per check: value, limit, status, reason, source (#20) |
 | Guardian | no | ✔ / ⚠ / ✘ per rule G1–G17 on each strategy; G11–G13 on the text |
-| Critic | yes (Strands, 11 tools) | ≤ 3 objections backed by tool results; one fix per strategy that reruns the whole calculation, re-checked by the Guardian, original kept if it fails (#30) |
+| Critic | yes (Strands, 11 tools) | ≤ 3 objections, each number backed by a cited tool result or the facts it was given (#45); one fix per strategy that reruns the whole calculation, re-checked by the Guardian, original kept if it fails (#30) |
 | Request side by side | no | the client's request "as asked" vs "what fits", same checks; pros and cons from the numbers (#28) |
 | Explainer | yes (Strands, tool `check_text`) | client text with number ids filled by code (strict G12, #27); template if a check fails (#23) |
+| Existing portfolio review | no (+ Critic, Explainer, Analyst) | what the client holds, with the same checks C–F and Guardian, fees in $, labelled stand-ins, and the moves in $ to the first strategy (#42, #44) |
 | Analyst | yes (Strands, tools) | answers to follow-ups; what-ifs re-run the pipeline, Guardian included; every number from a cited tool result (#35) |
 
 **Not in the demo:** the Markowitz optimiser (branch `optimisation-markowitz`, Joud) was tested and set aside (#37):

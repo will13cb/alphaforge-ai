@@ -79,7 +79,8 @@ QUESTIONS = {
     "objective": "What is this money for: growing it, retirement, a major project, income, passing it on, or a safety cushion?",
     "loss_reaction": "If your investments dropped 20% in three months, what would you do: sell everything, sell some, "
                      "hold, or buy more?",
-    "max_loss_pct": "What is the largest drop over a year, in %, that you could live with?",
+    "max_loss_pct": "What is the largest drop from a high point, at any time while invested, that you could live "
+                    "with, in %?",
     "emergency_fund_months": "How many months of expenses do you have set aside for emergencies?",
     "income_stability": "Is your income stable, variable, or uncertain?",
     "knowledge_level": "How would you describe your investing knowledge: none, basic, intermediate, or advanced?",

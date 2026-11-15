@@ -8,6 +8,7 @@ from interface.core import services, wizard
 from interface.core.questions import ALL_STEPS, BY_ID, STEPS
 from interface.ui import components as ui
 from interface.ui import voice as voice_ui
+from interface.ui.activity import live_run
 
 S = st.session_state
 
@@ -149,7 +150,7 @@ def step_form(i: int) -> None:
 
 def review() -> None:
     st.subheader("Check your answers")
-    st.markdown('<p class="af-muted">Review names and amounts carefully. Change any answer with “Edit” before running the simulation.</p>',
+    st.markdown('<p class="af-muted">Review names and amounts carefully. Change any answer with “Edit” before running the simulation. Analysis records may be saved to Amazon S3 or locally.</p>',
                 unsafe_allow_html=True)
     _, errors = wizard.all_values(S.answers)
     for i, step in enumerate(STEPS):
@@ -176,8 +177,8 @@ def review() -> None:
             if S.get("existing_positions"):  # branch portefeuille_existant: entered on the Welcome page
                 profile["existing_positions"] = dict(S.existing_positions)
             try:
-                with ui.thinking("Checking your limits, the market data and the proposals… (about 10 seconds)"):
-                    res = services.run_analysis(profile)
+                with live_run() as on_step:
+                    res = services.run_analysis(profile, on_step=on_step)
                 S.profile, S.res, S.chat = profile, res, []
                 S.goto = "Your results"
                 st.rerun()

@@ -111,8 +111,10 @@ STEPS = (
         Question("loss_reaction", "If your investments lost a fifth of their value in 3 months, what would you do?",
                  "choice", options=_opts(REACTION),
                  help="There is no right answer. People who sell after a drop often lock in the loss."),
-        Question("max_loss_pct", "What is the largest drop in one year you could live with, in %?", "percent",
-                 "Ex.: 15 (for 15%)", help="For example, 15 means that 10,000 $ could fall to 8,500 $ for a while."),
+        Question("max_loss_pct", "What is the largest drop from a high point, at any time while invested, that you "
+                 "could live with, in %?", "percent", "Ex.: 15 (for 15%)",
+                 help="From the highest value your investments reach to the lowest point after it, whenever it "
+                      "happens. For example, 15 means that 10,000 $ could fall to 8,500 $ for a while."),
     )),
     Step("experience", "Your experience", "We only propose what you can understand and follow.", (
         Question("knowledge_level", "How would you describe your investing experience?", "choice",

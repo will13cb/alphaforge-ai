@@ -74,7 +74,7 @@ def test_f7_warns_only_in_research_mode(monkeypatch):
     assert checks.f7_dividends(w) is None                                               # no data → no row, no guess
 
 
-# ---- dividends across the architecture (Guardian G18, F1, Explainer, funds) ---------------------------------------
+# ---- dividends across the architecture (Guardian G19, F1, Explainer, funds) ---------------------------------------
 
 HELD = [{"ticker": "RY.TO", "status": "covered", "payout_3y": .42, "reason": "dividends are 42% of the last 3 years' earnings"},
         {"ticker": "ENB.TO", "status": "not covered", "payout_3y": 1.30,
@@ -84,14 +84,14 @@ HELD = [{"ticker": "RY.TO", "status": "covered", "payout_3y": .42, "reason": "di
 def test_g18_exists_only_in_research_mode(monkeypatch):
     import importlib
     from dh.agents import guardian
-    assert "G18" not in guardian.RULES                                       # demo: 17 rules
+    assert "G19" not in guardian.RULES                                       # demo: 17 rules
     try:
         monkeypatch.setattr(data, "load_config", lambda path=None: data.Config(extra=("cadusa",)))
         g = importlib.reload(guardian)
-        assert "G18" in g.RULES
+        assert "G19" in g.RULES
         monkeypatch.setattr(checks, "f7_dividends", lambda w: {"status": "warn", "reason": "ENB.TO: 130%"})
         rows = [r for r in g._portfolio_checks({"weights": {"ENB.TO": .2, "XIU.TO": .8}, "stats": {}}, {}, {}, {})
-                if r["rule"] == "G18"]
+                if r["rule"] == "G19"]
         assert rows and rows[0]["status"] == "warn" and "ENB.TO" in rows[0]["detail"]
     finally:
         monkeypatch.setattr(data, "load_config", lambda path=None: data.Config())

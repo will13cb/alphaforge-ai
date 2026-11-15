@@ -11,16 +11,14 @@ Selection (drop any strategy with a ✘, keep ≤ 3, say why) lives in `pipeline
 
 from __future__ import annotations
 
-from ..data import period_label
-
 import pandas as pd
 
 from .. import data, metrics
+from ..data import period_label
 from ..holdings import holdings as load_holdings
 from . import checks as ck
 from . import guardian, market
 from .rules import DEFENSIVE
-
 
 # ---- G. request handling -------------------------------------------------------------------------------
 
@@ -64,8 +62,12 @@ def overlay_growth(base: dict[str, float], request: dict[str, float]) -> dict[st
 
 def _version(label: str, w: dict, requested: list[str], profile: dict, limits: dict, rets: pd.DataFrame,
              holdings: dict) -> dict:
+    # the same loss rule as the strategies (G7 = D2, simulated, R1/R8); imported here: portfolio imports this module's
+    # neighbours, not the other way round
+    from .portfolio import final_risk
+
     st = market.strategy_stats(w, rets=rets)
-    s = {"weights": w, "stats": st}
+    s = {"weights": w, "stats": st, "risk": final_risk(w, profile, limits, rets)}
     chk = ck.run(s, profile, limits, rets=rets, holdings=holdings)
     g = guardian.check_strategy(s, limits, profile, holdings)
     eff = metrics.look_through(w, holdings)
@@ -80,6 +82,7 @@ def _version(label: str, w: dict, requested: list[str], profile: dict, limits: d
         "label": label, "weights": w,
         "real_weight": {t: eff.get(t, 0.0) for t in requested},
         "max_drawdown": st["max_drawdown"], "drawdown_cad": round(cap * dd) if cap else None,
+        "chance_beyond_limit": s["risk"]["exceedance"], "drop_1_in_10": s["risk"]["drop_1_in_10"],
         "loss_limit": lim, "loss_limit_cad": round(cap * lim) if cap else None,
         "return_2022": st["return_2022"], "ann_vol": st["ann_vol"],
         "growth": sum(v for t, v in w.items() if t not in DEFENSIVE),

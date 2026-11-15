@@ -29,7 +29,7 @@ from ..data import ROOT, period, period_label
 from ..personas import DISCLAIMER
 
 DISCLAIMER_FR = "Simulation seulement, pour un profil fictif. Pas un conseil financier ; aucune transaction réelle."
-from . import critic, market
+from . import critic, grounding, market
 from .rules import UNIVERSE
 
 PROMPT_VERSION = "analyst-v3"
@@ -925,6 +925,9 @@ def validate(ans: dict, calls: list[dict], names: dict[str, str] | None = None) 
     missing = [t for t in critic._claim_numbers(plain) if not critic._backed(t, pool)]
     if missing:
         return f"replaced: unbacked number(s) {', '.join(missing)}", missing
+    issues = grounding.problems(plain, results)
+    if issues:
+        return "replaced: metric mismatch: " + "; ".join(issues), issues
     counts = {"rules": set(), "strategies": set(), "assets": set()}
     for r in results:
         _counts(r, counts)
@@ -1085,11 +1088,16 @@ def add_to_trace(res: dict, profile: dict, question: str, provider: str | None =
                  holdings=None) -> dict:
     """Answer a follow-up on a pipeline result and append Client → Analyst → Client to res['trace']."""
     a = ask(question, res, profile, provider, rets=rets, holdings=holdings)
+    return record_answer(res, question, a)
+
+
+def record_answer(res: dict, question: str, a: dict) -> dict:
+    """Append the already-computed answer and its tool evidence, without calling the agent again."""
     tr = res.get("trace")
     if tr is not None:
         tr.step("Client", "Analyst", f"follow-up: {question}")
         calls = "; ".join(short(c) for c in a["tool_calls"]) or "no tool call"
         tr.step("Analyst", "Client", f"[{a['source']}] {a['status']}; tools: {calls}",
-                output={k: a[k] for k in ("answer", "evidence", "status", "source", "model", "note")})
+                output={k: a.get(k) for k in ("answer", "evidence", "tool_calls", "status", "source", "model", "note")})
     res.setdefault("followups", []).append(a)
     return a

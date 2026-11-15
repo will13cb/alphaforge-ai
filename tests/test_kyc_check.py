@@ -17,7 +17,7 @@ def test_personas_bets_agree_and_change_no_limit():
 
 
 def test_bets_more_cautious_than_stated_are_flagged_not_applied():
-    p = {**AMIRA, "kyc_bets": {"bet_small": 0.04, "bet_large": 0.02, "bet_savings": 0.035}}  # Robert's bets
+    p = {**AMIRA, "kyc_bets": {"bet_small": 0.046, "bet_large": 0.0, "bet_savings": 0.038}}  # Robert's bets
     lim = derive_limits(p)
     assert not lim["kyc"]["agrees"] and any("to clarify" in f for f in lim["kyc"]["flags"])
     assert lim["risk_tolerance"] == derive_limits(_no_kyc(AMIRA))["risk_tolerance"]  # limits unchanged

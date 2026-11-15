@@ -4,8 +4,8 @@ Order: 1. the team's S3 bucket (`make data-up` put them there; needs S3_BUCKET +
 secrets), 2. rebuild with the organizers' script (works after the AWS account closes). Add other sources here.
 
 The data never goes in git (Yahoo's terms, decision #11), so a hosted app rebuilds it with the organizers' own script
-(`Datathon2026Infos/alphaforge_starter/build_dataset.py`, via `scripts/build_long_data.py`, same window 2021-11-12 to
-2026-11-12). Only when AF_AUTO_DATA=1 (set it in the host's secrets): a laptop never downloads by surprise.
+(`Datathon2026Infos/alphaforge_starter/build_dataset.py`, via `scripts/build_long_data.py`), from harness.toml [data]
+start (2010-01-04) to the official END, or 2021-11-12 if start is "". Only when AF_AUTO_DATA=1 (set it in the host's secrets): a laptop never downloads by surprise.
 
     from dh.bootstrap import ensure_data
     ok, note = ensure_data()      # (True, "") when data/raw is ready
@@ -44,6 +44,11 @@ def optional() -> list[str]:
 _LOCK = threading.Lock()  # one build even if several visitors open the app at once
 
 
+def build_start() -> str:
+    """First day a host rebuild downloads: harness.toml [data] start (decision #47), else the starter's own."""
+    return load_config().start or STARTER_START
+
+
 def data_present() -> bool:
     folder = load_config().data_dir
     return all((folder / f).exists() for f in required())
@@ -66,14 +71,15 @@ def ensure_data() -> tuple[bool, str]:
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
             folder = load_config().data_dir
+            start = build_start()
             if not all((folder / f).exists() for f in FILES):
-                mod.main(["--start", STARTER_START, "--out", str(folder)])
+                mod.main(["--start", start, "--out", str(folder)])
             for n in load_config().extra:  # research mode: the extra catalogue, same organizers' download
                 if not all((folder / f"products_{n}" / f).exists() for f in EXTRA_FILES):
                     spec = importlib.util.spec_from_file_location("build_products", ROOT / "scripts" / "build_products.py")
                     bp = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(bp)
-                    bp.main(["--catalogue", n, "--start", STARTER_START])
+                    bp.main(["--catalogue", n, "--start", start])
             ensure_holdings()
         except (Exception, SystemExit) as e:  # noqa: BLE001 — the app shows the reason instead of crashing
             return False, f"{note}; could not build the data ({type(e).__name__}: {str(e)[:200]})"

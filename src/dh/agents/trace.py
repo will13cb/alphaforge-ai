@@ -10,19 +10,28 @@ This is what the app shows step by step and what the jury can inspect (also save
 from __future__ import annotations
 
 import json
+import logging
+from collections.abc import Callable
+from copy import deepcopy
 from datetime import datetime, timezone
 
 ICON = {"pass": "✔", "warn": "⚠", "fail": "✘"}
 
 
 class Trace:
-    def __init__(self):
+    def __init__(self, on_step: Callable[[dict], None] | None = None):
         self.steps: list[dict] = []
+        self.on_step = on_step
 
     def step(self, agent: str, to: str, summary: str, output=None, checks=None, sources=None) -> dict:
         e = dict(agent=agent, to=to, timestamp=datetime.now(timezone.utc).isoformat(timespec="seconds"),
                  summary=summary, output=output, checks=checks or [], sources=sources or [])
         self.steps.append(e)
+        if self.on_step is not None:
+            try:
+                self.on_step(deepcopy(e))
+            except Exception:  # presentation must never change a financial result
+                logging.getLogger(__name__).exception("Activity observer failed")
         return e
 
     def markdown(self) -> str:

@@ -43,6 +43,8 @@ def document(res: dict, profile: dict, persona: str = "") -> dict:
         "created": now.isoformat(timespec="seconds"),
         "commit": _commit(),
         "persona": persona,
+        "parent_run_id": (res.get("stored") or {}).get("run_id"),
+        "followups": res.get("followups", []),
         "profile": profile,
         "limits": res.get("limits"),
         "verdict": res.get("verdict"),

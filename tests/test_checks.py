@@ -77,7 +77,7 @@ def test_c4_classes_and_c5_concentration():
     assert status(ck.c4_classes(rep({"SPY": 1.0}))) == "fail"
     assert status(ck.c4_classes(rep({"SPY": 0.6, "XBB.TO": 0.4}))) == "pass"
     assert status(ck.c5_concentration({"NVDA": 0.4, "MSFT": 0.3, "XOM": 0.3}, {})) == "warn"     # 3 names
-    assert status(ck.c5_concentration({"SPY": 0.5, "XBB.TO": 0.5}, {})) == "pass"                # broad ETFs
+    assert status(ck.c5_concentration({"SPY": 0.5, "XBB.TO": 0.5}, {})) == "warn"                # issuer holdings unknown
 
 
 def test_c6_duplicates_and_near_duplicates():
@@ -95,22 +95,32 @@ def test_c6_duplicates_and_near_duplicates():
 
 
 def test_d_risk_vs_client():
+    """Decision R8: D1 (observed) only discloses; D2 is THE loss rule, simulated on the final weights when the strategy
+    carries `risk`, else the observed drop, labelled."""
     prof = {"max_loss_pct": 20, "capital": 100_000}
     lim = {"loss_limit": 0.15, "max_drawdown": 0.15}
-    assert status(ck.d1_tolerance({"max_drawdown": -0.10}, prof)) == "pass"
-    assert status(ck.d1_tolerance({"max_drawdown": -0.18}, prof)) == "warn"                      # > 80% of 20%
-    assert status(ck.d1_tolerance({"max_drawdown": -0.25}, prof)) == "fail"
+    assert status(ck.d1_tolerance({"max_drawdown": -0.10}, prof, lim)) == "pass"
+    assert status(ck.d1_tolerance({"max_drawdown": -0.13}, prof, lim)) == "warn"                 # > 80% of 15%
+    assert status(ck.d1_tolerance({"max_drawdown": -0.25}, prof, lim)) == "warn"                 # observed: never blocks
     d2 = ck.d2_capacity({"max_drawdown": -0.18}, lim, prof)
-    assert status(d2) == "fail" and "18,000 $ vs 15,000 $" in d2["reason"]
+    assert status(d2) == "fail" and "18,000 $ vs 15,000 $" in d2["reason"] and "no simulation" in d2["reason"]
     assert status(ck.d2_capacity({"max_drawdown": -0.10}, lim, prof)) == "pass"
+    risk = {"exceedance": 0.08, "alpha": 0.10, "tolerance": 0.013, "horizon_years": 4, "drop_1_in_10": -0.14}
+    sim = ck.d2_capacity({"max_drawdown": -0.18}, lim, prof, risk)          # observed above, simulated within: pass
+    assert status(sim) == "pass" and "simulated" in sim["reason"] and "15,000 $" in sim["reason"]
+    assert status(ck.d2_capacity({}, lim, prof, {**risk, "exceedance": 0.11})) == "pass"       # within 2 std errors
+    assert status(ck.d2_capacity({}, lim, prof, {**risk, "exceedance": 0.15})) == "fail"
     st = {"worst_12m": -0.20, "stress_2022_drawdown": -0.12, "cvar_95": 0.015}
     assert status(ck.d3_stress(st, lim)) == "warn" and status(ck.d3_stress(dict(st, worst_12m=-0.05), lim)) == "pass"
 
 
 def test_e_goal():
-    o = {"risk_only": {"prob_target": 0.4, "prob_loss": 0.2}, "replay": {"prob_target": 0.8}}
-    assert status(ck.e_goal(o, {"target_amount": 120_000})) == "warn"
-    assert status(ck.e_goal({**o, "risk_only": {"prob_target": 0.6, "prob_loss": 0.1}}, {"target_amount": 1})) == "pass"
+    """The goal is judged in the central view (R3); risk_only and replay are quoted beside it."""
+    o = {"risk_only": {"prob_target": 0.3, "prob_loss": 0.2}, "replay": {"prob_target": 0.8},
+         "central": {"prob_target": 0.4, "prob_target_real": 0.3}}
+    e = ck.e_goal(o, {"target_amount": 120_000})
+    assert status(e) == "warn" and e["value"] == 0.4 and "today's dollars" in e["reason"]
+    assert status(ck.e_goal({**o, "central": {"prob_target": 0.6}}, {"target_amount": 1})) == "pass"
     assert status(ck.e_goal(None, {})) == "pass"
 
 
@@ -129,9 +139,12 @@ def test_f_profile_fit():
     assert via["F6"] == "warn"
 
 
-def test_guardian_g14_to_g17_call_the_checks():
+def test_guardian_g14_to_g16_and_g7_call_the_checks():
+    """G7 is D2 (one implementation, decision R8); G17 (= G7 × capital) is gone."""
     s = {"weights": {"XIU.TO": 0.10, "RY.TO": 0.05, "XBB.TO": 0.45, "ZST.TO": 0.40}, "stats": {"max_drawdown": -0.06}}
     out = {c["rule"]: c["status"] for c in guardian.check_strategy(s, derive_limits(ROBERT), ROBERT, holdings={})}
-    assert out["G14"] == "warn" and out["G15"] == "pass" and out["G16"] == "pass" and out["G17"] == "pass"
+    assert out["G14"] == "warn" and out["G15"] == "pass" and out["G16"] == "warn" and out["G7"] == "pass"
+    assert "G17" not in out and "G17" not in guardian.RULES
     over = dict(s, stats={"max_drawdown": -0.20})
-    assert {c["rule"]: c["status"] for c in guardian.check_strategy(over, derive_limits(ROBERT), ROBERT, holdings={})}["G17"] == "fail"
+    g7 = next(c for c in guardian.check_strategy(over, derive_limits(ROBERT), ROBERT, holdings={}) if c["rule"] == "G7")
+    assert g7["status"] == "fail" and g7["detail"] == ck.d2_capacity(over["stats"], derive_limits(ROBERT), ROBERT)["reason"]

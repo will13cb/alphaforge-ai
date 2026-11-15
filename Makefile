@@ -16,7 +16,7 @@ setup: ## venv + deps + .env
 data: ## Starter CSVs into data/raw/ (copy, S3, or rebuild)
 	@bash scripts/get-data.sh
 
-data-long: ## Longer history into data/raw/ (official build script, START=2004-11-18 by default; needs internet)
+data-long: ## Longer history into data/raw/ (official build script, from harness.toml start = 2010-01-04 unless START=; needs internet)
 	@$(PY) scripts/build_long_data.py $(if $(START),--start $(START))
 
 data-products: ## Extra products listed in Canada/U.S. into data/raw/products_cadusa/ (needs internet; then harness.toml [data] extra)

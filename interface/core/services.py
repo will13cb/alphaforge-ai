@@ -97,7 +97,7 @@ def demo_clients() -> dict[str, tuple[str, dict]]:
     return {k: (DEMO_LABELS.get(k, k), dict(p)) for k, p in DEMO_PROFILES.items()}
 
 
-def run_analysis(profile: dict) -> dict:
+def run_analysis(profile: dict, on_step=None) -> dict:
     """pipeline.run + the Explainer's text. Refuses an incomplete profile before calling the engine."""
     miss = extractor.missing(profile)
     if miss:
@@ -107,12 +107,15 @@ def run_analysis(profile: dict) -> dict:
         raise UserError(msg)
 
     def go():
-        res = pipeline.run(profile)
+        res = pipeline.run(profile, **({"on_step": on_step} if on_step is not None else {}))
         explainer.add_to_trace(res, profile)
         return res
 
     res = _guard("running the analysis", go)
-    store(res, profile)
+    try:
+        store(res, profile)
+    finally:
+        res["trace"].on_step = None  # no UI callback retained in session state
     logger().info("analysis ok: %d strategies, verdict %s", len(res.get("strategies", [])), res.get("verdict"))
     return res
 
@@ -147,6 +150,8 @@ def ask_analyst(question: str, res: dict, profile: dict, history: list[dict] | N
     q = q[:MAX_QUESTION]
     turns = [{"question": h["question"], "answer": h.get("answer", "")} for h in (history or []) if h.get("question")]
     a = _guard("answering your question", analyst.ask, q, res, profile, history=turns)
+    analyst.record_answer(res, q, a)
+    store(res, profile)
     logger().info("analyst %s via %s, %d tool call(s)", a.get("status"), a.get("source"), len(a.get("tool_calls", [])))
     return {**a, "cut": cut, "text": analyst.strip_disclaimer(a.get("answer", "")), "disclaimer": DISCLAIMER}
 
@@ -160,7 +165,7 @@ def charts(res: dict) -> dict:
     out, strategies = {}, res.get("strategies", [])
     try:
         out["growth"] = market_charts.growth_chart(market_charts.growth_data({s["name"]: s["weights"] for s in strategies}))
-    except Exception:  # noqa: BLE001
+    except (Exception, SystemExit):  # missing CSVs must not terminate Streamlit
         logger().exception("growth chart")
     for s in strategies:
         try:
@@ -168,7 +173,7 @@ def charts(res: dict) -> dict:
             df = pc.outcome_frame(s)
             if df is not None:
                 out[("outcome", s["key"])] = market_charts.outcome_chart(df)
-        except Exception:  # noqa: BLE001
+        except (Exception, SystemExit):  # missing CSVs must not terminate Streamlit
             logger().exception("strategy chart %s", s.get("key"))
     return out
 
@@ -199,3 +204,12 @@ def etfs_with_data() -> list[str]:
     from dh.agents.rules import BOND_ETFS, EQUITY_ETFS, GOLD
     known = known_tickers()
     return sorted(t for t in EQUITY_ETFS | BOND_ETFS | GOLD if t in known)
+
+
+def loaded_universe():
+    """Read the enabled universe through the same data path as the market agent."""
+    def go():
+        frame = data.universe().reset_index()
+        columns = [c for c in ("ticker", "name", "asset_class", "currency", "market") if c in frame.columns]
+        return frame[columns]
+    return _guard("loading the product universe", go)

@@ -76,7 +76,21 @@ def company_cap(loss_limit: float, worst_drop: float | None, max_growth: float, 
     return (round(by_loss, 4), "loss") if by_loss <= by_spread else (round(by_spread, 4), "spread")
 
 
-GOAL_MIN_PROB = 0.50          # goal floor: smallest growth share with >= 50% chance at the target (risk-only view)
+GOAL_MIN_PROB = 0.50          # R4: "reachable" = at least a 50% chance at the target (central assumption)
+GOAL_LOW_PROB = 0.25          # R4: below 25% even at the ceiling → "impossible within your limits", else "insufficient"
+
+# ---- quantitative audit, phase 2 (notes/risk-architecture.md, decisions R1-R9) ---------------------------------
+# R1: the growth ceiling is the largest share whose SIMULATED drawdown over the client's horizon breaks the loss limit
+# with a probability of at most LOSS_ALPHA (stationary bootstrap, central assumption), not the one past drawdown.
+LOSS_ALPHA = 0.10
+# R3: central assumption = the growth part earns cash + this premium a year (the defensive part earns cash).
+# Order of magnitude of the long-run equity premium over bills (Dimson, Marsh & Staunton, Global Investment Returns
+# Yearbook, world 1900-present: about 3-4% a year geometric). Verify against the current edition before quoting it.
+CENTRAL_PREMIUM = 0.03
+# R9: goals are shown in nominal dollars and in today's dollars at the Bank of Canada's 2% inflation-control target.
+INFLATION = 0.02
+# R2: window sensitivity of the ceiling = the ceiling recomputed on 3-year sub-windows, one year apart.
+SENSITIVITY_YEARS, SENSITIVITY_STEP_YEARS = 3.0, 1.0
 
 # ---- asset groups (starter universe, 31 assets) ----------------------------------------------
 STOCKS = {

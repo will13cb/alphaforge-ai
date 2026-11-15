@@ -255,7 +255,93 @@ def derive_limits(p: dict, drops: dict | None = None) -> dict:
             requests.append(r)
             flags.append(f"request {tk} {w:.0%}: {r['reason']}")
 
-    return dict(risk_tolerance=tol, risk_capacity=cap, risk_level=level, risk_name=t.pop("name"),
-                knowledge_score=know, **t, loss_limit=loss_limit, loss_limit_source=source, loss_limit_cad=loss_cad,
-                liquidity_floor=wd, horizon_max_growth=hcap, allowed_assets=allowed, reasons=reasons, flags=flags,
-                request_checks=requests, missing=[], kyc=kyc_check(p, tol))
+    out = dict(risk_tolerance=tol, risk_capacity=cap, risk_level=level, risk_name=t.pop("name"),
+               knowledge_score=know, **t, loss_limit=loss_limit, loss_limit_source=source, loss_limit_cad=loss_cad,
+               liquidity_floor=wd, horizon_max_growth=hcap, allowed_assets=allowed, reasons=reasons, flags=flags,
+               request_checks=requests, missing=[], kyc=kyc_check(p, tol))
+    out["reasons_plain"] = plain_reasons(p, out)
+    return out
+
+
+# ---- the same reasons, written for the client (screens only) ------------------------------------------------
+# `reasons` above stay as they are: the Explainer's facts (and so its cache hash) and the Critic's tool read them.
+# These say what each score means. Same numbers, same order; nothing here decides anything.
+SCALE_NOTE = ("Scores run from 1 to 5. Risk: 1 = Preserve, 2 = Cautious, 3 = Balanced, 4 = Growth, 5 = Aggressive. "
+              "Knowledge: 1 = none, 2 = basic, 3 = intermediate, 4 = advanced, 5 = experienced.")
+REACTION_TEXT = {"sell_all": "sell everything", "sell_some": "sell part of it", "hold": "hold on",
+                 "buy_more": "buy more"}
+KNOWLEDGE_NAME = {1: "none", 2: "basic", 3: "intermediate", 4: "advanced", 5: "experienced"}
+
+
+def _risk(n: int) -> str:
+    return f"{n}/5 ({RISK_LEVELS[n]['name']})"
+
+
+def _know(n: int) -> str:
+    return f"{n}/5 ({KNOWLEDGE_NAME.get(n, n)})"
+
+
+def plain_reasons(p: dict, lim: dict) -> list[str]:
+    """The Profiler's reasons in the client's words: every score says what scale it is on and what it means."""
+    a, b = REACTION[p["loss_reaction"]], _loss_score(p["max_loss_pct"])
+    tol, cap, level, know = lim["risk_tolerance"], lim["risk_capacity"], lim["risk_level"], lim["knowledge_score"]
+    out = [f"If your investments fell 20%, you would {REACTION_TEXT.get(p['loss_reaction'], p['loss_reaction'])}: "
+           f"risk tolerance {_risk(a)}.",
+           f"The largest drop you would accept is {p['max_loss_pct']:g}%: risk tolerance {_risk(b)}.",
+           f"We keep the more cautious of these two answers: your risk tolerance is {_risk(tol)}."]
+    c = _horizon_score(p["horizon_years"])
+    out.append(f"Your money stays invested about {p['horizon_years']:g} years: capacity to take risk {_risk(c)}.")
+    wd = p.get("withdrawal_share_3y") or 0
+    for cond, text in [(p["emergency_fund_months"] < 3,
+                        f"Your emergency fund covers {p['emergency_fund_months']:g} months (less than 3)"),
+                       (p["income_stability"] == "uncertain", "Your income is uncertain"),
+                       (wd >= 0.25, f"{wd:.0%} of the money may be needed within 3 years")]:
+        if cond and c > 1:
+            c -= 1
+            out.append(f"{text}: capacity lowered to {_risk(c)}.")
+    if p["objective"] == "safety_cushion" and c > 1:
+        out.append(f"Your goal is a safety cushion: capacity lowered to {_risk(1)}.")
+    out.append(f"Your risk level is the lower of your tolerance ({tol}/5) and your capacity ({cap}/5): "
+               f"{_risk(level)}.")
+    lvl = p.get("knowledge_level")
+    s = LEVEL_FROM_DECLARED.get(lvl, 1)
+    out.append(f"You describe your investing knowledge as {lvl or 'not given'}: knowledge {_know(s)}.")
+    if s < 5 and (p.get("years_experience") or 0) >= 5 and set(p.get("products_held") or []) & {"stocks", "etfs"}:
+        s += 1
+        out.append(f"You have invested in stocks or ETFs for 5 years or more: knowledge raised to {_know(s)}.")
+    quiz = p.get("quiz_correct")
+    if quiz is not None and s > QUIZ_CAP[quiz]:
+        s = QUIZ_CAP[quiz]
+        out.append(f"You answered {quiz} of 3 quiz questions correctly: knowledge capped at {_know(s)}.")
+    ev = expected_value_check(p)
+    if ev and not ev["correct"] and s > EV_WRONG_CAP:
+        s = EV_WRONG_CAP
+        out.append(f"Average-return question: you answered {ev['answer']:g}%, the answer is {ev['expected']:g}%: "
+                   f"knowledge capped at {_know(s)}.")
+    beginner = know <= BEGINNER_MAX_KNOWLEDGE
+    if beginner:
+        out.append(f"At knowledge {BEGINNER_MAX_KNOWLEDGE}/5 or less, crypto is not proposed and the budget for "
+                   "any single company is halved.")
+
+    ll, capital, cad = lim["loss_limit"], p.get("capital"), lim.get("loss_limit_cad")
+    cap_loss = RISK_LEVELS[cap]["max_drawdown"]
+    out.append(f"Your loss limit is {ll:.0%}" + (f" ({cad:,} $ of {capital:,.0f} $)" if cad and capital else "")
+               + f": the smaller of the drop you would accept ({p['max_loss_pct'] / 100:.0%}) and what a "
+               f"capacity of {cap}/5 can absorb ({cap_loss:.0%}).")
+    floor, hcap = lim["min_defensive"], lim["horizon_max_growth"]
+    why = {"liquidity": f"{wd:.0%} of the money may be needed within 3 years",
+           "horizon": f"with {p['horizon_years']:g} years ahead, at most {hcap:.0%} goes in stocks",
+           "safety": "we never put 100% in stocks"}[lim["min_defensive_source"]]
+    out.append(f"At least {floor:.0%} stays in safer investments (bonds and cash): {why}.")
+    mg = round(1 - floor, 4)
+    share = LOSS_SHARE_ONE_COMPANY / (2 if beginner else 1)
+    out.append(f"One company: if it fell again as much as at its worst ({drop_window()}), that alone may use at most "
+               f"{share:.0%} of your loss limit ({share * ll:.1%} of the portfolio). And no company gets more than "
+               f"1/{MIN_COMPANIES} of the {mg:.0%} you can hold in stocks ({mg / MIN_COMPANIES:.1%}). Each company's "
+               "cap is the lower of the two.")
+    excl = "crypto" in (p.get("exclusions") or [])
+    out.append("Crypto: not proposed at your knowledge level." if beginner and not excl
+               else "Crypto: left out, as you asked." if excl
+               else f"Crypto (Bitcoin and Ether counted as one bet): the same rule allows at most "
+                    f"{lim['max_crypto']:.1%}.")
+    return out

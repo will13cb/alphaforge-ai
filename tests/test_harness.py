@@ -60,5 +60,13 @@ def test_bootstrap_builds_only_when_asked(monkeypatch, tmp_path):
     monkeypatch.setattr(bootstrap.importlib.util, "module_from_spec", lambda spec: FakeBuild)
     monkeypatch.setattr(type(bootstrap.importlib.util.spec_from_file_location("x", __file__).loader), "exec_module",
                         lambda self, m: None)
-    assert bootstrap.ensure_data() == (True, "") and calls[0][:2] == ["--start", "2021-11-12"]
+    assert bootstrap.ensure_data() == (True, "") and calls[0][:2] == ["--start", bootstrap.build_start()]
     assert bootstrap.ensure_data() == (True, "") and len(calls) == 1       # built once
+
+
+def test_build_start_follows_harness(monkeypatch):
+    from dh import bootstrap, data
+    monkeypatch.setattr(bootstrap, "load_config", lambda: data.Config(start="2010-01-04"))
+    assert bootstrap.build_start() == "2010-01-04"
+    monkeypatch.setattr(bootstrap, "load_config", lambda: data.Config(start=""))
+    assert bootstrap.build_start() == bootstrap.STARTER_START

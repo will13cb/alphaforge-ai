@@ -180,6 +180,12 @@ def facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
             **{k: _pct(st[k]) for k in ("stress_2008", "stress_2020") if st.get(k) is not None},
             "chance_of_loss_risk_only": _pct(st.get("prob_loss")),
             "chance_of_target_risk_only": _pct(o.get("prob_target")),
+            # decision R1: the loss rule is simulated over the client's horizon; the worst drop above is OBSERVED
+            "chance_of_drop_beyond_loss_limit_simulated": _pct((s.get("risk") or {}).get("exceedance")),
+            "allowed_chance_of_drop_beyond_loss_limit": _pct((s.get("risk") or {}).get("alpha")),
+            "one_in_ten_drop_over_horizon_simulated": _pct((s.get("risk") or {}).get("drop_1_in_10")),
+            "goal_status": ((r.get("goal") or {}).get("status") or "").replace("_", " ") or None,
+            "chance_of_target_central": _pct(((s.get("outlook") or {}).get("central") or {}).get("prob_target")),
             "top_holdings": {t: _pct(w) for t, w in top},
             "why": [a for a in s.get("adjustments", []) if not a.startswith("offered")][:4],
             **_dividend_facts(s["weights"]),
@@ -349,7 +355,7 @@ def template(f: dict) -> str:
         if s.get("split_set_by"):
             line += f", set by {s['split_set_by']}"
             if s.get("worst_drop_test_alone_would_allow"):
-                line += f" (the worst-drop test alone would allow {s['worst_drop_test_alone_would_allow']})"
+                line += f" (the loss test alone would allow {s['worst_drop_test_alone_would_allow']})"
         line += f". Worst historical drop {s['worst_drop']} (your limit {lim['loss_limit']})"
         for k, lab in (("stress_2008", "in 2008-2009"), ("stress_2020", "in the 2020 crash")):
             if s.get(k):

@@ -116,6 +116,61 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1115-044935-will13cb-207d,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_stress_2022,-0.0776,Income / dividends: more prudent
 1115-044935-will13cb-48fc,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_ann_vol,0.0434,Income / dividends: more prudent
 1115-044935-will13cb-d3a4,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_prob_loss,0.057,Income / dividends: more prudent
+1115-180418-claude-df63,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-limits,amira,loss_limit,0.4,pipeline.run on the starter data
+1115-180418-claude-6e03,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-limits,amira,min_defensive,0.05,pipeline.run on the starter data
+1115-180418-claude-a4ce,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-limits,amira,max_crypto,0.1295,pipeline.run on the starter data
+1115-180418-claude-255c,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_growth,0.4,Growth tilt: most growth your limits allow
+1115-180418-claude-58a2,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_max_drawdown,-0.1482,Growth tilt: most growth your limits allow
+1115-180418-claude-d641,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_return_2022,-0.0988,Growth tilt: most growth your limits allow
+1115-180418-claude-b23c,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_stress_2022,-0.1293,Growth tilt: most growth your limits allow
+1115-180418-claude-d44b,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_ann_vol,0.1172,Growth tilt: most growth your limits allow
+1115-180418-claude-7828,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,growth_prob_loss,0.1605,Growth tilt: most growth your limits allow
+1115-180418-claude-cfdd,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_growth,0.35,Broad core: more prudent
+1115-180418-claude-8fc2,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_max_drawdown,-0.0858,Broad core: more prudent
+1115-180418-claude-7cf4,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_return_2022,-0.0056,Broad core: more prudent
+1115-180418-claude-37e7,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_stress_2022,-0.0512,Broad core: more prudent
+1115-180418-claude-5ab5,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_ann_vol,0.083,Broad core: more prudent
+1115-180418-claude-65db,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,core_prob_loss,0.0625,Broad core: more prudent
+1115-180418-claude-cf78,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_growth,0.25,Income / dividends: most prudent
+1115-180418-claude-dd9c,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_max_drawdown,-0.0827,Income / dividends: most prudent
+1115-180418-claude-098d,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_return_2022,0.0292,Income / dividends: most prudent
+1115-180418-claude-3719,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_stress_2022,-0.0221,Income / dividends: most prudent
+1115-180418-claude-95c9,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_ann_vol,0.0771,Income / dividends: most prudent
+1115-180418-claude-94f1,2026-11-15T18:04:18+00:00,Claude (for Joud),c019584,persona-strategies,amira,income_prob_loss,0.055,Income / dividends: most prudent
+1115-180423-claude-f46c,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-limits,mateo,loss_limit,0.25,pipeline.run on the starter data
+1115-180423-claude-559c,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-limits,mateo,min_defensive,0.3846,pipeline.run on the starter data
+1115-180423-claude-f257,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-limits,mateo,max_crypto,0.081,pipeline.run on the starter data
+1115-180423-claude-e168,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_growth,0.55,Broad core: most growth your limits allow
+1115-180423-claude-f7ad,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_max_drawdown,-0.1334,Broad core: most growth your limits allow
+1115-180423-claude-f94f,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_return_2022,-0.0898,Broad core: most growth your limits allow
+1115-180423-claude-9bff,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_stress_2022,-0.1239,Broad core: most growth your limits allow
+1115-180423-claude-1130,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_ann_vol,0.0826,Broad core: most growth your limits allow
+1115-180423-claude-37de,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,core_prob_loss,0.1125,Broad core: most growth your limits allow
+1115-180423-claude-39ce,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_growth,0.45,Income / dividends: more prudent
+1115-180423-claude-b23c,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_max_drawdown,-0.0891,Income / dividends: more prudent
+1115-180423-claude-0a47,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_return_2022,-0.0374,Income / dividends: more prudent
+1115-180423-claude-0060,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_stress_2022,-0.0845,Income / dividends: more prudent
+1115-180423-claude-9b83,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_ann_vol,0.0541,Income / dividends: more prudent
+1115-180423-claude-a6d1,2026-11-15T18:04:23+00:00,Claude (for Joud),c019584,persona-strategies,mateo,income_prob_loss,0.035,Income / dividends: more prudent
+1115-180424-claude-36fe,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-limits,robert,loss_limit,0.15,pipeline.run on the starter data
+1115-180424-claude-102b,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-limits,robert,min_defensive,0.8462,pipeline.run on the starter data
+1115-180424-claude-e2fd,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-limits,robert,max_crypto,0,pipeline.run on the starter data
+1115-180424-claude-5bcc,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-request,robert,TSLA_asked,0.25,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-180424-claude-f1f1,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-request,robert,TSLA_worst_drop,-0.708806,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-180424-claude-ee08,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-request,robert,TSLA_loss_at_asked,-0.1772,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-180424-claude-cee2,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-request,robert,TSLA_fits_up_to,0.0308,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-180424-claude-bd70,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_growth,0.15,Broad core: most growth your limits allow
+1115-180424-claude-9dac,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_max_drawdown,-0.0862,Broad core: most growth your limits allow
+1115-180424-claude-4b28,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_return_2022,-0.0578,Broad core: most growth your limits allow
+1115-180424-claude-857f,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_stress_2022,-0.0801,Broad core: most growth your limits allow
+1115-180424-claude-009b,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_ann_vol,0.0384,Broad core: most growth your limits allow
+1115-180424-claude-31a7,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,core_prob_loss,0.0385,Broad core: most growth your limits allow
+1115-180424-claude-5c40,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_growth,0.05,Income / dividends: more prudent
+1115-180424-claude-278f,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_max_drawdown,-0.0771,Income / dividends: more prudent
+1115-180424-claude-9a99,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_return_2022,-0.0508,Income / dividends: more prudent
+1115-180424-claude-0642,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_stress_2022,-0.0701,Income / dividends: more prudent
+1115-180424-claude-aa38,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_ann_vol,0.0341,Income / dividends: more prudent
+1115-180424-claude-62e9,2026-11-15T18:04:24+00:00,Claude (for Joud),c019584,persona-strategies,robert,income_prob_loss,0.0175,Income / dividends: more prudent
 1115-173628-claude-4d30,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_growth,0.15,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
 1115-173628-claude-8be4,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_max_drawdown,-0.0475,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
 1115-173628-claude-df38,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_ann_vol,0.0259,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
@@ -214,3 +269,58 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1115-193702-claude-5e87,2026-11-15T19:37:02+00:00,Claude,7699825,standin-VAB.TO,,worst_drop_gap,0.0004,"stand-in minus real worst drop, XBB.TO, scripts/validate_standins.py"
 1115-193702-claude-6bda,2026-11-15T19:37:02+00:00,Claude,7699825,standin-BND,,worst_drop_gap,0.0024,"stand-in minus real worst drop, AGG, scripts/validate_standins.py"
 1115-193703-claude-dcbb,2026-11-15T19:37:03+00:00,Claude,7699825,standin-IAU,,worst_drop_gap,-0.0008,"stand-in minus real worst drop, GLD, scripts/validate_standins.py"
+1115-210030-william-0098,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-limits,amira,loss_limit,0.4,pipeline.run on the starter data
+1115-210030-william-9780,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-limits,amira,min_defensive,0.05,pipeline.run on the starter data
+1115-210030-william-f9dc,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-limits,amira,max_crypto,0.1295,pipeline.run on the starter data
+1115-210030-william-06b2,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_growth,0.4,Growth tilt: most growth your limits allow
+1115-210030-william-e1cc,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_max_drawdown,-0.1482,Growth tilt: most growth your limits allow
+1115-210030-william-ad96,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_return_2022,-0.0988,Growth tilt: most growth your limits allow
+1115-210030-william-c02e,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_stress_2022,-0.1293,Growth tilt: most growth your limits allow
+1115-210030-william-2a8c,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_ann_vol,0.1172,Growth tilt: most growth your limits allow
+1115-210030-william-10eb,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,growth_prob_loss,0.1605,Growth tilt: most growth your limits allow
+1115-210030-william-5607,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_growth,0.35,Broad core: less in stocks
+1115-210030-william-da7c,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_max_drawdown,-0.0858,Broad core: less in stocks
+1115-210030-william-4b60,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_return_2022,-0.0056,Broad core: less in stocks
+1115-210030-william-77b4,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_stress_2022,-0.0512,Broad core: less in stocks
+1115-210030-william-fba1,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_ann_vol,0.083,Broad core: less in stocks
+1115-210030-william-6074,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,core_prob_loss,0.0625,Broad core: less in stocks
+1115-210030-william-8f23,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_growth,0.25,Income / dividends: least in stocks
+1115-210030-william-0450,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_max_drawdown,-0.0827,Income / dividends: least in stocks
+1115-210030-william-ada8,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_return_2022,0.0292,Income / dividends: least in stocks
+1115-210030-william-2cd7,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_stress_2022,-0.0221,Income / dividends: least in stocks
+1115-210030-william-3842,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_ann_vol,0.0771,Income / dividends: least in stocks
+1115-210030-william-7ff9,2026-11-15T21:00:30+00:00,William Caron-Bastarache,9a2febb,persona-strategies,amira,income_prob_loss,0.055,Income / dividends: least in stocks
+1115-210034-william-7af2,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-limits,mateo,loss_limit,0.25,pipeline.run on the starter data
+1115-210034-william-0209,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-limits,mateo,min_defensive,0.3846,pipeline.run on the starter data
+1115-210034-william-a097,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-limits,mateo,max_crypto,0.081,pipeline.run on the starter data
+1115-210034-william-d108,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_growth,0.55,Broad core: most growth your limits allow
+1115-210034-william-d055,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_max_drawdown,-0.1334,Broad core: most growth your limits allow
+1115-210034-william-312e,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_return_2022,-0.0898,Broad core: most growth your limits allow
+1115-210034-william-8ea3,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_stress_2022,-0.1239,Broad core: most growth your limits allow
+1115-210034-william-5adf,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_ann_vol,0.0826,Broad core: most growth your limits allow
+1115-210034-william-fe2b,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,core_prob_loss,0.1125,Broad core: most growth your limits allow
+1115-210034-william-d209,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_growth,0.45,Income / dividends: less in stocks
+1115-210034-william-a486,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_max_drawdown,-0.0891,Income / dividends: less in stocks
+1115-210034-william-c057,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_return_2022,-0.0374,Income / dividends: less in stocks
+1115-210034-william-2e77,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_stress_2022,-0.0845,Income / dividends: less in stocks
+1115-210034-william-d8ae,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_ann_vol,0.0541,Income / dividends: less in stocks
+1115-210034-william-7fe4,2026-11-15T21:00:34+00:00,William Caron-Bastarache,9a2febb,persona-strategies,mateo,income_prob_loss,0.035,Income / dividends: less in stocks
+1115-210036-william-ca06,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-limits,robert,loss_limit,0.15,pipeline.run on the starter data
+1115-210036-william-e76b,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-limits,robert,min_defensive,0.8462,pipeline.run on the starter data
+1115-210036-william-911a,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-limits,robert,max_crypto,0,pipeline.run on the starter data
+1115-210036-william-659c,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-request,robert,TSLA_asked,0.25,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-210036-william-c69d,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-request,robert,TSLA_worst_drop,-0.708806,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-210036-william-e5d7,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-request,robert,TSLA_loss_at_asked,-0.1772,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-210036-william-2d5b,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-request,robert,TSLA_fits_up_to,0.0308,"TSLA's worst drop in 2021-2026 was -70.9%; at 25% that alone would be -17.7% of the portfolio, more than your whole 15% "
+1115-210036-william-0275,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_growth,0.15,Broad core: most growth your limits allow
+1115-210036-william-260c,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_max_drawdown,-0.0862,Broad core: most growth your limits allow
+1115-210036-william-9aa8,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_return_2022,-0.0578,Broad core: most growth your limits allow
+1115-210036-william-1ace,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_stress_2022,-0.0801,Broad core: most growth your limits allow
+1115-210036-william-9984,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_ann_vol,0.0384,Broad core: most growth your limits allow
+1115-210036-william-8bd7,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,core_prob_loss,0.0385,Broad core: most growth your limits allow
+1115-210036-william-0b23,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_growth,0.05,Income / dividends: less in stocks
+1115-210036-william-20ae,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_max_drawdown,-0.0771,Income / dividends: less in stocks
+1115-210036-william-b717,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_return_2022,-0.0508,Income / dividends: less in stocks
+1115-210036-william-31ab,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_stress_2022,-0.0701,Income / dividends: less in stocks
+1115-210036-william-49e8,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_ann_vol,0.0341,Income / dividends: less in stocks
+1115-210036-william-11e5,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_prob_loss,0.0175,Income / dividends: less in stocks

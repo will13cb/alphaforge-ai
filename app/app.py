@@ -19,8 +19,8 @@ import pandas as pd
 import streamlit as st
 
 from dh import bootstrap, data, tracestore
+from dh.agents import analyst, explainer, extractor, market_charts, pipeline, profiler
 from dh.agents import checks as ck
-from dh.agents import analyst, explainer, extractor, market_charts, pipeline
 from dh.agents import portfolio_charts as pc
 from dh.agents.scenarios import DEMO_LABELS, DEMO_PROFILES
 from dh.agents.trace import ICON
@@ -34,6 +34,8 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 from interface.ui import theme  # noqa: E402
+from interface.ui.activity import live_run, render_record  # noqa: E402
+from interface.ui.explanation import format_explanation  # noqa: E402
 
 MODE = theme.mode(st.session_state)
 
@@ -116,16 +118,25 @@ def fmt(k: str, v) -> str:
     return str(v).replace("_", " ")
 
 
-@st.cache_resource(show_spinner="Running the agents: Profiler → Market data → Portfolio → Guardian → Explainer…")
 def run_profile(profile_json: str, ex_json: str = "", answered: tuple = (), persona: str = "") -> tuple[dict, dict]:
     """Cached by the profile itself, so a free-text client with the same facts reuses the run. Each run is saved to
     Amazon S3 (`tracestore`, decision #25; local copy if S3 isn't reachable, never blocks the screen)."""
+    cache = st.session_state.setdefault("analysis_runs", {})
+    cache_key = (profile_json, ex_json, answered, persona)
+    if cache_key in cache:
+        st.caption("Saved session result · open Activity & evidence to inspect its recorded hand-offs. Re-run for live activity.")
+        return cache[cache_key]
     profile = json.loads(profile_json)
-    res = pipeline.run(profile)
-    explainer.add_to_trace(res, profile)
-    if ex_json:
-        extractor.add_to_trace(res, json.loads(ex_json), list(answered))
-    tracestore.save_run_safe(res, profile, persona=persona)
+    with live_run() as on_step:
+        res = pipeline.run(profile, on_step=on_step)
+        try:
+            explainer.add_to_trace(res, profile)
+            if ex_json:
+                extractor.add_to_trace(res, json.loads(ex_json), list(answered))
+            tracestore.save_run_safe(res, profile, persona=persona)
+        finally:
+            res["trace"].on_step = None
+    cache[cache_key] = (profile, res)
     return profile, res
 
 
@@ -211,7 +222,7 @@ with st.sidebar:
     if pkey in PERSONAS:
         st.markdown(describe(pkey).replace("\n", "  \n"))
     if st.button("Re-run the agents"):
-        run_profile.clear()
+        st.session_state.pop("analysis_runs", None)
         st.session_state.pop("ex", None)
     st.divider()
     st.toggle("Dark mode", key="dark_mode", help="Switch between the light and the dark display.")
@@ -236,7 +247,7 @@ limits, strategies, e = res["limits"], res.get("strategies", []), res.get("expla
 st.markdown('<div class="af-eyebrow">AlphaForge AI · simulation</div>'
             '<div class="af-h1">An investment analyst that can say no</div>'
             '<div class="af-flow"><span>Profiler · rules</span><span>Market data</span><span>Portfolio · ≤ 3 risk levels'
-            '</span><span>Guardian · G1–G17</span><span class="ai">Critic · Claude on Bedrock</span>'
+            '</span><span>Guardian · G1–G18</span><span class="ai">Critic · Claude on Bedrock</span>'
             '<span class="ai">Explainer · Claude on Bedrock</span><span>Guardian · G11–G13</span>'
             '<span class="ai">Analyst · follow-ups</span></div>'
             '<p class="af-muted">Agents argue, code enforces: every limit, number and verdict below comes from code; '
@@ -247,7 +258,7 @@ box(f"Guardian on the proposals: {label}. {len(strategies)} strateg{'y' if len(s
     + (f", {len(res.get('dropped', []))} dropped" if res.get("dropped") else "") + ".")
 
 tab_p, tab_s, tab_e, tab_a, tab_t = st.tabs(["Profile & limits", "Strategies", "Explanation", "Follow-up (Analyst)",
-                                             "Trace"])
+                                             "Activity & evidence"])
 followups = st.session_state.setdefault("followups", {}).setdefault(run_key, [])
 
 # ---- 1. profile and limits -------------------------------------------------------------------------------
@@ -270,20 +281,22 @@ with tab_p:
             c[1].metric("Loss limit", pct(limits["loss_limit"], 0))
             c[2].metric("Defensive at least", pct(limits["min_defensive"], 0))
             c[3].metric("Crypto at most", pct(limits["max_crypto"]))
-            st.caption(f"Tolerance {limits['risk_tolerance']}, capacity {limits['risk_capacity']} → level "
-                       f"{limits['risk_level']}. Loss limit "
+            st.caption(f"Risk tolerance {limits['risk_tolerance']}/5, capacity to take risk {limits['risk_capacity']}/5 "
+                       f"→ risk level {limits['risk_level']}/5 ({limits['risk_name']}). Loss limit "
                        + (f"{limits['loss_limit_cad']:,} $, " if limits.get("loss_limit_cad") else "")
                        + f"set by your {limits['loss_limit_source']}. At most {pct(limits['horizon_max_growth'], 0)} "
-                       f"in stocks for your horizon. Knowledge {limits['knowledge_score']}/5.")
+                       f"in stocks for your horizon. Investing knowledge {limits['knowledge_score']}/5.")
             caps = explainer._caps_shown(strategies, limits, profile)
             if caps:
-                st.markdown(f"**One company at most** (its own cap, from its worst drop in the data ({LABEL}) and your limits, "
-                            "counted through the ETFs): " + ", ".join(f"{t} {v}" for t, v in caps.items()))
+                st.markdown(f"**Largest share of the portfolio any one company may take** (its own cap, from its worst "
+                            f"drop in the data ({LABEL}) and your limits, counted through the ETFs too): " + ", ".join(f"{t} {v}" for t, v in caps.items()))
             for r in limits.get("request_checks") or []:
                 st.warning(f"**Your request: {r['ticker']} {pct(r['asked'], 0)} doesn't fit your limits.** "
                            + r["reason"][:1].upper() + r["reason"][1:] + ".")
         st.markdown("**Why these limits**")
-        st.markdown("\n".join(f"{i}. {x}" for i, x in enumerate(limits.get("reasons", []), 1)) or "–")
+        st.caption(profiler.SCALE_NOTE)
+        st.markdown("\n".join(f"{i}. {x}" for i, x in
+                              enumerate(limits.get("reasons_plain") or limits.get("reasons", []), 1)) or "–")
 
 # ---- 2. strategies ---------------------------------------------------------------------------------------
 with tab_s:
@@ -298,7 +311,7 @@ with tab_s:
             st.caption("growth / defensive" + (f" · goal floor {pct(r['floor'], 0)}" if r.get("floor") is not None else ""))
             if r.get("set_by_text"):
                 st.markdown(f"<small>**Set by** {r['set_by_text']}"
-                            + (f". The worst-drop test alone would allow {pct(r['data_ceiling'], 0)}."
+                            + (f". The loss test alone would allow {pct(r['data_ceiling'], 0)}."
                                if r.get("set_by") != "worst_drop" and r.get("data_ceiling") is not None else ".")
                             + "</small>", unsafe_allow_html=True)
             if r.get("conflict_message"):
@@ -351,7 +364,7 @@ with tab_e:
                    + (f" · {e['check_calls']} self-check(s) with the Guardian's rules" if e.get("check_calls") else ""))
         if e.get("note") and e["note"] != "mock mode":
             st.caption(f"Note: {e['note']}")
-        st.markdown(e["text"])
+        st.markdown(format_explanation(e["text"], strategies))
         st.divider()
         lab, box = VERDICT[e["verdict"]]
         st.markdown(f"**Guardian on this text:** {lab}")
@@ -393,28 +406,11 @@ with tab_a:
 
 # ---- 5. trace --------------------------------------------------------------------------------------------
 with tab_t:
-    st.caption("One line per hand-off between agents: what was passed and why, with the Guardian's ✔/⚠/✘. Steps, "
-               "numbers and verdicts only, never the model's reasoning.")
-    for i, step in enumerate(res["trace"].steps, 1):
-        st.markdown(f"**{i}. {step['agent']} → {step['to']}**: {step['summary']}")
-        if step["checks"]:
-            st.markdown("\n".join(f"- {ICON[c['status']]} {c['rule']} {c['text']}: {c['detail']}" for c in step["checks"]))
-        if step.get("output") is not None:
-            with st.expander("output", expanded=False):
-                out = step["output"]
-                if isinstance(out, str):
-                    st.markdown(out)
-                else:
-                    st.json(json.loads(json.dumps(out, default=str)), expanded=False)
-    n = len(res["trace"].steps)
-    for j, a in enumerate(reversed(followups), 1):  # follow-ups are shown after the run, not stored in the cached run
-        st.markdown(f"**{n + 2 * j - 1}. Client → Analyst**: follow-up: {a['question']}")
-        calls = "; ".join(analyst.short(c) for c in a["tool_calls"]) or "no tool call"
-        st.markdown(f"**{n + 2 * j}. Analyst → Client**: [{a['source']}] {a['status']}; tools: {calls}")
-    stored = res.get("stored") or {}
-    if stored.get("stored") == "s3":
-        st.success(f"This run is saved on Amazon S3: `{stored['where']}`")
-    elif stored:
-        st.info(f"This run is saved locally: `{stored['where'] or '-'}` ({stored.get('note', '')})")
-    st.download_button("Download the trace (JSON)", res["trace"].to_json(), file_name=f"trace-{key}.json",
-                       mime="application/json")
+    render_record(res, profile, download_key="jury_activity_download")
+    if followups:
+        st.subheader("Follow-up activity")
+        for a in reversed(followups):
+            st.write(a["question"])
+            st.caption(f"{a['source']} · {a['status']}")
+            with st.expander("Analyst tool calls"):
+                st.json(a["tool_calls"], expanded=False)
