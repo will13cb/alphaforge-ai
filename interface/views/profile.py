@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from dh.i18n import lang, tr
+
 from interface.core import services, wizard
 from interface.core.questions import ALL_STEPS, BY_ID, STEPS
 from interface.ui import components as ui
@@ -44,7 +46,7 @@ def shown(q, raw) -> str:
     if q.kind in ("choice", "yesno"):
         return dict(q.options).get(v, str(v))
     if q.kind == "choices":
-        return ", ".join(dict(q.options).get(x, x) for x in v)
+        return ", ".join(tr(dict(q.options).get(x, x)) for x in v)
     if q.kind == "money":
         return f"{v:,.0f} $"
     if q.kind == "percent":
@@ -150,22 +152,22 @@ def step_form(i: int) -> None:
 
 def review() -> None:
     st.subheader("Check your answers")
-    st.markdown('<p class="af-muted">Review names and amounts carefully. Change any answer with “Edit” before running the simulation. Analysis records may be saved to Amazon S3 or locally.</p>',
+    st.markdown('<p class="af-muted">' + ui.esc("Review names and amounts carefully. Change any answer with “Edit” before running the simulation. Analysis records may be saved to Amazon S3 or locally.") + '</p>',
                 unsafe_allow_html=True)
     _, errors = wizard.all_values(S.answers)
     for i, step in enumerate(STEPS):
         qs = wizard.visible(i, S.answers)
         head, edit = st.container(key=f"af_row_{i}").columns([5, 1])  # stays on one line on a phone
-        head.markdown(f"**{step.title}**" + ("  (to fix)" if i in errors else ""))
+        head.markdown(f"**{tr(step.title)}**" + (tr("  (to fix)") if i in errors else ""))
         if edit.button("Edit", key=f"edit_{i}", width="stretch"):
             S.step = i
             st.rerun()
-        rows = [f"- {q.label} **{ui.esc(shown(q, S.answers.get(q.id, q.default)))}**" for q in qs
+        rows = [f"- {ui.esc(q.label)} **{ui.esc(shown(q, S.answers.get(q.id, q.default)))}**" for q in qs
                 if not (not q.required and shown(q, S.answers.get(q.id, q.default)) == "–")]
         st.markdown("\n".join(rows) or "- –", unsafe_allow_html=True)
     if errors:
         first = min(errors)
-        ui.notice(f"Some answers still need attention, starting with “{STEPS[first].title}”.", "bad")
+        ui.notice(tr("Some answers still need attention, starting with “") + tr(STEPS[first].title) + tr("”."), "bad")
         if st.button("Go to the first answer to fix", type="primary"):
             S.step = first
             S.tried.add(first)
@@ -195,7 +197,8 @@ def render() -> None:
     i = S.step
     titles = [s.title.replace(" (optional)", "") for s in ALL_STEPS]
     ui.steps_bar(titles, i)
-    st.progress(wizard.progress(i), text=f"Step {i + 1} of {len(ALL_STEPS)}")
+    st.progress(wizard.progress(i), text=(f"Étape {i + 1} sur {len(ALL_STEPS)}" if lang() == "fr"
+                                          else f"Step {i + 1} of {len(ALL_STEPS)}"))
     if i == 0:
         quick_start()
     if i < len(STEPS):

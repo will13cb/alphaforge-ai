@@ -25,6 +25,7 @@ LANGS = {"fr": "Français", "en": "English"}
 STATE_KEY = "af_lang"
 _PHRASE_RE = re.compile("|".join(re.escape(k) for k in sorted(PHRASES, key=len, reverse=True))) if PHRASES else None
 _EXACT_STRIPPED = {k.strip(): v for k, v in EXACT.items()}
+_WRAPPED = re.compile(r"^(<(?:p|div|span)[^>]*>)([^<]+)(</(?:p|div|span)>)$", re.S)
 
 
 def default_lang() -> str:
@@ -50,6 +51,9 @@ def tr(s, to: str | None = None):
     core = s.strip()
     if core in _EXACT_STRIPPED:
         return s.replace(core, _EXACT_STRIPPED[core])
+    m = _WRAPPED.match(core)  # '<p class="af-muted">Known sentence</p>': translate the sentence inside
+    if m and m.group(2).strip() in _EXACT_STRIPPED:
+        return s.replace(m.group(2), _EXACT_STRIPPED[m.group(2).strip()])
     return _PHRASE_RE.sub(lambda m: PHRASES[m.group(0)], s) if _PHRASE_RE else s
 
 

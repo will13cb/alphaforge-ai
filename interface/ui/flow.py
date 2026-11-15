@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from html import escape
 
+from dh.i18n import lang
+
 # Main row, in pipeline order (pipeline.py), and the Guardian below it, linked to the steps it checks.
 NODES = [("Client", "your answers"), ("Profiler", "rules"), ("Market data", "deterministic"),
          ("Portfolio", "up to 3 strategies"), ("Critic", "Claude · Bedrock"), ("Explainer", "Claude · Bedrock"),
@@ -107,8 +109,9 @@ def svg(steps: list[dict], finished: bool = False, caption: str | None = None) -
     edges += [_edge(n, GUARDIAN[0], pos, used) for n in GUARDS]
     nodes = [_node(n, s, pos, runs, working) for n, s in [*NODES, GUARDIAN]]
     done = sum(1 for n in [*names, GUARDIAN[0]] if n in runs)
-    label = (f"Pipeline: {done} of {len(names) + 1} agents done"
-             + (f", {working} working" if working else ""))
+    label = ((f"Pipeline : {done} agents sur {len(names) + 1} terminés" + (f", {working} en cours" if working else ""))
+             if lang() == "fr" else
+             (f"Pipeline: {done} of {len(names) + 1} agents done" + (f", {working} working" if working else "")))
     arrows = "".join(
         f'<marker id="af-arrow{k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
         f'orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill: var({c})"/></marker>'

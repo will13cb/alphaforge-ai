@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import html
+
+from dh.i18n import tr
 from contextlib import contextmanager
 
 import streamlit as st
@@ -12,11 +14,12 @@ from interface.ui import theme
 
 
 def esc(t) -> str:
-    return html.escape(str(t if t is not None else ""))
+    """Escaped for HTML, in the interface language (UI text only; engine text passes through, #49)."""
+    return html.escape(str(tr(t) if t is not None else ""))
 
 
 def label(q: Question) -> None:
-    badge = '<span class="af-badge req">required</span>' if q.required else '<span class="af-badge">optional</span>'
+    badge = f'<span class="af-badge req">{esc("required")}</span>' if q.required else f'<span class="af-badge">{esc("optional")}</span>'
     st.markdown(f'<div class="af-q">{esc(q.label)}{badge}</div>', unsafe_allow_html=True)
 
 
