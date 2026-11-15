@@ -12,6 +12,7 @@ from dh.agents.profiler import SCALE_NOTE
 from dh.data import period_label
 from interface.core import services
 from interface.ui import components as ui
+from interface.ui import flow
 from interface.ui.explanation import format_explanation
 from interface.ui import voice as voice_ui
 
@@ -331,6 +332,7 @@ def render() -> None:
     else:
         ui.notice("These options fit the limits checked. Review the points to know before choosing.", tone)
     st.title("Your investment overview")
+    st.markdown(flow.svg(res["trace"].steps, finished=True), unsafe_allow_html=True)  # the agent graph, always shown
     if st.button("See how this analysis was built →"):
         S.goto = "Activity"
         st.rerun()

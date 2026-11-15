@@ -27,10 +27,10 @@ def _short(text: str, n: int = 160) -> str:
 @contextmanager
 def live_run():
     """Yield a callback for Trace.step; failures keep completed events visible."""
+    graph = st.empty()  # outside the status box, so the graph stays on screen when the box collapses
+    graph.markdown(flow.svg([]), unsafe_allow_html=True)
     with st.status("Analysis running · checking your profile and market history…", expanded=True) as status:
         st.caption("Live activity · each entry appears after a real hand-off completes. Longer steps may take a moment.")
-        graph = st.empty()
-        graph.markdown(flow.svg([]), unsafe_allow_html=True)
         feed = st.empty()
         events = []
 

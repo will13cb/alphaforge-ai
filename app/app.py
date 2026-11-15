@@ -36,7 +36,7 @@ i18n.language_selector()  # top of the sidebar, before anything can stop the pag
 _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
-from interface.ui import theme  # noqa: E402
+from interface.ui import flow, theme  # noqa: E402
 from interface.ui.activity import live_run, render_record  # noqa: E402
 from interface.ui.explanation import format_explanation  # noqa: E402
 
@@ -128,6 +128,7 @@ def run_profile(profile_json: str, ex_json: str = "", answered: tuple = (), pers
     cache_key = (profile_json, ex_json, answered, persona)
     if cache_key in cache:
         st.caption("Saved session result · open Activity & evidence to inspect its recorded hand-offs. Re-run for live activity.")
+        st.markdown(flow.svg(cache[cache_key][1]["trace"].steps, finished=True), unsafe_allow_html=True)
         return cache[cache_key]
     profile = json.loads(profile_json)
     with live_run() as on_step:
