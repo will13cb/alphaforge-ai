@@ -30,7 +30,7 @@ import pandas as pd
 from .. import data, metrics
 from ..holdings import default_path, holdings as load_holdings
 from . import market
-from .rules import BOND_ETFS, CRYPTO, EQUITY_ETFS, ETFS, GOLD, STOCKS
+from .rules import BOND_ETFS, COMMODITIES, CRYPTO, EQUITY_ETFS, ETFS, GOLD, STOCKS
 
 # ---- rules (team assumptions, to validate; see notes/decisions.md #18) -----------------------------
 MAX_SECTOR = 0.40        # C3: no single sector above 40% of the portfolio (look-through)
@@ -46,8 +46,8 @@ RULES = {
 }
 
 CLASS_OF = {**{t: "equity" for t in STOCKS | EQUITY_ETFS}, **{t: "bonds" for t in BOND_ETFS},
-            **{t: "gold" for t in GOLD}, **{t: "crypto" for t in CRYPTO}}
-NOT_A_SECTOR = ("Broad market", "Bonds", "Gold", "Crypto", "ETF remainder", "Unknown")
+            **{t: "gold" for t in GOLD}, **{t: "crypto" for t in CRYPTO}, **{t: "commodities" for t in COMMODITIES}}
+NOT_A_SECTOR = ("Broad market", "Bonds", "Gold", "Commodities", "Crypto", "ETF remainder", "Unknown")
 
 
 @lru_cache(maxsize=2)
@@ -68,6 +68,13 @@ def _universe_col(col: str) -> dict[str, str]:
 
 def _currency(t: str, known: dict[str, str]) -> str:
     return known.get(t) or ("CAD" if t.endswith(".TO") else "USD")
+
+
+def currency_of(t: str, known: dict[str, str] | None = None) -> str:
+    """The currency risk a CAD investor carries: a catalogue's `currency_exposure` when it has one (XEF.TO is listed
+    in CAD but holds euros and yen → "Other"; a CAD-hedged ETF → CAD), else the currency of listing."""
+    from .. import products
+    return products.column_map("currency_exposure").get(t) or _currency(t, known or {})
 
 
 def report(weights: dict[str, float], rets: pd.DataFrame | None = None, holdings: dict | None = None,
@@ -101,6 +108,8 @@ def report(weights: dict[str, float], rets: pd.DataFrame | None = None, holdings
             s = "Bonds"
         elif k in GOLD:
             s = "Gold"
+        elif k in COMMODITIES:
+            s = "Commodities"
         elif k in CRYPTO:
             s = "Crypto"
         else:
@@ -118,7 +127,7 @@ def report(weights: dict[str, float], rets: pd.DataFrame | None = None, holdings
     # currency
     cur: dict[str, float] = {}
     for t, v in w.items():
-        c = _currency(t, ccy)
+        c = currency_of(t, ccy)
         cur[c] = cur.get(c, 0.0) + v
 
     # correlation (daily returns, same calendar as every other number)
@@ -192,7 +201,7 @@ def check(rep: dict) -> list[dict]:
     from . import checks as ck  # local: checks imports this module
     c3, c4 = ck.c3_sector(rep), ck.c4_classes(rep)
     pairs = rep["redundant_pairs"]
-    d2 = "ok" if not pairs else "; ".join(f"{p['a']}/{p['b']} {p['correlation']:.2f}" for p in pairs)
+    d2 = "ok" if not pairs else "; ".join(f"{p['a']}/{p['b']} {p['correlation']:.3f}" for p in pairs)
     return [dict(rule="C3", status=c3["status"], detail=c3["reason"], text=RULES["C3"]),
             _c("C6", not pairs, d2),
             dict(rule="C4", status=c4["status"], detail=c4["reason"], text=RULES["C4"])]

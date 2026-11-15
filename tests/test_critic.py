@@ -30,6 +30,41 @@ def test_validate_drops_unbacked_numbers_and_keeps_backed_ones():
     assert st[0] == "valid" and "13.4%" in st[1] and "no tool call" in st[2] and "unknown strategy" in st[3]
 
 
+
+def test_validate_accepts_facts_numbers_durations_and_weight_sums():
+    """Audit: Robert's TSLA objection was dropped for quoting his own request (25%) and loss limit (15%), K2 for
+    "12 months", Amira's for QQQ + SPY = 61.5%. Those come from FACTS / code, so they back a claim; inventions don't."""
+    calls = _calls({"assets": [{"ticker": "TSLA", "max_drawdown": -0.709}]})
+    f = {"client": {"requested_positions": {"TSLA": 0.25}, "max_loss_pct": 15},
+         "limits": {"loss_limit": 0.15},
+         "strategies": [{"key": "growth", "weights": {"QQQ": 0.30, "SPY": 0.315, "XBB.TO": 0.385},
+                         "split": {"growth": 0.615}, "stats": {"worst_12m": -0.062}}]}
+    strats = [{"key": "growth"}]
+    raw = [{"strategy": "growth", "evidence": ["t1"],
+            "claim": "He asked for 25% in TSLA; its worst drop was -70.9%, beyond his 15% loss limit."},
+           {"strategy": "growth", "evidence": ["t1"], "claim": "Worst 12 months -6.2% over a 4-year horizon."},
+           {"strategy": "growth", "evidence": ["t1"], "claim": "QQQ and SPY together make up 61.5% of the money."}]
+    raw.insert(0, {"strategy": "growth", "evidence": ["t1"], "claim": "It holds 47.3% in one bet."})  # invented
+    st = [o["status"] for o in critic.validate(raw, calls, strats, f)]
+    assert "47.3%" in st[0] and st[1:] == ["valid"] * 3
+    assert "25%" in critic.validate(raw[1:2], calls, strats)[0]["status"]   # without FACTS: as before, dropped
+
+
+def test_correlation_rounded_onto_a_threshold_is_written_exactly():
+    """0.948 written "0.95" reads like a breach of C6 (blocks at 0.95): code writes 0.948 back. 0.912 → 0.91 stays."""
+    calls = _calls({"pairs": [{"a": "QQQ", "b": "SPY", "correlation": 0.948}, {"a": "A", "b": "B", "correlation": 0.912}],
+                    "checks": [{"check": "C6", "value": 0.948, "limit": 0.95}]})  # the limit is in the results too
+    raw = [{"strategy": "growth", "evidence": ["t1"], "claim": "QQQ and SPY correlate 0.95; A and B 0.91."}]
+    o = critic.validate(raw, calls, [{"key": "growth"}])[0]
+    assert o["status"] == "valid" and "0.948" in o["claim"] and "0.91." in o["claim"]
+
+
+def test_levels_are_named_by_what_they_hold_not_by_risk():
+    """A level with less in stocks is not always safer in the data (Robert: -9.5% vs -8.6%): no "prudent" label."""
+    labels = [label for _, label, _ in portfolio.LEVELS]
+    assert labels == ["most growth your limits allow", "less in stocks", "least in stocks"]
+    assert not any("prudent" in x for x in labels)
+
 def test_at_most_three_objections_and_tool_budget():
     calls = _calls({"x": 1})
     raw = [{"strategy": "g", "claim": "fine", "evidence": ["t1"]}] * 5

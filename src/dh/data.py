@@ -9,6 +9,10 @@ returns; FX has gaps on Canadian holidays (forward-filled); crypto trades 7 days
 Longer histories (decision #31, `scripts/build_long_data.py`): assets start on different days. Before an asset's first
 price its returns are NaN (never 0%: a missing day is not a calm day), except for the stand-ins listed in
 `harness.toml [data.proxies]`, applied only before the first real price and reported by `proxies_used()`.
+
+More products (branch produit_cadusa): `harness.toml [data] extra = ["cadusa"]` loads data/raw/products_cadusa/
+(`make data-products`) next to the starter's files: same columns, same calendar, same CAD conversion. Default: no
+extra. Only CAD and USD prices can be converted; any other currency is refused, never left unconverted.
 """
 
 from __future__ import annotations
@@ -23,18 +27,15 @@ import pandas as pd
 
 
 def _find_root() -> Path:
-    """The project root (folder holding harness.toml).
-
-    Normally two levels above this file (src/dh/data.py). If `dh` was installed as a copy into
-    site-packages (e.g. Streamlit Cloud with a non-editable install), search upward from the
-    working directory instead; fall back to the package-relative path.
-    """
+    """The project folder (harness.toml, cache/, scripts/). From a source checkout or an editable install it is two
+    levels above this file; when a host installs the package as a copy into site-packages (Streamlit Cloud with a
+    plain `pip install .`), that path is inside the venv, so look from the working directory up instead."""
     here = Path(__file__).resolve().parents[2]
     if (here / "harness.toml").exists():
         return here
-    for d in (Path.cwd().resolve(), *Path.cwd().resolve().parents):
-        if (d / "harness.toml").exists():
-            return d
+    for p in (Path.cwd(), *Path.cwd().parents):
+        if (p / "harness.toml").exists():
+            return p
     return here
 
 
@@ -51,6 +52,7 @@ class Config:
     calendar: str = "weekdays"
     start: str = ""
     proxies: tuple = field(default_factory=tuple)   # ((ticker, source), ...): hashable, so loads can be cached
+    extra: tuple = field(default_factory=tuple)     # extra product catalogues, e.g. ("cadusa",): data/raw/products_<name>/
 
 
 def load_config(path: Path | str | None = None) -> Config:
@@ -62,6 +64,7 @@ def load_config(path: Path | str | None = None) -> Config:
         calendar=d.get("calendar", "weekdays"),
         start=d.get("start", "") or "",
         proxies=tuple(sorted((d.get("proxies") or {}).items())),
+        extra=tuple(d.get("extra") or ()),
     )
 
 
@@ -73,14 +76,37 @@ def _read(name: str, cfg: Config | None = None, **kw) -> pd.DataFrame:
     return pd.read_csv(p, **kw)
 
 
+def extra_dir(name: str, cfg: Config | None = None) -> Path:
+    """Where `scripts/build_products.py` writes a catalogue's files."""
+    return (cfg or load_config()).data_dir / f"products_{name}"
+
+
+def _with_extras(name: str, cfg: Config, **kw) -> pd.DataFrame:
+    """The starter's file plus the same file of every catalogue in `extra`. A ticker may appear in one only."""
+    frames = [_read(name, cfg, **kw)]
+    for e in cfg.extra:
+        p = extra_dir(e, cfg) / name
+        if not p.exists():
+            raise SystemExit(f"{p} missing: run `make data-products` (harness.toml [data] extra = {list(cfg.extra)}).")
+        frames.append(pd.read_csv(p, **kw))
+    if len(frames) == 1:
+        return frames[0]
+    if name == "assets_universe.csv":
+        seen = pd.concat([f["ticker"] for f in frames])
+        dup = sorted(seen[seen.duplicated()].unique())
+        if dup:
+            raise ValueError(f"ticker(s) in more than one catalogue: {', '.join(dup)}")
+    return pd.concat(frames, ignore_index=True)
+
+
 @lru_cache(maxsize=1)
 def universe() -> pd.DataFrame:
-    return _read("assets_universe.csv")
+    return _with_extras("assets_universe.csv", load_config())
 
 
 @lru_cache(maxsize=1)
 def prices() -> pd.DataFrame:
-    return _read("prices_daily.csv", parse_dates=["date"])
+    return _with_extras("prices_daily.csv", load_config(), parse_dates=["date"])
 
 
 @lru_cache(maxsize=1)
@@ -90,7 +116,7 @@ def fx() -> pd.Series:
 
 
 def corporate_actions() -> pd.DataFrame:
-    return _read("corporate_actions.csv", parse_dates=["ex_date"])
+    return _with_extras("corporate_actions.csv", load_config(), parse_dates=["ex_date"])
 
 
 def macro(series_id: str | None = None) -> pd.DataFrame:
@@ -113,6 +139,9 @@ def _panel(cfg: Config) -> pd.DataFrame:
     # instead of being converted at a rate from the future.
     rate = fx().reindex(wide.index.union(fx().index)).sort_index().ffill().reindex(wide.index)
     ccy = universe().set_index("ticker")["currency"]
+    unknown = sorted({f"{t} ({ccy.get(t)})" for t in wide.columns if ccy.get(t) not in ("CAD", "USD")})
+    if unknown:  # never leave a price unconverted: it would be read as CAD
+        raise ValueError(f"no CAD conversion for: {', '.join(unknown)} (only CAD and USD are supported)")
     for t in wide.columns:
         if ccy[t] == "USD" and cfg.base_currency == "CAD":
             wide[t] = wide[t] * rate

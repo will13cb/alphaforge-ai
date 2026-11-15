@@ -36,7 +36,7 @@ def shown(q, raw) -> str:
     c = wizard.check(q, raw)
     v = c.value
     if not c.ok:
-        return "⚠ to fix"
+        return "To fix"
     if v in (None, "", [], {}):
         return "–"
     if q.kind in ("choice", "yesno"):
@@ -83,7 +83,8 @@ def quick_start() -> None:
 
 
 def nav(i: int, last: bool = False) -> None:
-    b1, b2, _, b3 = st.columns([1, 1.3, 1.2, 1])
+    # keyed container: on a phone the CSS puts Continue first and drops the spacer (interface/ui/theme.py)
+    b1, b2, _, b3 = st.container(key=f"af_nav_{i}").columns([1, 1.3, 1.2, 1])
     if b1.button("← Back", disabled=i == 0, width="stretch", key=f"back_{i}"):
         S.step = i - 1
         st.rerun()
@@ -149,8 +150,8 @@ def review() -> None:
     _, errors = wizard.all_values(S.answers)
     for i, step in enumerate(STEPS):
         qs = wizard.visible(i, S.answers)
-        head, edit = st.columns([5, 1])
-        head.markdown(f"**{step.title}**" + ("  ⚠" if i in errors else ""))
+        head, edit = st.container(key=f"af_row_{i}").columns([5, 1])  # stays on one line on a phone
+        head.markdown(f"**{step.title}**" + ("  (to fix)" if i in errors else ""))
         if edit.button("Edit", key=f"edit_{i}", width="stretch"):
             S.step = i
             st.rerun()
@@ -168,6 +169,8 @@ def review() -> None:
         if st.button("Run the analysis", type="primary", width="stretch"):
             values, _ = wizard.all_values(S.answers)
             profile = wizard.to_profile(values)
+            if S.get("existing_positions"):  # branch portefeuille_existant: entered on the Welcome page
+                profile["existing_positions"] = dict(S.existing_positions)
             try:
                 with ui.thinking("Checking your limits, the market data and the proposals… (about 10 seconds)"):
                     res = services.run_analysis(profile)

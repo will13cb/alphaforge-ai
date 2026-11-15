@@ -2,6 +2,10 @@
 
     make data-up          # data/raw/*.csv → s3://$S3_BUCKET/raw/   (credentials and bucket from .env)
 
+Also uploads, when they exist, the research-mode folders (decision #41): data/raw/products_<name>/*.csv and
+data/raw/fundamentals/*.csv → s3://$S3_BUCKET/raw/<folder>/, where `dh.bootstrap` fetches them when
+harness.toml [data] extra is set.
+
 Private bucket, team use only: the CSVs are never made public (Yahoo's terms, decision #11). Prints what it uploaded.
 """
 
@@ -19,6 +23,15 @@ from dh.bootstrap import FILES, PREFIX  # noqa: E402
 from dh.data import load_config  # noqa: E402
 
 
+def files_to_upload(folder: Path) -> list[str]:
+    """Paths under data/raw/ to upload: the top-level CSVs (+ BUILD_INFO.txt), then the research-mode folders."""
+    out = sorted(p.name for p in folder.glob("*.csv")) + [f for f in ("BUILD_INFO.txt",) if (folder / f).exists()]
+    for sub in sorted([*folder.glob("products_*"), folder / "fundamentals"]):
+        if sub.is_dir():
+            out += sorted(f"{sub.name}/{p.name}" for p in sub.glob("*.csv"))
+    return out
+
+
 def main() -> int:
     bucket = os.getenv("S3_BUCKET")
     if not bucket:
@@ -30,7 +43,7 @@ def main() -> int:
         print(f"missing in {folder}: {', '.join(missing)} (run `make data` first)")
         return 1
     s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"))
-    for f in sorted(p.name for p in folder.glob("*.csv")) + [f for f in ("BUILD_INFO.txt",) if (folder / f).exists()]:
+    for f in files_to_upload(folder):
         s3.upload_file(str(folder / f), bucket, f"{PREFIX}/{f}")
         print(f"uploaded {f}  →  s3://{bucket}/{PREFIX}/{f}  ({(folder / f).stat().st_size / 1e6:.1f} MB)")
     return 0

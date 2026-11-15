@@ -50,3 +50,45 @@ Limits: survivorship bias is unchanged (2026's names over a longer past, which f
 2008 enters the worst drops, so company caps and splits get stricter; the cached Explainer texts must be re-saved
 (`make explain P=robert SAVE=1`) after the rebuild. Terms: Yahoo forbids redistribution (decision #11), Bank of Canada
 https://www.bankofcanada.ca/terms/, FRED https://fred.stlouisfed.org/legal/.
+
+## Extra products listed in Canada or the U.S. (optional, branch produit_cadusa)
+
+`make data-products` writes `data/raw/products_cadusa/` for the 60 products of `src/dh/product_catalogue.py`
+(ETFs, stocks, gold, silver; CAD or USD only). Then `harness.toml [data] extra = ["cadusa"]` loads them next to the
+starter's 31. Off by default.
+
+| | |
+|---|---|
+| Source | Yahoo Finance via yfinance, with the organizers' own `build_prices` (adj_close, dividends, splits) |
+| Date | ticker, currency and exchange checked 2026-11-15; prices 2021-11-12..2026-11-12 by default (`START=` for longer) |
+| Processing | catalogue checked before download; `quality_report.csv` after (history, coverage, one-day moves > 40%, stale quotes, gaps); a failed series is left out and listed |
+| Limits | unofficial API; adjusted history can be revised; names, sectors and exposure labels are the team's; no ETF holdings yet (look-through = lower bound) |
+| Licence | Yahoo: personal use, no redistribution (nothing goes in git, decision #11) |
+
+## Company statements for dividends (optional, branch produit_cadusa)
+
+`make data-fundamentals` writes `data/raw/fundamentals/` for every stock of the loaded universe: per fiscal year, net
+income to common shareholders, dividends paid to common shareholders, free and operating cash flow.
+
+| | |
+|---|---|
+| Source | Yahoo Finance via yfinance (`income_stmt`, `cashflow`, `info` for the statements' currency) |
+| Date | downloaded 2026-11-15; the latest 4-5 fiscal years as published that day |
+| Processing | for each year the first filled label (common dividends, else all cash dividends); dividends stored positive; no dividend row = 0 |
+| Limits | snapshot, not point-in-time (never in a backtest); Yahoo's labels and restatements; no FFO/AFFO for REITs; Yahoo's own `payoutRatio` is not used (unreliable) |
+| Licence | Yahoo: personal use, no redistribution |
+
+**To S3 (for the hosted app, research mode):** after `make data-products` and `make data-fundamentals`, `make data-up`
+also uploads `products_cadusa/` and `fundamentals/` to `s3://$S3_BUCKET/raw/`. A hosted copy fetches them at start
+only when its `harness.toml` has `extra = ["cadusa"]` (statements optional); with `extra = []` it fetches the starter
+files only, as before.
+
+## ETF fees (existing-portfolio review, decision #44)
+
+`src/dh/fees.json`, written by `scripts/build_fees.py`: Yahoo Finance `netExpenseRatio` for our ETFs and every stand-in
+fund (`dh.standins`), fetched 2026-11-15. It is Yahoo's copy of the issuer's figure: check the fund's own page before
+quoting one in a deliverable. Shown as "fund fees: about X $ a year"; never taken out of the returns (ETF adjusted
+prices are already net of the fund's own fees). A fund without a figure is listed as unknown, never assumed free.
+
+On a host without S3, `bootstrap.ensure_holdings()` downloads SPY's issuer file (State Street, direct .xlsx) and
+builds `etf_holdings.csv` at start (AF_AUTO_DATA=1). QQQ, ESGV and XIU.TO come from web pages: saved by hand only.

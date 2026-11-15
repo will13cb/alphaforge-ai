@@ -4,7 +4,8 @@ It reads the strategies the Guardian passed, decides what looks doubtful, INVEST
 objecting, and returns at most 3 objections, each citing the tool calls behind it, with one fix from a fixed menu
 (merge two lines, trim a line, shift growth to defensive, or just disclose). "The LLM argues, code enforces" (#2):
 
-    1. backed?   every number in an objection must appear in a tool result it cites (else dropped)
+    1. backed?   every number in an objection must appear in a tool result it cites, or in the FACTS it was given
+                 (the client, their limits, that strategy's own weights and stats), else dropped
     2. allowed?  the fix can only keep or lower risk with assets already held (`portfolio.apply_action`)
     3. once      the Portfolio applies at most one fix per strategy, every number is recomputed (`portfolio.revise`)
     4. Guardian  re-checks the revised strategy; if it fails or breaks the loss limit, the original stays
@@ -30,9 +31,10 @@ from datetime import datetime, timezone
 from ..data import ROOT
 from ..metrics import look_through as _look_through
 from . import guardian, market
+from .diversification import MAX_PAIR_CORR
 from .rules import CORR_WARN, DEFENSIVE
 
-PROMPT_VERSION = "critic-v1"
+PROMPT_VERSION = "critic-v2"   # v2: FACTS numbers count as backing (validate)
 DEMO_CACHE = ROOT / "cache" / "critic"      # committed: the demo replays offline
 LOCAL_CACHE = ROOT / ".cache" / "critic"    # gitignored
 MAX_CALLS = 6
@@ -53,8 +55,9 @@ Your job is to be the sceptic a careful advisor would be, using this guide:
 Work like this:
 - Decide what looks doubtful, then CHECK it with the tools before objecting. At most {MAX_CALLS} tool calls in total.
 - Every tool result has a call_id (t1, t2, ...). An objection must cite the call_ids that back it.
-- Quote numbers ONLY as they appear in the tool results you cite (you may write 0.912 as 0.91 or 0.132 as 13.2%).
-  An objection with a number no cited result contains is discarded by code.
+- Quote numbers ONLY as they appear in the tool results you cite or in FACTS (the client, their limits, that
+  strategy's weights and stats); you may write 0.132 as 13.2%. Write correlations with 3 decimals (0.948, not 0.95):
+  rules use 0.85 and 0.95 as thresholds. An objection with a number found in neither is discarded by code.
 - At most {MAX_OBJECTIONS} objections, the ones that matter most for THIS client. None is a valid answer.
 - Each objection proposes one fix from this menu (code applies it, then re-checks every rule):
   {{"type": "merge", "a": TICKER, "b": TICKER}}   keep the larger of two holdings of the same kind
@@ -215,7 +218,7 @@ def make_tools(strategies: list[dict], limits: dict, holdings: dict) -> list:
                  "ratio": v / (weights[t] / tot) if weights[t] else None} for t, v in rc["shares"].items()]
         return market._round({"holdings": sorted(rows, key=lambda r: -r["risk_share"]), "ann_vol": rc["ann_vol"]})
 
-    return list(market.AGENT_TOOLS) + [look_through, strategy_checks, limit_reason, risk_contributions]
+    return market.agent_tools() + [look_through, strategy_checks, limit_reason, risk_contributions]
 
 
 @contextmanager
@@ -233,15 +236,20 @@ def _tool_returns(rets):
 # ---- code enforces: validation ---------------------------------------------------------------------------
 
 _NUM = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?%?")
+# "12 months", "4-year", "3 y": a duration, i.e. a window or the client's horizon, not a measured number
+_DURATION = re.compile(r"\s*-?\s*(?:months?|years?|yrs?|y|weeks?|days?|trading days)\b", re.I)
 
 
 def _claim_numbers(text: str) -> list[str]:
     out = []
-    for m in _NUM.findall(text or ""):
-        v = float(m.rstrip("%"))
-        if not m.endswith("%") and (v.is_integer() and (abs(v) <= 10 or 1900 <= v <= 2100)):
-            continue  # small counts ("2 holdings", "3 strategies") and years are not data
-        out.append(m)
+    text = text or ""
+    for m in _NUM.finditer(text):
+        tok = m.group()
+        v = float(tok.rstrip("%"))
+        if not tok.endswith("%") and v.is_integer():
+            if abs(v) <= 10 or 1900 <= v <= 2100 or _DURATION.match(text, m.end()):
+                continue  # small counts ("2 holdings"), years and durations ("12 months") are not data
+        out.append(tok)
     return out
 
 
@@ -271,8 +279,47 @@ def _backed(token: str, pool: list[float]) -> bool:
     return False
 
 
-def validate(raw: list[dict], calls: list[dict], strategies: list[dict]) -> list[dict]:
-    """Each objection gets a status: `valid` or `dropped: <why>`. At most MAX_OBJECTIONS are kept."""
+def _facts_pool(f: dict | None, key: str) -> list[float]:
+    """Numbers an objection on strategy `key` may quote without a tool call: what the Critic was given in FACTS
+    (the client, e.g. 25% TSLA asked; their limits, e.g. a 15% loss limit; that strategy's weights, split and stats),
+    plus the sum of any two of its weights ("QQQ and SPY together make up 61.5%"). Nothing invented passes: each
+    number still comes from code."""
+    if not f:
+        return []
+    s = next((x for x in f.get("strategies") or [] if x.get("key") == key), {})
+    w = [v for v in (s.get("weights") or {}).values() if isinstance(v, (int, float))]
+    pairs = [a + b for i, a in enumerate(w) for b in w[i + 1:]]
+    return _result_numbers([f.get("client"), f.get("limits"), s.get("weights"), s.get("split"), s.get("stats")]) + pairs
+
+
+_THRESHOLDS = (CORR_WARN, MAX_PAIR_CORR)
+
+
+def _sharpen(claim: str, pool: list[float]) -> str:
+    """A correlation rounded onto a rule threshold reads like a breach: 0.948 written "0.95" next to a rule that
+    blocks at 0.95. Code writes the exact value back (3 decimals) whenever rounding crossed a threshold. Only numbers
+    written after "correlat..." in the same sentence; the thresholds themselves (C6's limit is in the tool results) are
+    not candidates, or "0.95" would always find itself."""
+    text = claim or ""
+
+    def fix(m):
+        tok = m.group()
+        if tok.endswith("%") or "." not in tok or "correlat" not in re.split(r"[.;]\s", text[:m.start()])[-1].lower():
+            return tok
+        v = float(tok)
+        near = [r for r in pool if 0 < r < 1 and abs(r - v) <= 0.5 * 10 ** -len(tok.split(".")[1]) + 1e-9
+                and not any(abs(r - t) < 1e-12 for t in _THRESHOLDS)]
+        if not near:
+            return tok
+        r = min(near, key=lambda x: abs(x - v))
+        crossed = any((v >= t - 1e-12) != (r >= t - 1e-12) for t in _THRESHOLDS)
+        return f"{r:.3f}" if crossed else tok
+    return _NUM.sub(fix, text)
+
+
+def validate(raw: list[dict], calls: list[dict], strategies: list[dict], facts_: dict | None = None) -> list[dict]:
+    """Each objection gets a status: `valid` or `dropped: <why>`. At most MAX_OBJECTIONS are kept.
+    facts_ = the FACTS the Critic was given (`facts()`): their numbers back a claim too (see `_facts_pool`)."""
     by_id = {c["call_id"]: c for c in calls}
     keys = {s["key"] for s in strategies}
     out = []
@@ -288,8 +335,11 @@ def validate(raw: list[dict], calls: list[dict], strategies: list[dict]) -> list
             o["status"] = "dropped: cites no tool call it made"
         else:
             pool = [n for e in o["evidence"] for n in _result_numbers(by_id[e]["result"])]
+            pool += _facts_pool(facts_, o["strategy"])
             missing = [t for t in _claim_numbers(o.get("claim", "")) if not _backed(t, pool)]
             o["status"] = f"dropped: unbacked number(s) {', '.join(missing)}" if missing else "valid"
+            if not missing:
+                o["claim"] = _sharpen(o.get("claim", ""), pool)
         if not isinstance(o.get("action"), dict) or o["action"].get("type") not in ("merge", "trim", "shift", "disclose"):
             o["action"] = {"type": "disclose"}
         out.append(o)
@@ -311,7 +361,7 @@ def _mock(strategies: list[dict], limits: dict, rec: Recorder, tools: dict) -> l
         if p.get("correlation", 0) >= CORR_WARN:
             out.append({"strategy": top["key"], "evidence": [r["call_id"]],
                         "claim": f"{p['a']} and {p['b']} moved almost together in {period_label()} (correlation "
-                                 f"{p['correlation']:.2f}): holding both is largely the same bet.",
+                                 f"{p['correlation']:.3f}): holding both is largely the same bet.",
                         "action": {"type": "merge", "a": p["a"], "b": p["b"]}})
     for s in strategies:
         r = rec.call(tools["strategy_checks"], "strategy_checks", {"strategy": s["key"]})
@@ -354,13 +404,16 @@ def _cache_paths(h: str):
 
 
 def review(strategies: list[dict], limits: dict, profile: dict, provider: str | None = None, rets=None,
-           holdings=None) -> dict:
-    """{objections, tool_calls, source, model, note, facts_hash}. Never raises on agent failure (→ mock critic)."""
+           holdings=None, context: dict | None = None) -> dict:
+    """{objections, tool_calls, source, model, note, facts_hash}. Never raises on agent failure (→ mock critic).
+    context: extra FACTS (the existing-portfolio pass); None leaves the facts, so the hash and caches, unchanged."""
     provider = (provider or os.getenv("LLM_PROVIDER", "mock")).lower()
     if holdings is None:
         from ..holdings import holdings as load_holdings
         holdings = load_holdings()
     f = facts(strategies, limits, profile)
+    if context:
+        f.update(context)
     mid = model_id()
     h = facts_hash(f, mid)
     tools = make_tools(strategies, limits, holdings)
@@ -388,7 +441,7 @@ def review(strategies: list[dict], limits: dict, profile: dict, provider: str | 
             rec = Recorder()
             raw = _mock(strategies, limits, rec, {t.__name__: t for t in tools})
             calls = rec.calls
-    return {"objections": validate(raw, calls, strategies), "tool_calls": calls, "source": src, "model": model,
+    return {"objections": validate(raw, calls, strategies, f), "tool_calls": calls, "source": src, "model": model,
             "note": note, "facts_hash": h}
 
 
@@ -413,7 +466,7 @@ def _short(call: dict) -> str:
     if isinstance(r, dict) and "error" in r:
         res = "error: " + r["error"][:60]
     elif call["tool"] == "correlation_between" and r.get("pairs"):
-        res = ", ".join(f"{p['a']}/{p['b']} {p['correlation']:.2f}" for p in r["pairs"][:2])
+        res = ", ".join(f"{p['a']}/{p['b']} {p['correlation']:.3f}" for p in r["pairs"][:2])
     elif call["tool"] == "strategy_checks":
         res = f"{sum(c['status'] == 'warn' for c in r.get('checks', []))} warning(s)"
     elif call["tool"] in ("portfolio_stats", "stress_test"):
@@ -490,4 +543,31 @@ def add_to_trace(res: dict, profile: dict, provider: str | None = None, rets=Non
     for agent, to, summary, kw in later:
         res["trace"].step(agent, to, summary, **kw)
     res["critic"] = c
+    return c
+
+
+# ---- existing portfolio (branch portefeuille_existant) ------------------------------------------------------
+
+EXISTING_NOTE = ("The single strategy with key 'existing' is the client's CURRENT portfolio, as they entered it, not a "
+                 "proposal: it may break their limits. Object to what matters most for this client, backed by tools. "
+                 "The fix is the rebuilt version shown next to it, so every action is 'disclose'.")
+
+
+def review_existing(current: dict, rev: dict, limits: dict, profile: dict, provider: str | None = None, rets=None,
+                    holdings=None) -> dict:
+    """The same Critic (same prompt, tools, validation) on the client's current portfolio. Objections are only
+    disclosed: no fix is applied to what the client owns. `rets` = the review's returns (hedged stand-ins blended)."""
+    w = current["weights"]
+    g = current["growth"]
+    s = {"key": "existing", "name": "Your portfolio today", "weights": w,
+         "split": {"growth": g, "defensive": round(1 - g, 6)}, "stats": current["stats"],
+         "checks": current["checks"], "guardian": {"checks": current["guardian_checks"]}}
+    ctx = {"note": EXISTING_NOTE,
+           "stand_ins": [x["label"] for x in rev.get("stand_ins") or []],
+           "not_assessable": rev.get("not_assessable") or []}
+    c = review([s], limits, profile, provider, rets=rets, holdings=holdings, context=ctx)
+    for o in c["objections"]:
+        o["action"] = {"type": "disclose"}
+        if o["status"] == "valid":
+            o["status"] = "disclosed"
     return c

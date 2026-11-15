@@ -36,7 +36,7 @@ def test_position_what_if_reruns_the_pipeline(robert_run, rets):
 
 
 def test_unknown_asset_and_unclear_question(robert_run, rets):
-    assert "no data for XSP" in ask("What if I add 10% XSP?", robert_run, ROBERT, rets)["answer"]
+    assert "no data for ZEQT" in ask("What if I add 10% ZEQT?", robert_run, ROBERT, rets)["answer"]   # no stand-in (#42)
     help_ = ask("Is gold nice?", robert_run, ROBERT, rets)
     assert help_["status"] == "valid" and not help_["tool_calls"]
 

@@ -38,7 +38,7 @@ LOCAL_CACHE = ROOT / ".cache" / "explainer"    # gitignored
 MAX_CHECKS = 3
 # Verified on the event account (CONTEXT.md, make bedrock-check): the default, so the committed demo cache replays
 # without a .env (judges, teammates, Friday without AWS). Override with BEDROCK_EXPLAINER_MODEL_ID.
-DEFAULT_MODEL_ID = "global.anthropic.claude-opus-5-5"
+from ..llm import DEFAULT_MODEL_ID  # noqa: E402  (one default for every agent, dh.llm)
 
 SYSTEM_PROMPT = f"""You write the explanation a fictional investor reads at the end of an investment-analysis
 simulation. You are given FACTS as JSON: the client's profile, their limits with the reasons behind each, and up to
@@ -49,6 +49,9 @@ Write for this client, in plain English, at most 350 words, with five short sect
 4. The strategies, compared (their risk level, split and what set it, worst historical drop, the sell-offs listed
 in FACTS.stress_windows, chance of a loss). 5. Limits of this analysis and
 what would change the answer.
+If FACTS has existing_portfolio, add after section 3 a section "The portfolio you already have": what we measured,
+its worst drop and the limits it breaks, what we see, every stand-in (held fund measured with another fund, and why)
+and every holding left out for lack of data, then the rebuilt version and its largest changes (a simulation).
 
 Hard rules:
 - NEVER write a number yourself: no digits at all, and no spelled-out amounts ("eight percent"). Every number in
@@ -99,6 +102,62 @@ def _caps_shown(strategies: list[dict], limits: dict, profile: dict) -> dict:
     return {t: _pct(caps[t]) for t in sorted(held) if t in caps}
 
 
+def _dividend_facts(weights: dict) -> dict:
+    """Research mode (decision #41): the dividends of the single companies held, judged on 3 years of earnings.
+    {} by default, so the demo's facts (and their cache hash) are unchanged. Numbers become ids for strict G12."""
+    from ..data import load_config
+    if not load_config().extra:
+        return {}
+    from .. import fundamentals
+    held = fundamentals.held_dividends(weights)
+    if not held:
+        return {}
+    return {"dividends": [{"ticker": h["ticker"], "status": h["status"],
+                           "share_of_3y_earnings_paid": _pct(h["payout_3y"]), "reason": h["reason"]} for h in held],
+            "dividends_rule": f"a dividend is covered when it is at most {1 / fundamentals.COVERAGE_THIN:.0%} of the "
+                              f"last {fundamentals.YEARS} years' earnings (team rule, not a regulation)"}
+
+
+def _money(x) -> str | None:
+    return f"{x:,.0f} $" if isinstance(x, (int, float)) else None
+
+
+def _existing_facts(r: dict | None) -> dict | None:
+    """The client's current portfolio, reviewed (branch portefeuille_existant). None → no key in the facts, so the
+    hash (and the demo caches) of a run without an existing portfolio is unchanged."""
+    if not r or not r.get("current"):
+        return None
+    c, t = r["current"], r.get("target") or {}
+    side = lambda v: {"worst_drop": _pct(v.get("max_drawdown")), "worst_drop_cad": _money(v.get("drawdown_cad")),
+                      "return_2022": _pct(v.get("return_2022")), "volatility": _pct(v.get("ann_vol")),
+                      "growth": _pct(v.get("growth")), "limits_broken": [f["id"] for f in v.get("fails", [])]}
+    return {
+        "measured_cad": _money(r.get("assessed_cad")), "entered_cad": _money(r.get("total_cad")),
+        "today": side(c), "rebuilt_as": t.get("name"), "rebuilt": side(t) if t else None,
+        "what_we_see": r.get("critique", [])[:8],
+        "stand_ins": [{"held": s["ticker"], "measured_with": s["measured_with"], "why": s["closeness"],
+                       "currency_hedge_simulated": s["hedged"],
+                       **({"hedge_effect_worst_drop": {k: _pct(v) for k, v in s["hedge_effect"]["max_drawdown"].items()}}
+                          if s.get("hedge_effect") else {}),
+                       **({"checked_against_real_fund": {
+                           "window": s["checked_against_real"]["window"],
+                           "real_worst_drop": _pct(s["checked_against_real"]["real_worst_drop"]),
+                           "stand_in_worst_drop": _pct(s["checked_against_real"]["stand_in_worst_drop"])}}
+                          if s.get("checked_against_real") else {})} for s in r.get("stand_ins") or []],
+        "stand_in_limits": r.get("limits_of_stand_ins"),
+        "no_data_left_out": r.get("not_assessable") or [],
+        "fees_a_year": ({"today": _money(r["fees"]["today"]["total_cad"]),
+                         "today_share": _pct(r["fees"]["today"]["weighted_mer"]),
+                         "rebuilt": _money((r["fees"].get("rebuilt") or {}).get("total_cad")),
+                         "unknown_for": r["fees"]["today"]["unknown"], "source": r["fees"]["today"]["source"]}
+                        if r.get("fees") else None),
+        "look_through_not_opened": (r.get("look_through") or {}).get("not_opened", []),
+        "largest_changes": [{"holding": m["ticker"], "held_as": m.get("held") or None, "today": _money(m["now_cad"]),
+                             "rebuilt": _money(m["target_cad"]), "change": _money(m["change_cad"]),
+                             "action": m["action"]} for m in (r.get("moves") or [])[:5]],
+    }
+
+
 def facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
     """Everything the Explainer may say, numbers pre-formatted as the text should show them."""
     p, label = period(), period_label()
@@ -123,8 +182,9 @@ def facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
             "chance_of_target_risk_only": _pct(o.get("prob_target")),
             "top_holdings": {t: _pct(w) for t, w in top},
             "why": [a for a in s.get("adjustments", []) if not a.startswith("offered")][:4],
+            **_dividend_facts(s["weights"]),
         })
-    return {
+    out = {
         "client": {"name": profile.get("name"), "age": profile.get("age"), "horizon_years": profile.get("horizon_years"),
                    "objective": profile.get("objective"),
                    "capital_cad": f"{profile['capital']:,.0f} $" if profile.get("capital") else None,
@@ -152,6 +212,10 @@ def facts(strategies: list[dict], limits: dict, profile: dict) -> dict:
                 + "; ".join(proxies_used()) + "." if proxies_used() else ""),
         "disclaimer": DISCLAIMER,
     }
+    ex = _existing_facts(limits.get("existing_review"))
+    if ex:
+        out["existing_portfolio"] = ex
+    return out
 
 
 def facts_hash(f: dict, model_id: str = "") -> str:
@@ -275,8 +339,11 @@ def template(f: dict) -> str:
         for r in f["requests_not_included"]:
             out.append(f"You asked for {r['asked'] or ''} in {r['ticker']}. {r['reason'][:1].upper()}{r['reason'][1:]}. "
                        f"The strategies below stay within that; the choice remains yours.".replace("for  in", "for"))
-    out += ["", "**The strategies.** Up to three risk levels, from the most growth your limits allow to the most "
-                "prudent; the choice is yours."]
+    ex = f.get("existing_portfolio")
+    if ex:
+        out += _template_existing(ex)
+    out += ["", "**The strategies.** Up to three options, from the most growth your limits allow to the least in "
+                "stocks; less in stocks is not always a smaller past drop, so compare the drops. The choice is yours."]
     for s in f["strategies"]:
         line = f"- **{s['name']}**: {s['growth']} growth, {s['defensive']} defensive"
         if s.get("split_set_by"):
@@ -293,12 +360,55 @@ def template(f: dict) -> str:
             line += f"; chance of ending below what you put in, without assuming past returns repeat: " \
                     f"{s['chance_of_loss_risk_only']}"
         out.append(line + ".")
+        if s.get("dividends"):
+            out.append("  Dividends of the companies held: " + "; ".join(
+                f"{d['ticker']} {d['status']}" + (f" ({d['share_of_3y_earnings_paid']} of 3 years' earnings)"
+                                                  if d.get("share_of_3y_earnings_paid") else "")
+                for d in s["dividends"]) + f". Rule: {s['dividends_rule']}.")
         if s["conflict_message"]:
             out.append(f"  {s['conflict_message']}")
     out += ["", f"**Limits of this analysis.** These numbers describe {f['period']} only; they are not predictions. "
                 "A longer horizon, a different loss limit or new money needed soon would change the answer.",
             "", f["disclaimer"]]
     return "\n".join(out)
+
+
+def _template_existing(ex: dict) -> list[str]:
+    t, r = ex["today"], ex.get("rebuilt")
+    out = ["", "**The portfolio you already have.** We measured " + ex["measured_cad"]
+           + (f" of the {ex['entered_cad']} you entered" if ex["entered_cad"] != ex["measured_cad"] else "")
+           + f". Its worst historical drop was {t['worst_drop']}"
+           + (f" (about {t['worst_drop_cad']})" if t.get("worst_drop_cad") else "")
+           + (f"; limits it breaks: {', '.join(t['limits_broken'])}." if t["limits_broken"] else
+              "; it stays within your limits.")]
+    out += [f"- {line}" for line in ex["what_we_see"]]
+    for s in ex["stand_ins"]:
+        line = (f"- {s['held']} is not in our data: it is measured with {s['measured_with']} ({s['why']})"
+                + (", with its currency hedge simulated" if s["currency_hedge_simulated"] else ""))
+        h = s.get("hedge_effect_worst_drop")
+        if h:
+            line += f"; worst drop {h['hedged']} hedged vs {h['unhedged']} without the hedge"
+        v = s.get("checked_against_real_fund")
+        if v:
+            line += (f". Checked against {s['held']}'s own prices ({v['window']}): its real worst drop was "
+                     f"{v['real_worst_drop']}, the stand-in's {v['stand_in_worst_drop']}")
+        out.append(line + ".")
+    if ex["stand_ins"]:
+        out.append(f"  Limits of these stand-ins: {ex['stand_in_limits']}.")
+    if ex["no_data_left_out"]:
+        out.append(f"- No data for {', '.join(ex['no_data_left_out'])}: left out of these numbers.")
+    fy = ex.get("fees_a_year")
+    if fy and fy.get("today"):
+        out.append(f"- Fund fees: about {fy['today']} a year ({fy['today_share']} of what we measured)"
+                   + (f"; rebuilt, about {fy['rebuilt']}" if fy.get("rebuilt") else "") + f" (source: {fy['source']}).")
+    if r:
+        out.append(f"Rebuilt as **{ex['rebuilt_as']}** with the same money, its worst drop would have been "
+                   f"{r['worst_drop']}" + (f" (about {r['worst_drop_cad']})" if r.get("worst_drop_cad") else "")
+                   + (". " if not r["limits_broken"] else f", still breaking {', '.join(r['limits_broken'])}. ")
+                   + "Largest changes, as a simulation: " + "; ".join(
+                       f"{m['holding']}{' (held as ' + ', '.join(m['held_as']) + ')' if m.get('held_as') else ''} "
+                       f"{m['today']} → {m['rebuilt']}" for m in ex["largest_changes"]) + ".")
+    return out
 
 
 # ---- Strands agent on Bedrock ---------------------------------------------------------------------------

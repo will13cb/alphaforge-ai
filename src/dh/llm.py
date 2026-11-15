@@ -23,9 +23,13 @@ def provider() -> str:
     return os.getenv("LLM_PROVIDER", "mock").lower()
 
 
+# Verified on the event account (CONTEXT.md, make bedrock-check). The one default: the agents import it.
+DEFAULT_MODEL_ID = "global.anthropic.claude-opus-5-5"
+
+
 def model() -> str:
     return (
-        os.getenv("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
+        os.getenv("BEDROCK_MODEL_ID", DEFAULT_MODEL_ID)
         if provider() == "bedrock"
         else "mock"
     )

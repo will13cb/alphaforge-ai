@@ -16,7 +16,7 @@ from interface.ui import components as ui
 S = st.session_state
 VERDICT = {"pass": ("Approved by the checks", "good"), "warn": ("Approved, with points to know", "warn"),
            "fail": ("Not approved by the checks", "bad")}
-STATUS = {"pass": "✔", "warn": "⚠", "fail": "✘"}
+STATUS = {"pass": "Passed", "warn": "To know", "fail": "Not met"}
 
 
 def pct(x, nd: int = 0) -> str:
@@ -57,7 +57,7 @@ def essentials(res: dict, profile: dict) -> None:
 
     st.subheader(f"{len(strategies)} way{'s' if len(strategies) != 1 else ''} to invest within these limits")
     st.markdown(f'<p class="af-muted">Simulated on {period_label()} market data, from the most growth your limits allow '
-                'to the most prudent. Past ups and downs, not a forecast.</p>',
+                'to the least in stocks. Less in stocks did not always mean smaller past drops: compare them. Past ups and downs, not a forecast.</p>',
                 unsafe_allow_html=True)
     for s in strategies:
         stt = s["stats"]
@@ -76,11 +76,11 @@ def essentials(res: dict, profile: dict) -> None:
             ui.metric(m[2], pct(stt.get("prob_loss")), "chance of ending below what you put in*")
             cons = unique(s.get("cons", []))
             if s.get("pros") or cons:
-                st.markdown("\n".join([f"- ➕ {x}" for x in s.get("pros", [])] + [f"- ➖ {x}" for x in cons]))
+                st.markdown("\n".join([f"- **For:** {x}" for x in s.get("pros", [])] + [f"- **Against:** {x}" for x in cons]))
             said = " ".join(cons).lower()
             bad = [c for c in s.get("checks", []) if c["status"] != "pass" and c["reason"].lower().rstrip(".") not in said]
             for c in bad[:3]:
-                ui.notice(f"{STATUS[c['status']]} {c['reason'][:1].upper()}{c['reason'][1:]}",
+                ui.notice(f"{STATUS[c['status']]}: {c['reason'][:1].upper()}{c['reason'][1:]}",
                           "bad" if c["status"] == "fail" else "warn")
     if strategies:
         st.caption("\\* Without assuming past average returns repeat: only the past swings are replayed.")
@@ -94,6 +94,8 @@ def request(res: dict) -> None:
     if c.get("not_assessable"):
         ui.notice("We have no market data for " + ", ".join(c["not_assessable"])
                   + ", so we can't measure its risk. It is left out.", "warn")
+    for lab in c.get("stand_ins") or []:
+        ui.notice(f"Not in our data: {lab}.", "info")
     a, f = c.get("as_asked"), c.get("fits")
     if a:
         cols = st.columns(2 if f else 1)
@@ -109,6 +111,63 @@ def request(res: dict) -> None:
                 ui.notice("Within your limits.", "good")
     if c.get("summary"):
         st.markdown(c["summary"])
+    st.caption("The choice stays yours: this only shows what each version would have done.")
+
+
+def existing(res: dict) -> None:
+    """Branch portefeuille_existant: the portfolio the person already owns, reviewed, then rebuilt."""
+    r = res.get("existing_review")
+    if not r:
+        return
+    st.subheader("The portfolio you already have")
+    if r.get("error"):
+        ui.notice(r["summary"], "warn")
+        return
+    if r.get("not_assessable"):
+        ui.notice("We have no market data for " + ", ".join(r["not_assessable"])
+                  + ", so it is left out of the numbers below.", "warn")
+    for si in r.get("stand_ins") or []:
+        h = (si.get("hedge_effect") or {}).get("max_drawdown")
+        ui.notice(f"{si['ticker']} is not in our data: measured with {si['measured_with']} ({si['closeness']})"
+                  + (", with its currency hedge simulated" if si["hedged"] else "")
+                  + (f": worst drop {pct(h['hedged'], 1)} hedged vs {pct(h['unhedged'], 1)} without the hedge" if h else "")
+                  + (f". Checked against {si['ticker']}'s own prices ({si['checked_against_real']['window']}): real worst "
+                     f"drop {pct(si['checked_against_real']['real_worst_drop'], 1)}, stand-in "
+                     f"{pct(si['checked_against_real']['stand_in_worst_drop'], 1)}" if si.get("checked_against_real") else "")
+                  + ".", "info")
+    if r.get("stand_ins"):
+        st.caption("Stand-in limits: " + r.get("limits_of_stand_ins", ""))
+    c, t = r.get("current"), r.get("target")
+    if not c:
+        return
+    cols = st.columns(2 if t else 1)
+    with cols[0]:
+        ui.card("Today", "")
+        ui.metric(st, pct(c.get("max_drawdown"), 1), f"worst drop, about {money(c.get('drawdown_cad'))}")
+        ui.notice(f"{len(c['fails'])} of your limits broken." if c.get("fails") else "Within your limits.",
+                  "bad" if c.get("fails") else "good")
+    if t:
+        with cols[1]:
+            ui.card(f"Rebuilt: {t['name']}", "")
+            ui.metric(st, pct(t.get("max_drawdown"), 1), f"worst drop, about {money(t.get('drawdown_cad'))}")
+            ui.notice(f"{len(t['fails'])} of your limits broken." if t.get("fails") else "Within your limits.",
+                      "bad" if t.get("fails") else "good")
+    st.markdown("**What we see**\n" + "\n".join(f"- {ui.esc(x)}" for x in r.get("critique", [])),
+                unsafe_allow_html=True)
+    objections = [o for o in (r.get("critic") or {}).get("objections", []) if o["status"] == "disclosed"]
+    if objections:
+        st.markdown("**The Critic's points** (each checked with a tool; " + ui.esc((r.get("critic") or {}).get("source", ""))
+                    + ")\n" + "\n".join(f"- {ui.esc(o.get('claim', ''))}" for o in objections), unsafe_allow_html=True)
+    if r.get("moves"):
+        st.markdown("**From today to the rebuilt version (simulation, nothing is bought or sold)**")
+        df = pd.DataFrame(r["moves"])
+        df["held"] = df["held"].map(lambda h: ", ".join(h) if h else "")
+        st.dataframe(df[["ticker", "held", "now_cad", "target_cad", "change_cad", "action"]].rename(columns={
+            "ticker": "Holding", "held": "You hold it as", "now_cad": "Today ($)", "target_cad": "Rebuilt ($)",
+            "change_cad": "Change ($)", "action": "Action"}), hide_index=True, width="stretch")
+        for m in r["moves"]:
+            if m.get("note"):
+                st.caption(f"{m['ticker']}: {m['note']}.")
     st.caption("The choice stays yours: this only shows what each version would have done.")
 
 
@@ -130,18 +189,19 @@ def details(res: dict) -> None:
     ch = services.charts(res)
     with st.expander(f"How the strategies would have moved, {period_label()}"):
         if "growth" in ch:
-            st.altair_chart(ch["growth"], width="stretch")
+            ui.chart(ch["growth"])
         else:
             st.caption("Chart unavailable.")
     for s in res.get("strategies", []):
         with st.expander(f"{s['name']}: what it holds and every check"):
             st.table(pd.DataFrame({"share": [pct(w, 1) for w in s["weights"].values()]}, index=list(s["weights"])))
             if ("split", s["key"]) in ch:
-                st.altair_chart(ch[("split", s["key"])], width="stretch")
+                ui.chart(ch[("split", s["key"])])
             if ("outcome", s["key"]) in ch:
-                st.altair_chart(ch[("outcome", s["key"])], width="stretch")
+                ui.chart(ch[("outcome", s["key"])])
             st.markdown("**Checks**")
-            st.markdown("\n".join(f"- {STATUS[c['status']]} **{c['check']}** {c['reason']}" for c in s.get("checks", [])))
+            st.markdown("\n".join(f"- <span class=\"af-st {c['status']}\">{STATUS[c['status']]}</span> **{ui.esc(c['check'])}** "
+                                  f"{ui.esc(c['reason'])}" for c in s.get("checks", [])), unsafe_allow_html=True)
             g = s.get("guardian", {})
             if g:
                 st.markdown(f"**Final rules (Guardian):** {VERDICT.get(g.get('verdict'), ('–',))[0]}")
@@ -175,6 +235,7 @@ def render() -> None:
         ui.notice(f"<b>{ui.esc(lab)}.</b> Below: your limits, the strategies that respect them, and why.", tone, safe=True)
     essentials(res, profile)
     request(res)
+    existing(res)
     explanation(res)
     if res.get("strategies") and st.button("Ask the assistant about these results →", type="primary"):
         S.goto = "Assistant"

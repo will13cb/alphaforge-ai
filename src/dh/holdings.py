@@ -153,6 +153,37 @@ def build(raw_dir: Path, out: Path) -> pd.DataFrame:
 
 # ---- loading for the pipeline ----------------------------------------------------------------
 
+def download(raw_dir: Path) -> list[str]:
+    """Fetch the issuer files that are direct downloads (SPY's .xlsx from State Street) into raw_dir. The others
+    (QQQ, ESGV, XIU.TO) are web pages: their files are saved by hand (data/README.md). Returns what was fetched;
+    never raises (the look-through falls back to "direct only", and says so)."""
+    import urllib.request
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    got = []
+    for etf, s in SOURCES.items():
+        if not s["url"].lower().endswith((".xlsx", ".xls", ".csv")):
+            continue
+        dest = raw_dir / s["url"].rsplit("/", 1)[-1]
+        try:
+            req = urllib.request.Request(s["url"], headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                dest.write_bytes(r.read())
+            got.append(etf)
+        except Exception as e:  # noqa: BLE001
+            print(f"[dh.holdings] {etf}: download failed ({type(e).__name__}: {e})")
+    return got
+
+
+def status(path: Path | str | None = None) -> dict:
+    """What the look-through can open: {etfs: {etf: as_of}, missing: [...]} — shown to the client, never hidden."""
+    p = Path(path) if path else default_path()
+    if not p.exists():
+        return {"etfs": {}, "missing": sorted(SOURCES), "file": False}
+    df = pd.read_csv(p)
+    have = {e: str(g["as_of"].iloc[0]) for e, g in df.groupby("etf")}
+    return {"etfs": have, "missing": sorted(set(SOURCES) - set(have)), "file": True}
+
+
 def default_path() -> Path:
     return load_config().data_dir / "etf_holdings.csv"
 

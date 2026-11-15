@@ -23,7 +23,7 @@ interface/core/             pure Python, no Streamlit, unit-tested
   wizard.py                 visible questions, step checks, cross-checks, progress, answers ↔ engine profile
   services.py               the ONLY door to the engine (pipeline, explainer, extractor, analyst, charts);
                             UserError (shown) vs InternalError (logged in logs/interface.log, short message + ref)
-interface/ui/theme.py       palette Neige / Gris saule / Gris antarctique / Érable, CSS, chat bubbles, animation
+interface/ui/theme.py       two modes (light editorial, dark), switch in the sidebar; CSS tokens, chart colours, no emoji
 interface/ui/components.py  field(), notice(), card(), metric(), steps_bar(), thinking() (cleared in a finally)
 interface/views/            profile.py (wizard + review), results.py, chat.py (conversation)
 ```

@@ -14,12 +14,27 @@ from .profiler import derive_limits
 from .trace import Trace, describe_checks, describe_limits
 
 
+def data_columns() -> list[str]:
+    from ..data import returns
+    return list(returns().columns)
+
+
 def run(profile: dict, strategy: dict | None = None, explanation: str | None = None, holdings=None,
         propose: bool = True, rets=None, drops: dict | None = None, critic: bool = True) -> dict:
     """holdings=None → real issuer holdings (dh.holdings); pass {} to force "direct only".
     rets=None → starter data (dh.data.returns()); tests pass synthetic returns.
     drops = each asset's worst drop for the company caps (#24): None → from `rets` if given, else the market data."""
     tr = Trace()
+    if profile.get("requested_positions"):   # "10% in XSP": measured with its stand-in (SPY), labelled (#42)
+        from .. import standins
+        try:
+            have = set(rets.columns) if rets is not None else set(data_columns())
+        except SystemExit:
+            have = set()
+        profile, used = standins.resolve_requests(profile, have)
+        if used:
+            tr.step("Market data", "Profiler", "request measured with a stand-in: "
+                    + "; ".join(u["label"] for u in used), output=used)
     if drops is None and rets is not None:
         from ..metrics import max_drawdown
         drops = {c: max_drawdown(rets[c]) for c in rets.columns}
@@ -67,6 +82,28 @@ def run(profile: dict, strategy: dict | None = None, explanation: str | None = N
             # a copy, not an in-place change (audit P15): G12 reads the side-by-side numbers from res["limits"]
             limits = res["limits"] = {**limits, "request_comparison": comparison}
         res["request_comparison"] = comparison
+        if profile.get("existing_positions"):  # branch portefeuille_existant: review + rebuild, never blocks the run
+            from . import existing
+            try:
+                review = existing.review(profile, limits, kept, rets=rets, holdings=holdings, critic=critic)
+            except Exception as ex:  # noqa: BLE001 — the proposals above stay valid without the review
+                review = {"error": f"{type(ex).__name__}: {ex}"[:200],
+                          "summary": "Existing portfolio could not be reviewed; the proposals are unaffected."}
+            if review:
+                tr.step("Portfolio", "Critic" if review.get("critic") else "Client", review["summary"],
+                        output=existing.public(review))
+                c = review.get("critic")
+                if c:
+                    from .critic import _short
+                    calls = "; ".join(_short(x) for x in c["tool_calls"]) or "no tool call"
+                    kept_o = [o for o in c["objections"] if o["status"] == "disclosed"]
+                    tr.step("Critic", "Client", f"existing portfolio: {len(c['tool_calls'])} tool call(s): {calls}. "
+                            f"{len(kept_o)} objection(s) disclosed ({c['source']}).", output=c,
+                            checks=[{"rule": o["id"], "status": "warn", "text": f"existing: {o.get('claim', '')}",
+                                     "detail": o["status"]} for o in c["objections"]])
+                # a copy, like the request comparison: the Explainer's facts and G12 read the review from res["limits"]
+                limits = res["limits"] = {**limits, "existing_review": existing.public(review)}
+            res["existing_review"] = review
         res["verdict"] = "fail" if not kept else guardian.verdict([c for s in kept for c in s["guardian"]["checks"]])
         return res
 
@@ -78,7 +115,8 @@ def run(profile: dict, strategy: dict | None = None, explanation: str | None = N
         tr.step("Guardian", "Critic" if v != "fail" else "Portfolio", describe_checks("Portfolio", s, v), checks=s)
         checks += s
 
-    if explanation is not None and strategy is not None:  # TODO Explainer agent produces this
+    # Hand-written text (scenarios, tests). The Explainer agent's text is checked by explainer.add_to_trace.
+    if explanation is not None and strategy is not None:
         e = guardian.check_explanation(explanation, strategy, limits, profile)
         v = guardian.verdict(e)
         tr.step("Explainer", "Guardian", "client text, " + str(len(explanation)) + " characters", output=explanation)

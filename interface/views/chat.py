@@ -40,10 +40,10 @@ def chart_for(turn: dict):
                                                  scale=alt.Scale(paddingInner=0.35)))
             bars = base.mark_bar().encode(
                 x=alt.X("drop:Q", title=f"Worst {period_label()} drop (%)"),
-                color=alt.Color("version:N", legend=None, scale=alt.Scale(range=[theme.ERABLE, theme.ANTARCTIQUE])),
+                color=alt.Color("version:N", legend=None, scale=alt.Scale(range=[theme.palette(theme.mode(S))["c1"], theme.palette(theme.mode(S))["c2"]])),
                 tooltip=["version", alt.Tooltip("drop:Q", format=".1f")])
             if a.get("loss_limit"):
-                bars = bars + base.mark_tick(color=theme.INK, thickness=2, size=30).encode(x="limit:Q")
+                bars = bars + base.mark_tick(color=theme.palette(theme.mode(S))["bad"], thickness=2, size=30).encode(x="limit:Q")
             return bars.properties(height=110)
     return None
 
@@ -55,7 +55,7 @@ def show_answer(t: dict) -> None:
     st.markdown(t["text"])
     ch = chart_for(t)
     if ch is not None:
-        st.altair_chart(ch, width="stretch", height=130)
+        ui.chart(ch, height=130)
         st.caption("Dark mark: your loss limit.")
     if t.get("cut"):
         st.caption("Your question was long, so only its beginning was read.")
@@ -103,7 +103,9 @@ def render() -> None:
     if not chat:
         st.markdown('<p class="af-muted">Ask in your own words, for example:</p>', unsafe_allow_html=True)
         cols = st.columns(2)
-        for i, sug in enumerate(SUGGESTIONS):
+        from interface.views.holdings_input import EXISTING_QUESTIONS
+        sugs = SUGGESTIONS + (EXISTING_QUESTIONS if (S.get("profile") or {}).get("existing_positions") else [])
+        for i, sug in enumerate(sugs):
             if cols[i % 2].button(sug, key=f"sug_{i}", width="stretch"):
                 chat.append({"question": sug, "status": "pending"})
                 st.rerun()

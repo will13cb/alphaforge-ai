@@ -19,6 +19,12 @@ data: ## Starter CSVs into data/raw/ (copy, S3, or rebuild)
 data-long: ## Longer history into data/raw/ (official build script, START=2004-11-18 by default; needs internet)
 	@$(PY) scripts/build_long_data.py $(if $(START),--start $(START))
 
+data-products: ## Extra products listed in Canada/U.S. into data/raw/products_cadusa/ (needs internet; then harness.toml [data] extra)
+	@$(PY) scripts/build_products.py $(if $(START),--start $(START))
+
+data-fundamentals: ## Annual statements of every stock (payout, dividend coverage) into data/raw/fundamentals/ (needs internet)
+	@$(PY) scripts/build_fundamentals.py
+
 data-up: ## Upload data/raw/*.csv to s3://$S3_BUCKET/raw/ (for the hosted app; credentials from .env)
 	@$(ENV) $(PY) scripts/upload_data.py
 

@@ -186,3 +186,16 @@ def position(text_name: str, text_pct) -> Check:
     if p.value == 0:
         return Check(False, None, "Please enter a percentage above 0.")
     return Check(True, {extractor.ticker_of(n): p.value / 100})
+
+
+def held_position(text_name: str, text_amount) -> Check:
+    """A holding the person already owns (branch portefeuille_existant): a name or ticker + the dollars in it."""
+    n = _clean(text_name)
+    if not n:
+        return Check(False, None, "Please enter the company or fund, or its ticker (e.g. XIU.TO).")
+    m = money(text_amount, 0, bounds("capital")[1], required=True)
+    if not m.ok:
+        return m
+    if m.value == 0:
+        return Check(False, None, "Please enter an amount above 0.")
+    return Check(True, (extractor.ticker_of(n), float(m.value)))

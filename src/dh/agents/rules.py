@@ -87,12 +87,36 @@ EQUITY_ETFS = {"XIU.TO", "SPY", "QQQ", "ESGV"}
 BOND_ETFS = {"XBB.TO", "ZST.TO", "AGG", "TLT"}
 CRYPTO = {"BTC-USD", "ETH-USD"}
 GOLD = {"GLD"}
-UNIVERSE = STOCKS | EQUITY_ETFS | BOND_ETFS | CRYPTO | GOLD
-ETFS = EQUITY_ETFS | BOND_ETFS | GOLD
+COMMODITIES: set[str] = set()   # commodity funds other than gold: none in the starter
+
+
+def _extra_groups() -> dict:
+    """Branch produit_cadusa: with harness.toml [data] extra = ["cadusa"], the catalogue's products join the groups
+    below, derived from its columns by dh.products.asset_groups (which gives exactly these sets on the starter).
+    Without extra (the default), nothing changes."""
+    from ..data import load_config
+    groups: dict = {}
+    for name in load_config().extra:
+        from ..products import asset_groups, catalogue
+        for k, v in asset_groups(catalogue(name)).items():
+            groups[k] = groups.get(k, frozenset()) | v
+    return groups
+
+
+_EXTRA = _extra_groups()
+STOCKS |= _EXTRA.get("stocks", set())
+EQUITY_ETFS |= _EXTRA.get("equity_etfs", set())
+BOND_ETFS |= _EXTRA.get("bond_etfs", set())
+CRYPTO |= _EXTRA.get("crypto", set())
+GOLD |= _EXTRA.get("gold", set())
+COMMODITIES |= _EXTRA.get("commodities", set())
+UNIVERSE = STOCKS | EQUITY_ETFS | BOND_ETFS | CRYPTO | GOLD | COMMODITIES
+ETFS = EQUITY_ETFS | BOND_ETFS | GOLD | COMMODITIES
 
 # Defensive = what is meant to hold up when stocks fall. TLT is a bond ETF but NOT defensive here:
 # 20+ year Treasuries are very rate-sensitive (check its 2022 drawdown with `make check`).
-DEFENSIVE = {"ZST.TO", "XBB.TO", "AGG", "GLD"}
+# From a catalogue: short/aggregate/government bonds, cash, gold (dh.products.DEFENSIVE_SUB_CLASSES).
+DEFENSIVE = {"ZST.TO", "XBB.TO", "AGG", "GLD"} | _EXTRA.get("defensive", set())
 
 # Dividend payers held for income (F1 income objective, the "income" strategy's single names): one list (audit P10).
 DIVIDEND_PAYERS = {"RY.TO", "TD.TO", "FTS.TO", "ENB.TO", "JNJ", "PG"}

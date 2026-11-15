@@ -180,3 +180,22 @@ def caps_shown(res: dict, profile: dict) -> dict:
     except Exception:  # noqa: BLE001
         logger().exception("caps")
         return {}
+
+
+def known_tickers() -> set[str]:
+    """Tickers with market data, to tell the person at once which holdings can be measured. Empty if no data."""
+    if not data_ready()[0]:
+        return set()
+    from dh.agents import market
+    try:
+        return {a["ticker"] for a in market.list_assets()["assets"]}
+    except Exception:  # noqa: BLE001 — only a hint on screen; the engine re-checks every ticker
+        logger().exception("known_tickers")
+        return set()
+
+
+def etfs_with_data() -> list[str]:
+    """The funds (ETFs) we have market data for, to suggest when a holding has none."""
+    from dh.agents.rules import BOND_ETFS, EQUITY_ETFS, GOLD
+    known = known_tickers()
+    return sorted(t for t in EQUITY_ETFS | BOND_ETFS | GOLD if t in known)

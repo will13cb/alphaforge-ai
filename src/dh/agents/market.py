@@ -115,11 +115,21 @@ def countries(tickers=None) -> dict[str, str]:
     return {t: country_of(t, u.get(t)) for t in names}
 
 
+def exposures(tickers=None) -> dict[str, str]:
+    """{ticker: where the holdings are}: a catalogue's `exposure` (dh.products, e.g. XEF.TO → Developed ex-North
+    America) when it has one, else the country of listing. Identical to `countries` for the starter's 31."""
+    from .. import products
+    exp = products.column_map("exposure")
+    return {t: exp.get(t) or c for t, c in countries(tickers).items()}
+
+
 def _meta() -> pd.DataFrame | None:
     try:
         u = data.universe().set_index("ticker")
         out = u[["name", "asset_class", "currency", "sector"]].copy()
         out["country"] = [country_of(t, m) for t, m in u["market"].items()]
+        if "exposure" in u.columns:  # extra catalogues (dh.products): where the holdings are, not where it is listed
+            out["exposure"] = u["exposure"].where(u["exposure"].notna(), None)
         return out
     except SystemExit:  # starter CSVs not there (tests, fresh clone)
         return None
@@ -289,7 +299,7 @@ def describe(facts: dict) -> str:
     c = facts.get("correlations")
     if c and c["top_pairs"]:
         p = c["top_pairs"][0]
-        s += f" Most correlated pair: {p['a']}/{p['b']} ({p['correlation']:.2f})."
+        s += f" Most correlated pair: {p['a']}/{p['b']} ({p['correlation']:.3f})."
     if bad:
         s += f" Unusable data: {', '.join(bad)}."
     return s
@@ -536,4 +546,36 @@ def required_return(capital: float, horizon_years: float, target_amount: float, 
     return _round(out)
 
 
+def dividend_facts(tickers: list[str]) -> dict:
+    """Is a company's dividend covered by what it earns? Payout ratio and coverage from its annual statements.
+
+    Args:
+        tickers: 1 to 10 stock tickers, e.g. ["ENB.TO", "RY.TO"]. A fund gets its distribution yield only.
+
+    Returns:
+        per ticker: status (covered / thin / not covered / loss / no dividend / fund / no data) and why; dividends per
+        share over the last 12 months, yield, yearly dividends, growth and cuts (from our price files); payout ratio =
+        dividends paid / net income to common shareholders, for the last fiscal year and the last 3 together (the
+        status uses the 3 years), earnings and free-cash-flow coverage (from the statements); sector caveats.
+        Snapshot, not a forecast.
+    """
+    from .. import fundamentals
+    if not isinstance(tickers, list) or not 1 <= len(tickers) <= 10:
+        return {"error": "give 1 to 10 tickers"}
+    return _round({"companies": [fundamentals.dividend_facts(str(t)) for t in tickers],
+           "rule": f"on the last {fundamentals.YEARS} fiscal years together: covered if earnings >= "
+                           f"{fundamentals.COVERAGE_THIN:g}x dividends; thin {fundamentals.COVERAGE_MIN:g}-"
+                           f"{fundamentals.COVERAGE_THIN:g}x; not covered below {fundamentals.COVERAGE_MIN:g}x "
+                           "(team rule, not a regulation); REITs not measurable without FFO"})
+
+
 AGENT_TOOLS = [list_assets, asset_facts, portfolio_stats, stress_test, correlation_between, goal_check, required_return]
+
+# Research tools (branch produit_cadusa): handed to the agents only with harness.toml [data] extra set, so the demo's
+# tool list (and the tool counts quoted in the deliverables) stay as they are by default.
+RESEARCH_TOOLS = [dividend_facts]
+
+
+def agent_tools() -> list:
+    """The tools the Strands agents get: AGENT_TOOLS, plus RESEARCH_TOOLS when an extra catalogue is configured."""
+    return list(AGENT_TOOLS) + (list(RESEARCH_TOOLS) if data.load_config().extra else [])

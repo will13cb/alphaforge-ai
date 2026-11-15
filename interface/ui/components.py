@@ -8,6 +8,7 @@ from contextlib import contextmanager
 import streamlit as st
 
 from interface.core.questions import Question
+from interface.ui import theme
 
 
 def esc(t) -> str:
@@ -26,7 +27,7 @@ def example(text: str) -> None:
 
 def error(text: str | None) -> None:
     if text:
-        st.markdown(f'<div class="af-err" role="alert">⚠ {esc(text)}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="af-err" role="alert">{esc(text)}</div>', unsafe_allow_html=True)
 
 
 def field(q: Question, answers: dict, err: str | None, key_prefix: str = "f") -> None:
@@ -100,3 +101,9 @@ def thinking(text: str = "The assistant is checking your question…"):
         yield box
     finally:
         box.empty()
+
+
+def chart(ch, **kw) -> None:
+    """An engine chart in the current display mode (light or dark): colours from theme.style_chart, no Streamlit
+    theme on top so text stays readable on both backgrounds."""
+    st.altair_chart(theme.style_chart(ch, theme.mode(st.session_state)), width="stretch", theme=None, **kw)

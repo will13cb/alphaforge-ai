@@ -30,7 +30,8 @@ from ..holdings import holdings as load_holdings
 from . import checks as ck
 from . import diversification as dv
 from . import market
-from .rules import BEGINNER_MAX_KNOWLEDGE, CRYPTO, DEFENSIVE, EQUITY_ETFS, EXCLUSIONS, GOAL_MIN_PROB, STOCKS
+from .rules import (BEGINNER_MAX_KNOWLEDGE, CRYPTO, DEFENSIVE, DIVIDEND_PAYERS, EQUITY_ETFS, EXCLUSIONS, GOAL_MIN_PROB,
+                    MAX_COUNTRY_EQUITY, STOCKS)
 
 MAX_STRATEGIES = 3
 STEP = 0.05                   # growth-share grid for the split search
@@ -60,6 +61,69 @@ STRATEGY_DEFS = {
 GROWTH_INTERESTS = {"ai", "tech", "crypto"}
 SHORT_HEAVY = {"ZST.TO": 0.60, "XBB.TO": 0.20, "GLD": 0.20}   # P3: loss limit ≤ 10% (decision #13)
 ESG_SWAP = {"SPY": "ESGV"}
+
+# ---- research mode (branch produit_cadusa): only with harness.toml [data] extra set, so the demo is unchanged ----
+# Each change is triggered by the client's profile or by an existing check (C2), never by a persona's name.
+RESEARCH_ESG_SWAP = {"XIU.TO": "XESG.TO"}         # replace, never add: daily correlation ~0.96 with XIU (C6 ≥ 0.95)
+SHORT_HORIZON_YEARS = 5                           # horizon ≤ 5 y: short-term bonds instead of aggregate (rate risk)
+SHORT_HORIZON_SWAP = {"XBB.TO": "XSB.TO"}
+INTERNATIONAL = {"XEF.TO": 0.75, "XEC.TO": 0.25}  # developed ex-North America / emerging, when C2 would warn
+PAYER_MAX_PAYOUT = 0.80                           # income names: dividends ≤ 80% of the last 3 years' earnings
+
+
+def research_mode() -> bool:
+    """True when an extra product catalogue is configured (harness.toml [data] extra)."""
+    return bool(data.load_config().extra)
+
+
+def _covered_payers(g: dict) -> tuple[dict, list[str]]:
+    """Income names keep their place only if their dividend is ≤ PAYER_MAX_PAYOUT of 3 years' earnings."""
+    from .. import fundamentals
+    notes, out = [], dict(g)
+    for t in sorted(set(g) & DIVIDEND_PAYERS):
+        try:
+            cov = fundamentals.coverage(t)
+        except SystemExit:
+            return g, ["dividend coverage not checked (run `make data-fundamentals`)"]
+        p = cov.get("payout_ratio_3y")
+        if "error" in cov or p is None or p > PAYER_MAX_PAYOUT:
+            out.pop(t)
+            why = cov.get("error") or (f"dividends {p:.0%} of its last 3 years' earnings" if p is not None
+                                       else "no earnings over its last 3 years")
+            notes.append(f"{t} left out of the income names: {why} (income names stay ≤ {PAYER_MAX_PAYOUT:.0%})")
+    return out, notes
+
+
+def _add_international(g: dict) -> tuple[dict, list[str]]:
+    """If one country would be above MAX_COUNTRY_EQUITY of the equities (C2 ⚠), move the smallest 5%-step share of
+    the basket to INTERNATIONAL that brings it back to the limit."""
+    eq = {t: v for t, v in g.items() if t in STOCKS or t in EQUITY_ETFS}
+    if not eq or set(INTERNATIONAL) <= set(g):
+        return g, []
+    where = market.exposures(list(eq))
+
+    def top(basket: dict) -> tuple[str, float]:
+        e = {t: v for t, v in basket.items() if t in STOCKS or t in EQUITY_ETFS}
+        by: dict[str, float] = {}
+        for t, v in e.items():
+            c = where.get(t) or market.exposures([t])[t]
+            by[c] = by.get(c, 0.0) + v / sum(e.values())
+        return max(by.items(), key=lambda kv: kv[1])
+
+    country, share = top(g)
+    if share <= MAX_COUNTRY_EQUITY + 1e-9:
+        return g, []
+    for k in range(1, 11):
+        x = round(k * STEP, 2)
+        new = {t: v * (1 - x) for t, v in g.items()}
+        for t, v in INTERNATIONAL.items():
+            new[t] = new.get(t, 0.0) + x * v
+        c2, s2 = top(new)
+        if s2 <= MAX_COUNTRY_EQUITY + 1e-9:
+            return new, [f"{country} was {share:.0%} of the equities (C2 limit {MAX_COUNTRY_EQUITY:.0%}): "
+                         f"{x:.0%} of the stock part moved to developed ex-North America and emerging markets "
+                         f"({', '.join(INTERNATIONAL)})"]
+    return g, [f"{country} {share:.0%} of the equities: international ETFs could not bring it under the C2 limit"]
 
 
 class Strategy(TypedDict, total=False):
@@ -153,6 +217,15 @@ def baskets(key: str, profile: dict, limits: dict) -> tuple[dict, dict, list[str
             if a in g:
                 g[b] = g.pop(a)
                 notes.append(f"{a} replaced by the ESG-screened {b} (ESG preference)")
+    research = research_mode()
+    if research:
+        if _wants_esg(profile):
+            for a, b in RESEARCH_ESG_SWAP.items():
+                if a in g:
+                    g[b] = g.pop(a)
+                    notes.append(f"{a} replaced by the ESG-screened {b} (ESG preference)")
+        g, more = _covered_payers(g)
+        notes += more
     allowed = set(limits["allowed_assets"])
     dropped = sorted(t for t in g if t not in allowed)
     if dropped:
@@ -164,9 +237,19 @@ def baskets(key: str, profile: dict, limits: dict) -> tuple[dict, dict, list[str
                            "not allowed for this profile", []).append(t)
         notes += [f"left out: {', '.join(ts)} ({w})" for w, ts in why.items()]
     g = _norm({t: w for t, w in g.items() if t in allowed})
+    if research and set(INTERNATIONAL) <= allowed:
+        g, more = _add_international(g)
+        notes += more
     dfn = SHORT_HEAVY if limits["loss_limit"] <= 0.10 else d["defensive"]
     if dfn is SHORT_HEAVY:
         notes.append(f"loss limit {limits['loss_limit']:.0%} ≤ 10%: short-term-heavy defensive basket (ZST 60%)")
+    horizon = profile.get("horizon_years")
+    if research and isinstance(horizon, (int, float)) and horizon <= SHORT_HORIZON_YEARS:
+        for a, b in SHORT_HORIZON_SWAP.items():
+            if a in dfn and b in allowed:
+                dfn = {(b if t == a else t): v for t, v in dfn.items()}
+                notes.append(f"{a} replaced by {b} (horizon {horizon:g} years ≤ {SHORT_HORIZON_YEARS}: "
+                             "short-term bonds carry less interest-rate risk)")
     dfn = _norm({t: w for t, w in dfn.items() if t in allowed})
     return g, dfn, notes
 
@@ -312,7 +395,7 @@ def fix_diversification(w: dict[str, float], rep: dict, limits: dict, rets: pd.D
         if a in new and b in new:
             keep, drop = (a, b) if new[a] >= new[b] else (b, a)
             new[keep] += new.pop(drop)
-            notes.append(f"C6: {drop} merged into {keep} (correlation {p['correlation']:.2f}, same bet twice)")
+            notes.append(f"C6: {drop} merged into {keep} (correlation {p['correlation']:.3f}, same bet twice)")
     ls = rep.get("largest_sector", {})
     if ls.get("weight", 0) > dv.MAX_SECTOR + 1e-9:
         sec = dv._universe_col("sector")
@@ -395,12 +478,14 @@ def propose(profile: dict, limits: dict, rets: pd.DataFrame | None = None, holdi
 
 
 # ---- the 3 strategies are 3 RISK LEVELS (decision #32) ------------------------------------------------
-# Level 1 = the growth share the client's limits allow (the ceiling), levels 2 and 3 = 10 and 20 points more
-# prudent. Each level is a full recalculation (assemble) with a higher defensive floor, never a hand edit, and it can
+# Level 1 = the growth share the client's limits allow (the ceiling), levels 2 and 3 = 10 and 20 points less in
+# stocks. Named by what they hold, not "more prudent": less in stocks did NOT always mean smaller past drops (Robert:
+# 5% stocks in XBB/AGG fell -9.5% in 2021-2026, 15% stocks with ZST -8.6%), so a risk word would be a promise the
+# data can break. The measured drops sit next to each name. Each level is a full recalculation (assemble) with a higher defensive floor, never a hand edit, and it can
 # only be safer than level 1. The client's preferred flavour (growth tilt if offered, else broad core) takes level 1,
 # the others the next levels. Levels closer than MIN_LEVEL_GAP to one already kept, or below MIN_LEVEL_GROWTH, are
 # dropped: Robert (15% ceiling) gets 2 strategies, not 3 near-copies.
-LEVELS = [(1, "most growth your limits allow", 0.0), (2, "more prudent", 0.10), (3, "most prudent", 0.20)]
+LEVELS = [(1, "most growth your limits allow", 0.0), (2, "less in stocks", 0.10), (3, "least in stocks", 0.20)]
 MIN_LEVEL_GAP = 0.05
 MIN_LEVEL_GROWTH = 0.05
 FLAVOUR_ORDER = ("growth", "core", "income")
@@ -411,7 +496,7 @@ def level_limits(limits: dict, level: dict | None) -> dict:
     if not level or level.get("rank", 1) == 1:
         return limits
     floor = round(max(limits["min_defensive"], 1 - level["target_growth"]), 4)
-    why = (f"risk level {level['rank']} of 3 ({level['label']}): {level['target_growth']:.0%} growth, "
+    why = (f"option {level['rank']} of 3 ({level['label']}): {level['target_growth']:.0%} growth, "
            f"{level['delta'] * 100:.0f} points below the top strategy, a choice offered to the client, not a limit")
     return {**limits, "min_defensive": floor, "min_defensive_source": "level", "min_defensive_why": why}
 
@@ -431,7 +516,7 @@ def levels(flavours: list, profile: dict, limits: dict, rets: pd.DataFrame, hold
             break
         lvl = {"rank": rank, "label": label, "delta": delta, "target_growth": target}
         key, why, g, dfn, notes = f
-        lv_notes = [] if rank == 1 else [f"level {rank} of 3 ({label}): growth capped at {target:.0%}, "
+        lv_notes = [] if rank == 1 else [f"option {rank} of 3 ({label}): growth capped at {target:.0%}, "
                                          f"{delta * 100:.0f} points below the top strategy's {ref:.0%}"]
         s = top if rank == 1 else assemble(key, why, g, dfn, notes + lv_notes, profile, level_limits(limits, lvl),
                                            rets, holdings)

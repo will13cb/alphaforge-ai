@@ -1,3 +1,4 @@
 # For Streamlit Community Cloud (and any pip-based host): the project and its agents extra (Strands for Bedrock).
+# Editable (-e): the code runs from this checkout, so harness.toml, cache/ and scripts/ are found.
 # Python 3.12+ (choose it in the host's settings). Locally, `make setup` does the same.
 -e .[agents]

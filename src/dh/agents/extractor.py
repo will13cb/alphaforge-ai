@@ -37,7 +37,7 @@ PROMPT_VERSION = "extractor-v1"
 DEMO_CACHE = ROOT / "cache" / "extractor"      # committed: the demo replays offline
 LOCAL_CACHE = ROOT / ".cache" / "extractor"    # gitignored
 MAX_CHECKS = 3
-DEFAULT_MODEL_ID = "global.anthropic.claude-opus-5-5"   # verified on the event account (CONTEXT.md)
+from ..llm import DEFAULT_MODEL_ID  # noqa: E402  (one default for every agent, verified on the event account)
 
 # ---- schema (contract §1 `profile`) ---------------------------------------------------------------------
 ENUMS = {
@@ -196,6 +196,23 @@ def validate(raw: dict, text: str) -> tuple[dict, list[str]]:
                     req[ticker_of(str(t))] = w
             if req:
                 out[k] = req
+        elif k == "existing_positions":   # holdings already owned: amounts must be written in the client's words
+            flat = numbers_in(re.sub(r"(?<=\d)[ \u00a0\u202f](?=\d{3}\b)", "", text)) | nums
+            held = {}
+            for t, a_ in (v.items() if isinstance(v, dict) else []):
+                try:
+                    a_ = float(a_)
+                except (TypeError, ValueError):
+                    continue
+                if a_ <= 0:
+                    continue
+                if not (_in(a_, flat) or _in(a_ / 1e3, flat)):
+                    notes.append(f"holding {t}: {a_:,.0f} $ is not written in the client's words, dropped")
+                    continue
+                from .. import standins
+                held[standins.canonical(ticker_of(str(t)), UNIVERSE)] = a_
+            if held:
+                out[k] = held
         elif k in TEXT_FIELDS:
             out[k] = str(v)[:300]
         else:
@@ -226,6 +243,33 @@ def _money(t: str, pattern: str) -> float | None:
 
 
 _AMT = r"\$?\s?(?P<n>\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)(?![\d.,]*\d)\s*(?P<u>k\b|m\b|thousand|million)?\s*(?:\$|dollars|cad)?"
+
+
+_HOLD_VERB = re.compile(r"\b(?:i (?:already )?(?:have|hold|own)|i've got|j'ai|j’ai|je d[ée]tiens|je poss[èe]de|"
+                        r"my (?:current )?(?:portfolio|holdings?)|mon portefeuille)\b", re.I)
+_HELD = re.compile(r"(?<![\d%])(\d{1,3}(?:[ ,\u00a0\u202f]\d{3})+|\d+(?:[.,]\d+)?)\s*(k|m)?\s*(?:\$|cad|dollars?)?\s*"
+                   r"(?:of|in|into|dans|en|de|d'|d’)\s+(?:l'|le |la |les )?([A-Za-z][\w.&\-]*)", re.I)
+
+
+def existing_from_text(text: str) -> dict[str, float]:
+    """Holdings the client says they ALREADY own ("I have 10k in XIU", "j'ai 10 000 $ dans XSP et 5 k$ dans RY").
+    Only sentences with a holding verb; only names that map to an asset we know (or a stand-in fund, or a ticker
+    written in capitals). Amounts in $; a % is a request, not a holding."""
+    from .. import standins
+    out: dict[str, float] = {}
+    for sent in re.split(r"(?<=[.!?;])\s+|\n", text):
+        if not _HOLD_VERB.search(sent):
+            continue
+        for raw, unit, name in _HELD.findall(sent):
+            if re.match(r"\s*%", sent[sent.find(raw) + len(raw):]):
+                continue
+            digits = re.sub(r"[ ,\u00a0\u202f]", "", raw) if re.search(r"[ ,\u00a0\u202f]\d{3}\b", raw) else raw.replace(",", ".")
+            v = float(digits) * {"k": 1e3, "m": 1e6}.get(unit.lower(), 1)
+            cand = name.strip(".,;:!?")
+            tk = standins.canonical(ticker_of(cand), UNIVERSE)
+            if tk in UNIVERSE or tk in standins.STAND_INS or (cand.isupper() and len(cand) >= 2):
+                out[tk] = out.get(tk, 0.0) + v
+    return out
 
 
 def rule_parse(text: str) -> dict:
@@ -323,6 +367,11 @@ def rule_parse(text: str) -> dict:
         p["requested_positions"] = req
         if any(t_ in CRYPTO for t_ in req) and "crypto" in p.get("exclusions", []):
             p["exclusions"].remove("crypto")
+    held = existing_from_text(text)
+    if held:
+        p["existing_positions"] = held
+        if p.get("capital") in held.values():   # "I have 10k in XIU" is a holding, not the capital: ask instead
+            p.pop("capital")
     m = re.search(r"\b(?:my name is|call me)\s+([a-z]+)", t)
     if m:
         p["name"] = m.group(1).title()
@@ -347,6 +396,7 @@ Fields (omit any the client did not state or clearly imply):
 - interests: subset of {sorted(LISTS['interests'])}
 - exclusions: subset of {sorted(EXCLUSIONS)} (or tickers)
 - employment_sector: one of {SECTORS}
+- existing_positions ({{ticker: CAD amount}}: what they say they ALREADY hold, e.g. "I have 10k in XIU" → {{"XIU.TO": 10000}})
 - request (str: what they asked for, in their words), requested_positions ({{ticker: weight 0-1}}; tickers from:
   {', '.join(sorted(UNIVERSE))}; keep any other ticker as written)
 

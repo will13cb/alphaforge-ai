@@ -111,6 +111,8 @@ def compare(profile: dict, limits: dict, strategies: list[dict], rets: pd.DataFr
     out = {"base": base["name"], "request": req,
            "not_assessable": sorted(set(req) - set(assessable)),
            "why": {t: notes[t]["reason"] for t in req if t in notes and "reason" in notes[t]}}
+    if profile.get("request_stand_ins"):   # e.g. XSP.TO asked, measured with SPY (dh.standins, #42)
+        out["stand_ins"] = list(profile["request_stand_ins"])
     if assessable:
         out["as_asked"] = _version("as asked", overlay(base["weights"], assessable), list(assessable), profile,
                                    limits, rets, holdings)
@@ -136,6 +138,8 @@ def summary(cmp: dict) -> str:
         parts.append(f"{v['label']}: {rw}; worst drop {v['max_drawdown']:.1%}{money}; failing: {bad}")
     if cmp.get("not_assessable"):
         parts.append("no data for " + ", ".join(cmp["not_assessable"]))
+    if cmp.get("stand_ins"):
+        parts.append("stand-in: " + "; ".join(cmp["stand_ins"]))
     return ". ".join(parts) + "."
 
 

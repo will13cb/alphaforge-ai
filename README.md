@@ -19,7 +19,7 @@ every number to the data.
 
 Example: Robert (59, about 4 years before he needs the money, accepts at most a 15% loss) asks for 25% in Tesla.
 - His horizon rule (a stated judgment, not a data result) allows at most about 15% in stocks: his first strategy is
-  about 15/85 and the second is 10 points more prudent; the trace says the horizon rule decided.
+  about 15/85 and the second holds 10 points less in stocks (and still fell slightly more in the past: bonds, not cash); the trace says the horizon rule decided.
 - Caps are computed, not fixed: Tesla's own worst drop was −70.9%, so 25% alone would have cost −17.7% of the
   portfolio, more than his whole 15% loss limit; it fits up to 3.1%.
 - The explanation (Claude Opus 5.5 on Amazon Bedrock) gives him those numbers and leaves the decision to him;

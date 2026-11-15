@@ -850,3 +850,90 @@ must agree are a check a judge can follow; the EV question tests understanding r
 
 **Limits:** no screen asks the bets yet (personas carry example answers; the interface can add them, Joud's lane).
 `metrics.py` is shared (rule 1): Joud to review `risk_contributions`.
+
+## 41. More products (CAD/USD), profile-driven baskets, dividend coverage — research mode, off by default (Sun Nov 15, Joud, `produit_cadusa`)
+
+Everything below runs only with `harness.toml [data] extra = ["cadusa"]` (`make data-products`, `make
+data-fundamentals`). Default `extra = []`: the demo's baskets, checks, tool list, caches and numbers are unchanged
+(tested in two processes: proposals, verdicts and checks identical).
+
+1. **60 products listed in Canada or the U.S.** (`dh.product_catalogue`), chosen for the simplest integration: the
+   starter's classes only, full 2021-2026 window, no futures/crypto/multi-asset funds, no near-duplicate of a starter
+   asset, no fossil-fuel producer. rules.py adds them to its groups (derived from data: same sets on the starter).
+2. **Baskets driven by the profile or by an existing check, never by a persona's name** (`portfolio.baskets`):
+   ESG interest → XIU.TO replaced by XESG.TO (replace, never add: correlation 0.956, C6); horizon ≤ 5 years → XBB.TO
+   replaced by XSB.TO (2022: −11.7% vs −4.0%, 2021-2026 worst drop −15.5% vs −6.1%); one country above 70% of the
+   equities (C2 ⚠) → the smallest 5%-step share moved to XEF.TO/XEC.TO (3:1) that brings it to the limit. No cash
+   product added: ZST.TO already plays that role (PSA.TO ≈ ZST.TO).
+3. **Dividend coverage** (`dh.fundamentals`): status on the last 3 fiscal years together (one year misleads: BCE.TO
+   32% of 2025 earnings, 107% over 3 years, cut in 2025); covered ≥ 1.25× earnings, thin 1–1.25×, not covered < 1×
+   (a definition), loss; free-cash-flow shortfall added to the reason (not for banks/insurers); REITs "not
+   measurable" without FFO. A team rule, never called a regulation.
+4. **Income names must be covered**: a dividend payer stays in the income strategy only if its dividends are ≤ 80% of
+   its last 3 years' earnings; ENB.TO (130%) is left out by the rule, with the reason in the trace. New check
+   **F7** (⚠ only): a single company held whose dividend is not covered (earnings understate some businesses' cash,
+   so it discloses, never blocks).
+
+**Why:** usefulness to users (international diversification, ESG, short-horizon protection) and faithful explanations:
+the system applies to its own picks the rigour it applies to Robert's Tesla request. **Limits:** one 5-year window;
+XESG.TO and ESGV are ESG tilts, not fossil-free (look-through needs their holdings); statements are a snapshot (never
+in a backtest). Numbers: `results.csv` experiments `cadusa-persona-strategies` (logged without the SPY holdings file: look-through
+direct only, which affects C1, not the splits, worst drops or volatilities), `dividend-coverage`, `cadusa-evidence`.
+
+**Extended (Sun Nov 15, same research mode):** dividends reach the rest of the architecture.
+- Guardian **G18** (⚠ only, same implementation as F7): a single company held whose dividend is not covered. The rule
+  exists only in research mode (the demo keeps 17 rules).
+- **F1** (income objective) counts bonds, dividend payers covered on 3 years (`fundamentals.covered_payers`) and
+  dividend ETFs (sub_class `factor_dividend`), instead of the fixed `DIVIDEND_PAYERS` list.
+- **Explainer** facts carry each held company's dividend status and 3-year payout (numbers become ids, strict G12);
+  the template writes one line per strategy. Default facts unchanged, so the demo cache keys are unchanged (checked).
+- **Funds**: the reason gives the 12-month distribution yield and the years distributions were lower.
+- The default mode stays off: turning it on needs `make warm` (Bedrock), `make log-personas` and the deliverables'
+  numbers redone, so it is left for the finals.
+
+
+## 42. Existing portfolio: review, labelled stand-ins, rebuild (Sun Nov 15, Joud, `portefeuille_existant`)
+
+**Why.** BN workshop (slides 13-14): a decision starts from "what am I trying to improve?" in what the client already
+holds. Its own example, XSP.TO, is not in the starter pack.
+
+**Decision.**
+- Third way to start: the client enters holdings one by one (ticker + $). `existing.review` runs them through the same
+  C-F checks and Guardian as any strategy, writes a critique from those numbers, and rebuilds them into the first
+  proposed strategy (#32) with the moves in $. No new optimiser (#1, #37).
+- A fund we have no data for is measured with a **labelled stand-in** (`dh.standins`, 22 funds tracking the same or a
+  close index) or listed "no data" and left out. Never silent. A fund with its own mix (ZEQT) is not mapped.
+- CAD-hedged funds (XSP.TO, VSP.TO, ZUE.TO, XQQ.TO, ZQQ.TO): the source's USD return (USD/CAD move removed) + the
+  overnight rate gap (Bank of Canada − fed funds).
+- Checked against each fund's real prices (`scripts/validate_standins.py`, results.csv `standin-*`): unhedged within
+  ±0.4 pt of the real worst drop; hedged ones understate it by 1.0-3.2 pts (XSP.TO −24.3% vs −27.5% real). The real
+  number is shown next to every stand-in; no correction applied to the series.
+- Critic: same agent and tools on the current portfolio, disclose only (the rebuild is the fix). Explainer: section
+  "The portfolio you already have" from facts (G12 strict). Analyst: `existing_portfolio`, `what_if_existing`.
+- A run without an existing portfolio is unchanged (no new facts key: demo cache keys unchanged).
+
+## 44. Existing portfolio, follow-ups: fees, free text, requests via stand-ins, look-through, demo cache (Sun Nov 15, Joud)
+
+- **Fees** (`dh.fees`, `scripts/build_fees.py`): Yahoo net expense ratio per fund (the held fund's own: XSP.TO's,
+  not SPY's), shown in $ a year today vs rebuilt. Not deducted from returns. Unknown → listed, never 0.
+- **Free text**: the extractor reads holdings already owned ("I have 10k in XIU", "j'ai 10 000 $ dans XSP") into
+  `existing_positions`, amounts grounded in the text; such an amount is never taken as the capital.
+- **Requests**: "10% in XSP" is measured with SPY (stand-in, labelled; hedge not simulated for requests).
+- **Look-through**: the review says which equity ETFs were opened; the hosted app builds SPY's holdings at start.
+- **Demo cache**: `make warm` also warms Robert + the example portfolio (Critic ×2, Explainer, 2 Analyst questions),
+  with the exact profile the guided interface sends.
+
+## 45. Critic validation sees its FACTS; strategies named by what they hold; correlations at 3 decimals (Sun Nov 15, Joud, `claude/relaxed-edison-ihsi38`)
+- **Problem (code audit, run on the 3 personas):** the Critic's validator only accepted numbers from the tool results
+  an objection cited. It dropped Robert's own TSLA objection (25% asked, 15% loss limit: from the profile, not a
+  tool), "worst 12 months" (a window) and Amira's "QQQ + SPY = 61.5%" (a sum of two weights).
+- **Fix (`critic.validate`):** a number is backed if it is in a cited tool result OR in the FACTS the Critic was given
+  (client, limits, that strategy's weights/split/stats) OR the sum of two of that strategy's weights. Integers followed
+  by a duration ("12 months", "4-year") are not data. Inventions still drop (test). Prompt `critic-v2`.
+- **"More prudent" was false for Robert:** 5% stocks (XBB/AGG) fell −9.5%, 15% stocks (with ZST) −8.6%. Levels 2 and 3
+  are now "less in stocks" / "least in stocks": named by what they hold; the measured drops sit next to the name.
+- **C6 at the edge:** QQQ/SPY = 0.948 passes C6 (✘ at 0.95) but was written "0.95". Correlations now shown with 3
+  decimals; a Critic claim whose rounding crosses 0.85 or 0.95 gets the exact value written back by code.
+- **One default model:** `dh.llm.DEFAULT_MODEL_ID` (Opus 5.5, verified) used by `ask` and every agent (was Nova Lite in `ask`).
+- **Cost:** strategy names and the Critic prompt are in the cached facts → the Critic and Explainer demo caches no
+  longer match. **Re-run `make warm` (valid AWS keys) and commit `cache/` before Sun 23:59.**

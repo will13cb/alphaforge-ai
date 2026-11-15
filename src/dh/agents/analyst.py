@@ -158,8 +158,79 @@ def make_tools(res: dict, profile: dict, rets=None, holdings=None) -> list:
                             "warnings": [c["check"] for c in s.get("checks", []) if c["status"] == "warn"]}
                            for s in res.get("strategies") or []]})
 
+    def _view(r: dict | None) -> dict:
+        if not r or not r.get("current"):
+            return {"measured": False, "no_data": (r or {}).get("not_assessable", [])}
+        c = r["current"]
+        c2 = next((x for x in c.get("checks", []) if x["check"] == "C2"), {})
+        return {"measured": True, "measured_cad": r.get("assessed_cad"), "worst_drop": c["max_drawdown"],
+                "worst_drop_cad": c.get("drawdown_cad"), "loss_limit": c["loss_limit"],
+                "loss_limit_cad": c.get("loss_limit_cad"), "return_2022": c.get("return_2022"),
+                "largest_country_share_of_stocks": c2.get("value"),
+                "where_the_stocks_are": (c2.get("reason") or "").split(" (")[0],
+                "limits_broken": [f["id"] for f in c["fails"]], "warnings": [f["id"] for f in c["warnings"]],
+                "stand_ins": [f"{x['ticker']} measured with {x['measured_with']}"   # no fund names: "S&P 500" is not a number
+                              + (" (currency hedge simulated)" if x["hedged"] else "") for x in r.get("stand_ins") or []],
+                "no_data": r.get("not_assessable", [])}
+
+    def existing_portfolio() -> dict:
+        """The portfolio the client ALREADY holds (entered as ticker + dollars), reviewed with the same checks, and
+        rebuilt into their first proposed strategy.
+
+        Returns:
+            today: worst drop (% and $), loss limit, where the stocks are, limits broken; what_we_see (lines);
+            stand_ins (funds measured with another fund, e.g. XSP.TO with SPY, hedge simulated); no_data;
+            rebuilt: name, worst drop, limits broken; largest_changes in $ (a simulation, not an order).
+        """
+        r = res.get("existing_review")
+        if not r:
+            return {"error": "the client entered no existing portfolio"}
+        t = r.get("target") or {}
+        return market._round({
+            "today": _view(r), "what_we_see": r.get("critique", []),
+            "rebuilt": {"name": t.get("name"), "worst_drop": t.get("max_drawdown"),
+                        "worst_drop_cad": t.get("drawdown_cad"), "limits_broken": [f["id"] for f in t.get("fails", [])]}
+            if t else None,
+            "largest_changes": [{k: m.get(k) for k in ("ticker", "held", "now_cad", "target_cad", "change_cad", "action")}
+                                for m in (r.get("moves") or [])[:5]]})
+
+    def what_if_existing(ticker: str, amount_cad: float, add: bool = False) -> dict:
+        """Re-check the client's EXISTING portfolio with one holding set to a dollar amount (added, changed, or
+        removed with 0), e.g. "what would adding 10,000 $ of XSP do to my diversification?".
+
+        Args:
+            ticker: a ticker, e.g. "XSP.TO" (funds not in our data may be measured with a labelled stand-in).
+            amount_cad: dollars in that holding after the change; 0 removes it.
+            add: True adds amount_cad to what the client already holds in it ("add 10,000 $ of XSP").
+
+        Returns:
+            before and after: worst drop (% and $), loss limit, largest country's share of the stocks and where
+            they are, limits broken, stand-ins used, holdings without data.
+        """
+        from . import existing
+        if not profile.get("existing_positions"):
+            return {"error": "the client entered no existing portfolio"}
+        if not isinstance(amount_cad, (int, float)) or amount_cad < 0:
+            return {"error": "amount_cad must be a number of dollars, 0 or more"}
+        r_ = market._tool_rets() if rets is None else rets
+        have = set(r_.columns)
+        pos = existing.clean_positions(profile["existing_positions"], have)
+        t = existing.clean_positions({ticker: 1}, have)
+        t = next(iter(t), str(ticker).upper())
+        amount_cad = float(amount_cad) + (pos.get(t, 0.0) if add else 0.0)
+        new = {k: v for k, v in pos.items() if k != t}
+        if amount_cad > 0:
+            new[t] = amount_cad
+        kw = dict(rets=r_, holdings=holdings or {})
+        before = existing.review(profile, res["limits"], res.get("strategies") or [], **kw)
+        after = existing.review({**profile, "existing_positions": new}, res["limits"], res.get("strategies") or [],
+                                **kw) if new else None
+        return market._round({"ticker": t, "old_cad": pos.get(t, 0.0), "new_cad": float(amount_cad),
+                              "before": _view(before), "after": _view(after)})
+
+    extra = [existing_portfolio, what_if_existing] if profile.get("existing_positions") else []
     return critic.make_tools(res.get("strategies") or [], res["limits"], holdings or {}) + [results_overview, what_if_position,
-                                                                                          what_if_profile]
+                                                                                          what_if_profile] + extra
 
 
 # ---- reading the question: assets, amounts, language ------------------------------------------------------
@@ -448,7 +519,7 @@ def _part_corr(r: dict, lang: str) -> str:
     fr = lang == "fr"
     if "error" in r:
         return (f"Je n'ai pas pu le vérifier : {r['error'].split('.')[0]}." if fr else f"I could not check: {r['error'].split('.')[0]}.")
-    pairs = "; ".join(f"{p['a']}/{p['b']} {p['correlation']:.2f}".replace(".", "," if fr else ".") for p in r["pairs"])
+    pairs = "; ".join(f"{p['a']}/{p['b']} {p['correlation']:.3f}".replace(".", "," if fr else ".") for p in r["pairs"])
     return (f"Corrélations des rendements quotidiens {period_label()} : {pairs}. Au-dessus d'environ 0,8, c'est en bonne partie "
             f"le même pari." if fr else
             f"Daily return correlations {period_label()}: {pairs}. Above about 0.8, it is largely the same bet.")
@@ -600,6 +671,17 @@ def _mock(question: str, rec: critic.Recorder, tools: dict, profile: dict | None
         ev.append(r["call_id"]) if "call_id" in r else None
         return r
 
+    if (profile.get("existing_positions") and "existing_portfolio" in tools
+            and (_EXISTING.search(question) or (_ADD.search(question) and _AMOUNT.search(question)))):
+        amt = _AMOUNT.search(question)
+        named = [t for t in q["assets"]]
+        if named and (amt or _REMOVE.search(question)):
+            v = 0.0 if _REMOVE.search(question) and not amt else _amount(amt)
+            kw = {"ticker": named[0], "amount_cad": v, **({"add": True} if v and _ADD.search(question) else {})}
+            parts.append(_part_what_if_existing(call("what_if_existing", kw), lang))
+        else:
+            parts.append(_part_existing(call("existing_portfolio", {}), lang))
+        return {"answer": "\n\n".join(parts), "evidence": ev}
     if "position" in q["intents"]:
         (t, w), *rest = q["positions"].items()
         kw = {"ticker": t, "weight": w}
@@ -653,6 +735,64 @@ def _mock(question: str, rec: critic.Recorder, tools: dict, profile: dict | None
         return {"answer": (("Je ne suis pas sûr d'avoir compris. " if lang == "fr" else "I'm not sure I understood. ")
                            + HELP[lang]), "evidence": []}
     return {"answer": "\n\n".join(parts), "evidence": ev}
+
+
+_EXISTING = re.compile(r"current portfolio|existing portfolio|what i (already )?(own|hold|have)|my (current )?holdings|"
+                       r"portefeuille (actuel|existant)|ce que je (d[ée]tiens|poss[èe]de)|mes placements actuels|"
+                       r"ce que j'ai d[ée]j[àa]", re.I)
+_ADD = re.compile(r"\b(add|adding|put|ajout|ajouter|ajoutais|mettre|rajout)", re.I)
+_REMOVE = re.compile(r"\b(remove|without|drop|sans|retir|enlev)", re.I)
+
+
+def _part_existing(r: dict, lang: str) -> str:
+    """The existing portfolio's review, every number from the existing_portfolio tool."""
+    fr = lang == "fr"
+    if "error" in r:
+        return r["error"]
+    t, b = r["today"], r.get("rebuilt")
+    if not t.get("measured"):
+        return ("Aucune de vos positions n'a de données : " if fr else "None of your holdings has data: ") + \
+            ", ".join(t.get("no_data", []))
+    broken = ", ".join(t["limits_broken"]) or ("aucune" if fr else "none")
+    out = [(f"Sur les {t['measured_cad']:,.0f} $ mesurés, la pire baisse passée de votre portefeuille actuel est de "
+            f"{_p(t['worst_drop'], lang)} ({_m(abs(t['worst_drop_cad'] or 0), lang)}), pour une limite de "
+            f"{_p(t['loss_limit'], lang, 0)}. Limites dépassées : {broken}." if fr else
+            f"On the {t['measured_cad']:,.0f} $ we could measure, your current portfolio's worst past drop is "
+            f"{_p(t['worst_drop'], lang)} ({_m(abs(t['worst_drop_cad'] or 0), lang)}), against a limit of "
+            f"{_p(t['loss_limit'], lang, 0)}. Limits broken: {broken}.")]
+    if t.get("stand_ins"):
+        out.append(("Mesurés avec un substitut : " if fr else "Measured with a stand-in: ") + "; ".join(t["stand_ins"]) + ".")
+    if t.get("no_data"):
+        out.append(("Sans données, laissés de côté : " if fr else "No data, left out: ") + ", ".join(t["no_data"]) + ".")
+    if b:
+        out.append((f"Reconstruit en « {b['name']} », la pire baisse aurait été de {_p(b['worst_drop'], lang)}." if fr else
+                    f"Rebuilt as '{b['name']}', the worst drop would have been {_p(b['worst_drop'], lang)}."))
+    return " ".join(out)
+
+
+def _part_what_if_existing(r: dict, lang: str) -> str:
+    fr = lang == "fr"
+    if "error" in r:
+        return r["error"]
+    a, b = r["before"], r["after"]
+    if not b.get("measured"):
+        return ("Sans cette position, rien ne peut être mesuré." if fr else "Without that holding, nothing can be measured.")
+
+    def line(v, lab):
+        if not v.get("measured"):
+            return f"{lab} : –" if fr else f"{lab}: –"
+        broken = ", ".join(v["limits_broken"]) or ("aucune" if fr else "none")
+        where = v.get("where_the_stocks_are") or ""
+        return (f"{lab} : pire baisse {_p(v['worst_drop'], lang)}, {where}, limites dépassées : {broken}" if fr else
+                f"{lab}: worst drop {_p(v['worst_drop'], lang)}, {where}, limits broken: {broken}")
+    head = (f"{r['ticker']} à {r['new_cad']:,.0f} $ (avant {r['old_cad']:,.0f} $)." if fr else
+            f"{r['ticker']} at {r['new_cad']:,.0f} $ (before {r['old_cad']:,.0f} $).")
+    out = [head, line(a, "Avant" if fr else "Before") + ".", line(b, "Après" if fr else "After") + "."]
+    if b.get("stand_ins"):
+        out.append(("Substitut : " if fr else "Stand-in: ") + "; ".join(b["stand_ins"]) + ".")
+    if b.get("no_data"):
+        out.append(("Sans données : " if fr else "No data: ") + ", ".join(b["no_data"]) + ".")
+    return " ".join(out)
 
 
 def _part_results(r: dict, lang: str) -> str:

@@ -46,8 +46,8 @@ def test_robert_tsla_side_by_side(rets):
 def test_excluded_or_unknown_requests(rets):
     c = run(dict(MATEO, requested_positions={"XOM": 0.10}), rets)["request_comparison"]
     assert "fits" not in c and {"F6", "G3"} <= {f["id"] for f in c["as_asked"]["fails"]}
-    u = run(dict(ROBERT, requested_positions={"XSP": 0.10}), rets)["request_comparison"]
-    assert u["not_assessable"] == ["XSP"] and "as_asked" not in u
+    u = run(dict(ROBERT, requested_positions={"ZEQT": 0.10}), rets)["request_comparison"]
+    assert u["not_assessable"] == ["ZEQT"] and "as_asked" not in u
     assert run(AMIRA, rets)["request_comparison"] is None
 
 
@@ -82,3 +82,10 @@ def test_g12_knows_the_side_by_side_numbers(rets):
     asked = res["request_comparison"]["as_asked"]
     known = guardian._known_numbers(res["strategies"][0], res["limits"], ROBERT)
     assert any(abs(abs(asked["max_drawdown"]) * 100 - abs(k)) < 0.5 for k in known)  # G12 compares magnitudes (signs: #34)
+
+
+def test_request_for_a_stand_in_fund_is_measured_and_labelled(rets):
+    """'10% in XSP' (no data of its own) is measured with SPY, and the comparison says so (#42)."""
+    c = run(dict(ROBERT, requested_positions={"XSP": 0.10}), rets)["request_comparison"]
+    assert c["request"] == {"SPY": 0.10} and not c["not_assessable"]
+    assert c["stand_ins"] and "XSP.TO" in c["stand_ins"][0] and "stand-in" in c["summary"]

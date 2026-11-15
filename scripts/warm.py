@@ -34,7 +34,20 @@ def plan() -> dict:
     from dh.agents.scenarios import DEMO_PROFILES
 
     qs = list(dict.fromkeys(_const("app/app.py", "FOLLOW_UPS") + _const("interface/views/chat.py", "SUGGESTIONS")))
-    return {"clients": list(DEMO_PROFILES), "text": _const("app/app.py", "SAMPLE_TEXT"), "questions": qs}
+    return {"clients": list(DEMO_PROFILES), "text": _const("app/app.py", "SAMPLE_TEXT"), "questions": qs,
+            # existing portfolio (#42): Robert via "Try with an example client" + "Try an example portfolio"
+            "existing": {"client": "robert", "positions": _const("interface/views/holdings_input.py", "EXAMPLE"),
+                         "questions": _const("interface/views/holdings_input.py", "EXISTING_QUESTIONS")}}
+
+
+def existing_profile(p: dict) -> dict:
+    """The exact profile the guided interface sends for the existing-portfolio demo, so the facts hashes match: the
+    demo client's answers as the form round-trips them (wizard), plus the example portfolio."""
+    sys.path.insert(0, str(ROOT))
+    from dh.agents.scenarios import DEMO_PROFILES
+    from interface.core import wizard
+    prof = wizard.to_profile(wizard.all_values(wizard.from_profile(DEMO_PROFILES[p["existing"]["client"]]))[0])
+    return {**prof, "existing_positions": dict(p["existing"]["positions"])}
 
 
 def main(argv=None) -> int:
@@ -43,11 +56,15 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     p = plan()
     live = os.getenv("LLM_PROVIDER", "mock").lower() == "bedrock" and not a.dry
-    n = 2 * len(p["clients"]) + 1 + len(p["clients"]) * len(p["questions"])
+    n = 2 * len(p["clients"]) + 1 + len(p["clients"]) * len(p["questions"]) + 3 + len(p["existing"]["questions"])
     print(f"{'LIVE (Bedrock)' if live else 'DRY RUN: no call made'} · {n} calls")
     for c in p["clients"]:
         print(f"  critic + explainer  {c}")
     print(f"  extractor           {p['text'][:70]}…")
+    ex_ = p["existing"]
+    print(f"  critic ×2 + explainer  {ex_['client']} + existing portfolio {ex_['positions']}")
+    for q in ex_["questions"]:
+        print(f"  analyst             {ex_['client']:12} (existing) {q}")
     for c in p["clients"]:
         for q in p["questions"]:
             print(f"  analyst             {c:12} {q}")
@@ -85,6 +102,22 @@ def main(argv=None) -> int:
                 print(f"✘ analyst {c} «{q}»: {ans['status']}")
                 continue
             keep(f"analyst {c} «{q}» ({ans['source']})", analyst.save_demo, ans)
+    prof = existing_profile(p)          # existing portfolio (#42): proposals' Critic, the review's Critic, Explainer
+    res = pipeline.run(prof)
+    for what, cr in (("critic", res.get("critic") or {}),
+                     ("critic (existing)", (res.get("existing_review") or {}).get("critic") or {})):
+        if cr and cr.get("source") != "mock":
+            keep(f"{what} robert+portfolio ({cr['source']})", critic.save_demo, cr)
+        else:
+            failed.append(f"{what} robert+portfolio: no review ({cr.get('note', 'not run')})")
+    e = explainer.add_to_trace(res, prof)
+    keep(f"explainer robert+portfolio ({e['source']}, {e['verdict']})", explainer.save_demo, e)
+    for q in p["existing"]["questions"]:
+        ans = analyst.ask(q, res, prof)
+        if ans["status"] != "valid":
+            failed.append(f"analyst robert+portfolio «{q}»: {ans['status']} ({ans['note']})")
+            continue
+        keep(f"analyst robert+portfolio «{q}» ({ans['source']})", analyst.save_demo, ans)
     ex = extractor.extract(p["text"])
     keep(f"extractor ({ex['source']})", extractor.save_demo, ex, p["text"])
 

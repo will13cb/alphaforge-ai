@@ -116,3 +116,101 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1115-044935-will13cb-207d,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_stress_2022,-0.0776,Income / dividends: more prudent
 1115-044935-will13cb-48fc,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_ann_vol,0.0434,Income / dividends: more prudent
 1115-044935-will13cb-d3a4,2026-11-15T04:49:35+00:00,will13cb,30f7f2a,persona-strategies,robert,income_prob_loss,0.057,Income / dividends: more prudent
+1115-173628-claude-4d30,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_growth,0.15,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173628-claude-8be4,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_max_drawdown,-0.0475,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173628-claude-df38,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,core_ann_vol,0.0259,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173628-claude-48df,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,income_growth,0.05,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173628-claude-2854,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,income_max_drawdown,-0.0622,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173628-claude-af18,2026-11-15T17:36:28+00:00,Claude,d9bd5cc,cadusa-persona-strategies,robert,income_ann_vol,0.0302,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-7d4d,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,growth_growth,0.95,Growth tilt: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173632-claude-a47e,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,growth_max_drawdown,-0.2857,Growth tilt: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173632-claude-9d58,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,growth_ann_vol,0.1831,Growth tilt: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173632-claude-32a1,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,core_growth,0.85,Broad core: more prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-a085,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,core_max_drawdown,-0.1478,Broad core: more prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-c4ff,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,core_ann_vol,0.1169,Broad core: more prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-6109,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,income_growth,0.75,Income / dividends: most prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-8328,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,income_max_drawdown,-0.1196,Income / dividends: most prudent; research mode extra=cadusa (decision #41)
+1115-173632-claude-0ade,2026-11-15T17:36:32+00:00,Claude,d9bd5cc,cadusa-persona-strategies,amira,income_ann_vol,0.0792,Income / dividends: most prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-9756,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core_growth,0.6,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173635-claude-c3eb,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core_max_drawdown,-0.1387,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173635-claude-ca93,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core_ann_vol,0.0901,Broad core: most growth your limits allow; research mode extra=cadusa (decision #41)
+1115-173635-claude-2007,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,income_growth,0.5,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-a1a9,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,income_max_drawdown,-0.1009,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-c566,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,income_ann_vol,0.0592,Income / dividends: more prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-dc9c,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core-3_growth,0.4,Broad core: most prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-40ed,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core-3_max_drawdown,-0.1154,Broad core: most prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-e4fe,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-persona-strategies,mateo,core-3_ann_vol,0.0647,Broad core: most prudent; research mode extra=cadusa (decision #41)
+1115-173635-claude-8e57,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,RY.TO_payout_3y,0.418506,"FY 2023-10-31..2025-10-31, statements retrieved 2026-11-15"
+1115-173635-claude-ae99,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,RY.TO_payout_last_fy,0.442923,FY 2025-10-31
+1115-173635-claude-3938,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,TD.TO_payout_3y,0.538269,"FY 2023-10-31..2025-10-31, statements retrieved 2026-11-15"
+1115-173635-claude-0d37,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,TD.TO_payout_last_fy,0.383668,FY 2025-10-31
+1115-173635-claude-db4c,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,FTS.TO_payout_3y,0.462702,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-51e4,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,FTS.TO_payout_last_fy,0.459743,FY 2025-12-31
+1115-173635-claude-3d28,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,ENB.TO_payout_3y,1.30099,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-6181,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,ENB.TO_payout_last_fy,1.16233,FY 2025-12-31
+1115-173635-claude-b41e,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,JNJ_payout_3y,0.473199,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-11f2,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,JNJ_payout_last_fy,0.461909,FY 2025-12-31
+1115-173635-claude-d99c,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,PG_payout_3y,0.639048,"FY 2024-06-30..2026-06-30, statements retrieved 2026-11-15"
+1115-173635-claude-05f4,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,PG_payout_last_fy,0.649486,FY 2026-06-30
+1115-173635-claude-4cd9,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,BCE.TO_payout_3y,1.068,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-cf27,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,BCE.TO_payout_last_fy,0.321332,FY 2025-12-31
+1115-173635-claude-6546,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,T.TO_payout_3y,1.52867,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-149b,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,T.TO_payout_last_fy,1.46271,FY 2025-12-31
+1115-173635-claude-daa3,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,ABBV_payout_3y,2.50838,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-84a0,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,ABBV_payout_last_fy,2.78476,FY 2025-12-31
+1115-173635-claude-d9a2,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,PEP_payout_3y,0.801316,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-8343,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,PEP_payout_last_fy,0.926942,FY 2025-12-31
+1115-173635-claude-915b,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,KO_payout_3y,0.72826,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-ba68,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,KO_payout_last_fy,0.669795,FY 2025-12-31
+1115-173635-claude-6e50,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,NEE_payout_3y,0.60201,"FY 2023-12-31..2025-12-31, statements retrieved 2026-11-15"
+1115-173635-claude-3092,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,dividend-coverage,,NEE_payout_last_fy,0.684711,FY 2025-12-31
+1115-173635-claude-ba1a,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-evidence,,XBB.TO_return_2022,-0.116645,"CAD, adj_close"
+1115-173635-claude-0772,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-evidence,,XBB.TO_max_drawdown,-0.154797,2021-2026
+1115-173635-claude-3f17,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-evidence,,XSB.TO_return_2022,-0.0403981,"CAD, adj_close"
+1115-173635-claude-afcd,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-evidence,,XSB.TO_max_drawdown,-0.0607514,2021-2026
+1115-173635-claude-3f3e,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-evidence,,XESG.TO_XIU.TO_daily_corr,0.955898,2021-2026
+1115-173635-claude-9d9a,2026-11-15T17:36:35+00:00,Claude,d9bd5cc,cadusa-data-quality,,products_ok,60,of 60
+1115-193640-claude-5c40,2026-11-15T19:36:40+00:00,Claude,d1fe50b,standin-XSP.TO,,worst_drop_gap,0.0317,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193641-claude-fb4d,2026-11-15T19:36:41+00:00,Claude,d1fe50b,standin-VSP.TO,,worst_drop_gap,0.0121,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193641-claude-c565,2026-11-15T19:36:41+00:00,Claude,d1fe50b,standin-ZUE.TO,,worst_drop_gap,0.0101,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193641-claude-0de8,2026-11-15T19:36:41+00:00,Claude,d1fe50b,standin-VFV.TO,,worst_drop_gap,-0.0006,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193642-claude-8fba,2026-11-15T19:36:42+00:00,Claude,d1fe50b,standin-ZSP.TO,,worst_drop_gap,0,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193642-claude-7a5f,2026-11-15T19:36:42+00:00,Claude,d1fe50b,standin-XUS.TO,,worst_drop_gap,-0.004,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193643-claude-4503,2026-11-15T19:36:43+00:00,Claude,d1fe50b,standin-HXS.TO,,worst_drop_gap,0.0038,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193643-claude-c9fa,2026-11-15T19:36:43+00:00,Claude,d1fe50b,standin-VOO,,worst_drop_gap,0.0227,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193643-claude-10d3,2026-11-15T19:36:43+00:00,Claude,d1fe50b,standin-IVV,,worst_drop_gap,0.0228,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193644-claude-8c22,2026-11-15T19:36:44+00:00,Claude,d1fe50b,standin-XQQ.TO,,worst_drop_gap,0.0136,"stand-in minus real worst drop, QQQ hedged, scripts/validate_standins.py"
+1115-193644-claude-ce6f,2026-11-15T19:36:44+00:00,Claude,d1fe50b,standin-ZQQ.TO,,worst_drop_gap,0.0143,"stand-in minus real worst drop, QQQ hedged, scripts/validate_standins.py"
+1115-193644-claude-187c,2026-11-15T19:36:44+00:00,Claude,d1fe50b,standin-ZNQ.TO,,worst_drop_gap,0.0004,"stand-in minus real worst drop, QQQ, scripts/validate_standins.py"
+1115-193645-claude-3aea,2026-11-15T19:36:45+00:00,Claude,d1fe50b,standin-QQQM,,worst_drop_gap,0.0299,"stand-in minus real worst drop, QQQ, scripts/validate_standins.py"
+1115-193645-claude-d5fb,2026-11-15T19:36:45+00:00,Claude,d1fe50b,standin-ZIU.TO,,worst_drop_gap,-0.0001,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193645-claude-acbb,2026-11-15T19:36:45+00:00,Claude,d1fe50b,standin-HXT.TO,,worst_drop_gap,-0.0003,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193646-claude-7869,2026-11-15T19:36:46+00:00,Claude,d1fe50b,standin-XIC.TO,,worst_drop_gap,-0.0012,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193646-claude-3c83,2026-11-15T19:36:46+00:00,Claude,d1fe50b,standin-VCN.TO,,worst_drop_gap,-0.0024,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193647-claude-1031,2026-11-15T19:36:47+00:00,Claude,d1fe50b,standin-ZCN.TO,,worst_drop_gap,-0.0011,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193647-claude-4a18,2026-11-15T19:36:47+00:00,Claude,d1fe50b,standin-ZAG.TO,,worst_drop_gap,-0.0002,"stand-in minus real worst drop, XBB.TO, scripts/validate_standins.py"
+1115-193647-claude-2b88,2026-11-15T19:36:47+00:00,Claude,d1fe50b,standin-VAB.TO,,worst_drop_gap,0.0004,"stand-in minus real worst drop, XBB.TO, scripts/validate_standins.py"
+1115-193648-claude-9bca,2026-11-15T19:36:48+00:00,Claude,d1fe50b,standin-BND,,worst_drop_gap,0.0456,"stand-in minus real worst drop, AGG, scripts/validate_standins.py"
+1115-193648-claude-1625,2026-11-15T19:36:48+00:00,Claude,d1fe50b,standin-IAU,,worst_drop_gap,0.0234,"stand-in minus real worst drop, GLD, scripts/validate_standins.py"
+1115-193658-claude-8f03,2026-11-15T19:36:58+00:00,Claude,7699825,standin-XSP.TO,,worst_drop_gap,0.0317,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193658-claude-dc04,2026-11-15T19:36:58+00:00,Claude,7699825,standin-VSP.TO,,worst_drop_gap,0.0121,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193658-claude-bae5,2026-11-15T19:36:58+00:00,Claude,7699825,standin-ZUE.TO,,worst_drop_gap,0.0101,"stand-in minus real worst drop, SPY hedged, scripts/validate_standins.py"
+1115-193658-claude-3715,2026-11-15T19:36:58+00:00,Claude,7699825,standin-VFV.TO,,worst_drop_gap,-0.0006,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193659-claude-c3b4,2026-11-15T19:36:59+00:00,Claude,7699825,standin-ZSP.TO,,worst_drop_gap,0,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193659-claude-a2a2,2026-11-15T19:36:59+00:00,Claude,7699825,standin-XUS.TO,,worst_drop_gap,-0.004,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193659-claude-b4b2,2026-11-15T19:36:59+00:00,Claude,7699825,standin-HXS.TO,,worst_drop_gap,0.0038,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193659-claude-4468,2026-11-15T19:36:59+00:00,Claude,7699825,standin-VOO,,worst_drop_gap,-0.0002,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193659-claude-b1e3,2026-11-15T19:36:59+00:00,Claude,7699825,standin-IVV,,worst_drop_gap,0.0001,"stand-in minus real worst drop, SPY, scripts/validate_standins.py"
+1115-193700-claude-85cf,2026-11-15T19:37:00+00:00,Claude,7699825,standin-XQQ.TO,,worst_drop_gap,0.0136,"stand-in minus real worst drop, QQQ hedged, scripts/validate_standins.py"
+1115-193700-claude-060a,2026-11-15T19:37:00+00:00,Claude,7699825,standin-ZQQ.TO,,worst_drop_gap,0.0143,"stand-in minus real worst drop, QQQ hedged, scripts/validate_standins.py"
+1115-193700-claude-3b54,2026-11-15T19:37:00+00:00,Claude,7699825,standin-ZNQ.TO,,worst_drop_gap,0.0004,"stand-in minus real worst drop, QQQ, scripts/validate_standins.py"
+1115-193700-claude-7952,2026-11-15T19:37:00+00:00,Claude,7699825,standin-QQQM,,worst_drop_gap,-0.0009,"stand-in minus real worst drop, QQQ, scripts/validate_standins.py"
+1115-193701-claude-c641,2026-11-15T19:37:01+00:00,Claude,7699825,standin-ZIU.TO,,worst_drop_gap,-0.0001,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193701-claude-2965,2026-11-15T19:37:01+00:00,Claude,7699825,standin-HXT.TO,,worst_drop_gap,-0.0003,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193701-claude-40be,2026-11-15T19:37:01+00:00,Claude,7699825,standin-XIC.TO,,worst_drop_gap,-0.0012,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193701-claude-d225,2026-11-15T19:37:01+00:00,Claude,7699825,standin-VCN.TO,,worst_drop_gap,-0.0024,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193702-claude-e21a,2026-11-15T19:37:02+00:00,Claude,7699825,standin-ZCN.TO,,worst_drop_gap,-0.0011,"stand-in minus real worst drop, XIU.TO, scripts/validate_standins.py"
+1115-193702-claude-d1a6,2026-11-15T19:37:02+00:00,Claude,7699825,standin-ZAG.TO,,worst_drop_gap,-0.0002,"stand-in minus real worst drop, XBB.TO, scripts/validate_standins.py"
+1115-193702-claude-5e87,2026-11-15T19:37:02+00:00,Claude,7699825,standin-VAB.TO,,worst_drop_gap,0.0004,"stand-in minus real worst drop, XBB.TO, scripts/validate_standins.py"
+1115-193702-claude-6bda,2026-11-15T19:37:02+00:00,Claude,7699825,standin-BND,,worst_drop_gap,0.0024,"stand-in minus real worst drop, AGG, scripts/validate_standins.py"
+1115-193703-claude-dcbb,2026-11-15T19:37:03+00:00,Claude,7699825,standin-IAU,,worst_drop_gap,-0.0008,"stand-in minus real worst drop, GLD, scripts/validate_standins.py"

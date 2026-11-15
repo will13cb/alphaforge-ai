@@ -53,6 +53,7 @@ at the start of the pipeline trace and stores `res["extraction"]`.
 | `exclusions` | list of str | ["crypto"] | Portfolio, Guardian |
 | `request` | str | "Put 25% in TSLA" | Critic, Guardian, Explainer |
 | `requested_positions` | dict ticker → weight (what they asked, a fact) | {"TSLA": 0.25} | Profiler, Guardian |
+| `existing_positions` | dict ticker → dollars the client already holds (a fact; funds without data use a labelled stand-in, #42) | {"TSLA": 60000, "XIU.TO": 30000} | Portfolio (`existing.review`), interface |
 | `missing` | list of str | ["target_amount"] | Profiler follow-up questions |
 
 ### `limits` (conclusions)

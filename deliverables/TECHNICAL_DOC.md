@@ -87,7 +87,7 @@ before answering. Then code checks the final text again: if it fails, or AWS err
   rule and the 5% safety net decide; and the test is checked on the same data it was chosen on (G7 passes by
   construction). A bootstrap condition (chance of a drop beyond the limit ≤ 5%) is the planned next step (S2).
 - **Up to three strategies = three risk levels** (#32): the most growth the client's limits allow, then 10 and 20
-  points more prudent (each a full recalculation with a higher defensive floor, never above the client's limits).
+  points less in stocks (each a full recalculation with a higher defensive floor, never above the client's limits).
   The client's preferred flavour (growth tilt, broad core, income) takes the first level. Levels closer than 5 points
   are dropped, so a client with little room (Robert) gets two, not three near-copies.
 - **Longer history, optional** (#31): `make data-long` rebuilds the same 31 assets from 2004 with the organizers'

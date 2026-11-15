@@ -36,6 +36,16 @@ RULES = {
 }
 
 
+def research_mode() -> bool:
+    """harness.toml [data] extra set (decision #41): G18 exists only then, so the demo's rule list is unchanged."""
+    from ..data import load_config
+    return bool(load_config().extra)
+
+
+if research_mode():
+    RULES["G18"] = "Dividends of single companies held are covered by their last 3 years' earnings (warning: disclose)"
+
+
 def _c(rule, ok, detail, warn=False):
     return dict(rule=rule, status="pass" if ok else ("warn" if warn else "fail"), detail=detail, text=RULES[rule])
 
@@ -113,6 +123,10 @@ def _portfolio_checks(s: dict, limits: dict, profile: dict, holdings: dict) -> l
     if "max_drawdown" in st and profile.get("capital"):
         d2 = checks.d2_capacity(st, limits, profile)
         out.append(dict(rule="G17", status=d2["status"], detail=d2["reason"], text=RULES["G17"]))
+    if "G18" in RULES and research_mode():  # same implementation as F7; ⚠ only: earnings understate some cash flows
+        f7 = checks.f7_dividends(w)
+        if f7 is not None:
+            out.append(dict(rule="G18", status=f7["status"], detail=f7["reason"], text=RULES["G18"]))
     return out
 
 
@@ -135,6 +149,17 @@ def _known_numbers(s: dict, limits: dict, profile: dict) -> list[float]:
                      if isinstance(v.get(k), (int, float))]
             vals += [x * 100 for x in v.get("real_weight", {}).values()]
             vals += [x * 100 for x in (v.get("request_at") or {}).values()]
+    # Existing portfolio (branch portefeuille_existant): today's and the rebuilt version's numbers, stand-in effects
+    ex = limits.get("existing_review") or {}
+    for v in (ex.get("current"), ex.get("target")):
+        if v:
+            vals += [v[k] * 100 for k in ("max_drawdown", "return_2022", "ann_vol", "growth", "loss_limit")
+                     if isinstance(v.get(k), (int, float))]
+            vals += [x * 100 for x in (v.get("weights") or {}).values()]
+    for si in ex.get("stand_ins") or []:
+        vals += [x * 100 for d in (si.get("hedge_effect") or {}).values() for x in d.values() if isinstance(x, (int, float))]
+        vals += [x * 100 for x in (si.get("checked_against_real") or {}).values() if isinstance(x, (int, float))]
+    vals += [float(m) for line in ex.get("critique") or [] for m in PCT.findall(line)]
     # C-F checks (#20): their values and every % in their reasons are computed by code, so the text may quote them
     for c in s.get("checks") or []:
         vals += [x * 100 for x in (c.get("value"), c.get("limit")) if isinstance(x, (int, float)) and abs(x) <= 1]

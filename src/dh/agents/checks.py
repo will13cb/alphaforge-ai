@@ -70,10 +70,11 @@ def c1_company(w: dict, limits: dict, holdings: dict) -> dict:
 
 
 def c2_geography(w: dict, holdings: dict) -> dict:
-    """Country of the equities: holdings' countries where the issuer file has them, else the country of listing."""
+    """Country of the equities: holdings' countries where the issuer file has them, else where the holdings are
+    (a catalogue's `exposure`: XEF.TO → Developed ex-North America), else the country of listing."""
     hc = _holding_countries()
     eq = {t: v for t, v in w.items() if t in STOCKS or t in EQUITY_ETFS}
-    listing = market.countries(list(eq))
+    listing = market.exposures(list(eq))
     by: dict[str, float] = {}
     known = 0.0
     for t, v in eq.items():
@@ -91,9 +92,12 @@ def c2_geography(w: dict, holdings: dict) -> dict:
     top = max(share.items(), key=lambda kv: kv[1])
     cur = {}
     for t, v in w.items():
-        c = "CAD" if t.endswith(".TO") else "USD"
+        c = dv.currency_of(t)
         cur[c] = cur.get(c, 0.0) + v
     basis = "holdings' countries where known, else country of listing" if known else "country of listing"
+    from .. import products
+    if set(eq) & set(products.column_map("exposure")):   # a catalogue product: its holdings' region, not its listing
+        basis = basis.replace("country of listing", "where the holdings are (catalogue), else country of listing")
     return _c("C2", round(top[1], 4), MAX_COUNTRY_EQUITY, _status(warn=top[1] > MAX_COUNTRY_EQUITY + 1e-9),
               f"{top[0]} {top[1]:.0%} of the equities ({basis}); currency "
               + ", ".join(f"{k} {v:.0%}" for k, v in sorted(cur.items(), key=lambda kv: -kv[1])),
@@ -160,8 +164,8 @@ def c6_duplicates(w: dict, rep: dict, holdings: dict, rets: pd.DataFrame | None)
     eq = sorted(t for t in w if t in EQUITY_ETFS and t in holdings)
     overlaps = [(a, b, metrics.overlap(holdings[a], holdings[b])) for i, a in enumerate(eq) for b in eq[i + 1:]]
     overlaps = [o for o in overlaps if o[2] > OVERLAP_WARN]
-    parts = [f"same bet twice {p['a']}/{p['b']} {p['correlation']:.2f}" for p in hard]
-    parts += [f"{a}/{b} correlated {x:.2f}" for a, b, x in soft] + [f"{a}/{b} share {x:.0%}" for a, b, x in overlaps]
+    parts = [f"same bet twice {p['a']}/{p['b']} {p['correlation']:.3f}" for p in hard]
+    parts += [f"{a}/{b} correlated {x:.3f}" for a, b, x in soft] + [f"{a}/{b} share {x:.0%}" for a, b, x in overlaps]
     worst = max([p["correlation"] for p in hard] + [x for _, _, x in soft] + [0.0])
     return _c("C6", round(worst, 3), CORR_WARN, _status(fail=bool(hard), warn=bool(soft or overlaps)),
               "; ".join(parts) or "no near-duplicate holdings", "diversification.report, dh.metrics.overlap")
@@ -224,9 +228,17 @@ def f_profile(w: dict, profile: dict, limits: dict, holdings: dict) -> list[dict
         out.append(_c("F1", round(growth, 4), 0.05, _status(fail=growth > 0.05 + 1e-9),
                       f"safety cushion: growth {growth:.0%} (should be close to 0)", "profile.objective"))
     elif obj == "income":
-        inc = sum(v for t, v in w.items() if t in DEFENSIVE or t in DIVIDEND_PAYERS)
+        payers, src, what = DIVIDEND_PAYERS, "profile.objective", "dividend payers"
+        if data_extra():  # research mode: payers judged on their coverage, plus dividend ETFs (decision #41)
+            from .. import fundamentals, products
+            covered = fundamentals.covered_payers(w)
+            if covered is not None:
+                funds = {t for t, sc in products.column_map("sub_class").items() if sc == "factor_dividend"}
+                payers, src = covered | funds, "profile.objective, dh.fundamentals"
+                what = "dividend payers covered by their earnings or dividend ETFs"
+        inc = sum(v for t, v in w.items() if t in DEFENSIVE or t in payers)
         out.append(_c("F1", round(inc, 4), 0.5, _status(warn=inc < 0.5),
-                      f"income objective: {inc:.0%} in bonds or dividend payers", "profile.objective"))
+                      f"income objective: {inc:.0%} in bonds or {what}", src))
     else:
         out.append(_c("F1", obj, None, "pass", f"objective {obj}: no extra constraint", "profile.objective"))
     hcap = limits.get("horizon_max_growth", horizon_max_growth(profile["horizon_years"]))
@@ -261,6 +273,24 @@ def f_profile(w: dict, profile: dict, limits: dict, holdings: dict) -> list[dict
 
 # ---- all of them -------------------------------------------------------------------------------------
 
+def f7_dividends(w: dict) -> dict | None:
+    """Research mode (harness.toml [data] extra): single companies whose dividend is not covered by their last 3
+    years' earnings (dh.fundamentals). ⚠ only, never ✘: earnings understate some businesses' cash (pipelines), so it
+    discloses. None when the statements are not downloaded (no row rather than a guess)."""
+    from .. import fundamentals
+    names = sorted(t for t in w if t in STOCKS and w[t] > 0)
+    try:
+        facts = {t: fundamentals.dividend_facts(t) for t in names}
+        fundamentals.annual()
+    except SystemExit:
+        return None
+    bad = {t: f for t, f in facts.items() if f.get("status") in ("not covered", "loss")}
+    reason = ("; ".join(f"{t}: {f['reason']}" for t, f in bad.items()) if bad
+              else f"every dividend payer held is covered by its last {fundamentals.YEARS} years' earnings"
+              if names else "no single company held")
+    return _c("F7", sorted(bad), [], _status(warn=bool(bad)), reason, "dh.fundamentals (annual statements, Yahoo Finance)")
+
+
 def run(strategy: dict, profile: dict, limits: dict, rets: pd.DataFrame | None = None, holdings=None) -> list[dict]:
     """Every C-F check for one strategy (needs strategy["weights"], ["stats"], optionally ["outlook"])."""
     holdings = load_holdings() if holdings is None else holdings
@@ -270,7 +300,14 @@ def run(strategy: dict, profile: dict, limits: dict, rets: pd.DataFrame | None =
     return [c1_company(w, limits, holdings), c2_geography(w, holdings), c3_sector(rep), c3b_job_sector(rep, profile),
             c4_classes(rep), c5_concentration(w, holdings), c6_duplicates(w, rep, holdings, rets),
             d1_tolerance(st, profile), d2_capacity(st, limits, profile), d3_stress(st, limits),
-            e_goal(strategy.get("outlook"), profile), *f_profile(w, profile, limits, holdings)]
+            e_goal(strategy.get("outlook"), profile), *f_profile(w, profile, limits, holdings),
+            *([f7] if data_extra() and (f7 := f7_dividends(w)) is not None else [])]
+
+
+def data_extra() -> bool:
+    """Research mode: an extra product catalogue is configured (harness.toml [data] extra)."""
+    from ..data import load_config
+    return bool(load_config().extra)
 
 
 def summary(checks: list[dict]) -> str:
