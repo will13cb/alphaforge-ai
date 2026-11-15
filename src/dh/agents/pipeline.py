@@ -25,6 +25,14 @@ def run(profile: dict, strategy: dict | None = None, explanation: str | None = N
     rets=None → starter data (dh.data.returns()); tests pass synthetic returns.
     drops = each asset's worst drop for the company caps (#24): None → from `rets` if given, else the market data."""
     tr = Trace(on_step=on_step)
+    if profile.get("investment_mode") == "fixed_rate":
+        from .fixed_income import run as fixed_income_run
+        scenario = fixed_income_run(profile)
+        tr.step("Profiler", "Fixed-income agent", "Client requested bonds held to maturity; traded-fund drawdown rules do not model contractual cash flows.")
+        tr.step("Fixed-income agent", "Client", scenario["message"], output=scenario,
+                sources=[{"source": scenario["references"]["terms_source"]}])
+        return dict(limits={"missing": [], "scenario_only": True}, checks=[], strategies=[], dropped=[],
+                    verdict="warn", trace=tr, fixed_income_scenario=scenario)
     if profile.get("requested_positions"):   # "10% in XSP": measured with its stand-in (SPY), labelled (#42)
         from .. import standins
         try:

@@ -10,6 +10,7 @@ pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
 from interface.core import services  # noqa: E402
+from interface.core.questions import STEPS  # noqa: E402
 
 APP = str(ROOT / "interface" / "app.py")
 needs_data = pytest.mark.skipif(not services.data_ready()[0], reason="starter CSVs not in data/raw (make data)")
@@ -78,7 +79,7 @@ def test_conditional_question_and_reset():
 def test_full_flow_results_and_conversation():
     at = start()
     btn(at, "Try with an example client").click().run()
-    assert at.session_state.step == 5 and any("Check your answers" in s.value for s in at.subheader)
+    assert at.session_state.step == len(STEPS) and any("Check your answers" in s.value for s in at.subheader)
     btn(at, "Run the analysis").click().run()
     assert not at.exception and at.session_state.section == "Your results"
     md = " ".join(m.value for m in at.markdown)

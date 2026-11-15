@@ -58,6 +58,10 @@ def essentials(res: dict, profile: dict) -> None:
         if caps:
             st.markdown("**Largest share of the portfolio any one company may take** (counted through the funds too): "
                         + ", ".join(f"{t} {v}" for t, v in caps.items()))
+        kyc = services.kyc_lines(lim)
+        if kyc:
+            st.markdown("**Cross-check: your three quick choices**\n" + "\n".join(f"- {ui.esc(x)}" for x in kyc),
+                        unsafe_allow_html=True)
 
     st.subheader(f"{len(strategies)} way{'s' if len(strategies) != 1 else ''} to invest within these limits")
     st.markdown(f'<p class="af-muted">Simulated on {period_label()} market data, from the most growth your limits allow '
@@ -186,7 +190,10 @@ def explanation(res: dict) -> None:
     src = {"bedrock": "Claude on Amazon Bedrock (live)", "cache (explainer)": "Claude on Amazon Bedrock (saved answer)",
            "template": "a fixed template (no AI model)"}.get(e.get("source"), e.get("source", ""))
     lab, tone = VERDICT.get(e.get("verdict"), ("", "info"))
-    st.caption(f"Written by {src}. Every number in it was checked by code against the results." + (f" {lab}." if lab else ""))
+    if e.get("source") == "fixed_rate":
+        st.caption("Calculated from the sourced bond terms and stated purchase-price assumptions. No AI model invents the rate.")
+    else:
+        st.caption(f"Written by {src}. Every number in it was checked by code against the results." + (f" {lab}." if lab else ""))
 
 
 def details(res: dict) -> None:
@@ -230,6 +237,14 @@ def render() -> None:
         if st.button("Go to your profile", type="primary"):
             S.goto = "Your profile"
             st.rerun()
+        return
+    if res.get("fixed_income_scenario"):
+        from interface.ui.fixed_income import render_plan
+        st.title("Your bond portfolio")
+        render_plan(res["fixed_income_scenario"])
+        explanation(res)
+        with st.expander("Analysis record"):
+            st.json(res["trace"].steps, expanded=False)
         return
     lab, tone = VERDICT.get(res.get("verdict"), ("", "info"))
     if res["limits"].get("missing"):

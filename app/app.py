@@ -300,7 +300,10 @@ with tab_p:
 
 # ---- 2. strategies ---------------------------------------------------------------------------------------
 with tab_s:
-    if not strategies:
+    if res.get("fixed_income_scenario"):
+        from interface.ui.fixed_income import render_plan
+        render_plan(res["fixed_income_scenario"])
+    elif not strategies:
         st.info("No strategy: see the Profile tab and the Trace.")
     cols = st.columns(max(1, len(strategies)))
     for col, s in zip(cols, strategies):

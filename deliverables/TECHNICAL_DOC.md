@@ -29,6 +29,7 @@ number is plain Python. *Agents investigate and argue; code enforces.*
 | 5 | **Explainer** (`explainer.py`) | Strands agent, tool `check_text` | the client text, written from facts where every number is an id (#23, #27) |
 | app | **Analyst** (`analyst.py`) | Strands agent, tools, ≤ 5 calls | answers to follow-up questions; its what-ifs re-run the whole pipeline (#35) |
 | app | **Existing portfolio** (`existing.py`) | rules + the same agents | what the client already holds, reviewed with the same checks C–F and Guardian, then rebuilt into the first proposed strategy with each move in $ (#42, #44) |
+| app | **Fixed-income lookup** (`agents/fixed_income.py`) | rules, no LLM | for a bond-only preference: sourced Canadian and U.S. government bonds held to maturity (rate, maturity, cash flows in CAD), or "no supported match"; public references, not dealer offers; never promises a guaranteed rate it can't source |
 | — | **Trace store** (`tracestore.py`) | Amazon S3 | the whole run as JSON in `s3://<bucket>/traces/`, from both apps and the CLI (#25) |
 
 **What a ✘ does.** On the profile (G1): no proposal, the client is asked. On a strategy: it is dropped and the trace
@@ -40,9 +41,12 @@ Nothing loops back (the Critic gets one round), so every run ends, and the trace
 - **Before any proposal:** G1, the essential facts must be known; otherwise ask the client.
 - **On each strategy:**
   - G2 valid weights; G3 allowed assets only; G4 each company within its own cap, counted through ETFs; G5 crypto;
-  - G6 defensive floor; G7 worst drop within the client's loss limit; G8 volatility (warning);
+  - G6 defensive floor; G7 loss rule: simulated chance of a drop deeper than the client's loss limit over their
+    horizon ≤ 10%, on the final weights (#46); G8 volatility (warning);
   - G9 a request that doesn't fit is never quietly applied; G10 exclusions held through ETFs (disclosed);
-  - G14–G17 (from `checks.py`, #20): geography, sector and the client's own job sector, concentration, worst drop in $.
+  - G14–G16 (from `checks.py`, #20): geography, sector and the client's own job sector, concentration (the worst
+    drop in $ is now part of G7);
+  - G18 consistency: every number shown describes the final weights and data (#46). 17 rules in all.
 - **On the text:** G11 the disclaimer is present; G12 every % and $ in it is exactly one of the computed facts; G13
   every request that doesn't fit is explained.
 

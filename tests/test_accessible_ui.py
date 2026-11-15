@@ -69,3 +69,40 @@ def test_reviewed_voice_question_uses_existing_analyst(monkeypatch):
     assert app.text_area(key="voice_question").value == ""
     app.run()
     assert calls == ["What is volatility?"]  # a rerun must not duplicate the turn
+
+
+def test_french_recording_language_does_not_change_english_playback(monkeypatch):
+    monkeypatch.setenv("AF_VOICE_ENABLED", "1")
+    calls = []
+    def narrate(text, language):
+        calls.append((text, language))
+        return b"audio", "audio/mp3"
+    monkeypatch.setattr(voice, "narrate", narrate)
+    app = AppTest.from_file(APP).run()
+    app.toggle(key="voice_mode").set_value(True).run()
+    app.selectbox(key="voice_language").set_value("Français (Canada)").run()
+    assert not calls
+    app.button(key="welcome_intro_read").click().run()
+    assert not app.exception
+    assert len(calls) == 1 and calls[0][1] == "en-CA"
+    assert "See how to invest" in calls[0][0]  # the actual visible introduction
+    assert "Answer a few questions" in calls[0][0]
+    assert app.get("audio")[0].proto.autoplay is True
+    app.toggle(key="large_text").set_value(True).run()
+    assert len(calls) == 1  # form/display reruns do not regenerate speech
+    assert app.get("audio")[0].proto.autoplay is False
+    app.button(key="welcome_intro_read").click().run()
+    assert len(calls) == 1  # replay uses session audio
+
+
+def test_ready_transcript_appears_without_manual_status_checks(monkeypatch):
+    monkeypatch.setenv("AF_VOICE_ENABLED", "1")
+    monkeypatch.setattr(voice, "poll", lambda ticket: ("done", "My horizon is 10 years."))
+    app = AppTest.from_file(APP).run()
+    app.toggle(key="voice_mode").set_value(True).run()
+    app.session_state["welcome_voice_job"] = {"job": "mock-job"}
+    app.run()
+    assert not app.exception
+    assert app.text_area(key="welcome_voice_review").value == "My horizon is 10 years."
+    assert app.text_area(key="welcome_text").value == ""  # review still required
+    assert not any(b.label == "Check transcript" for b in app.button)

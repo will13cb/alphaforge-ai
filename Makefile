@@ -71,3 +71,6 @@ scan: ## Scan git history for secrets before going public
 
 claude: ## Launch Claude Code with .env loaded
 	@$(ENV) claude
+
+data-fixed-income: ## Build dated Canadian/U.S. fixed-income catalogue for raw/fixed_income/ in S3
+	@$(PY) scripts/build_fixed_income.py

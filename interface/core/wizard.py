@@ -7,7 +7,7 @@ loses anything; they are parsed again each time a step is checked.
 from __future__ import annotations
 
 from . import validation as v
-from .questions import ALL_STEPS, BY_ID, STEPS, Question
+from .questions import ALL_STEPS, BET_IDS, BY_ID, STEPS, Question
 
 
 def visible(step_index: int, answers: dict, show_advanced: bool = True) -> list[Question]:
@@ -71,6 +71,12 @@ def cross_checks(step_index: int, answers: dict, values: dict) -> dict:
         cap, mon = values.get("capital"), values.get("monthly_contribution")
         if cap is not None and cap == 0 and not mon:
             out["capital"] = "Enter an amount to invest today, or a monthly amount: with neither, there is nothing to invest."
+    if step_index < len(STEPS) and STEPS[step_index].id == "attitude":
+        # dh.kyc.score needs all three bets (their median and spread); one or two alone can't be compared
+        given = [b for b in BET_IDS if values.get(b) is not None]
+        if 0 < len(given) < len(BET_IDS):
+            first = next(b for b in BET_IDS if values.get(b) is None)
+            out[first] = "Answer all three choices, or skip all three: one or two alone can't be compared."
     return out
 
 
@@ -111,6 +117,15 @@ def to_profile(values: dict) -> dict:
         p["employment_sector"] = values["employment_sector"]
     if values.get("request"):
         p["requested_positions"] = dict(values["request"])
+    bets = {b: values[b] for b in BET_IDS if values.get(b) is not None}   # 0.0 is a valid answer
+    if len(bets) == len(BET_IDS):
+        p["kyc_bets"] = bets
+    if values.get("ev_answer_pct") is not None:
+        p["ev_answer_pct"] = values["ev_answer_pct"]
+    if values.get("investment_mode") == "fixed_rate":
+        p["investment_mode"] = "fixed_rate"
+        p["fixed_rate_pct"] = values["fixed_rate_pct"]
+        p["fixed_income_market"] = values.get("fixed_income_market") or "both"
     return p
 
 
@@ -119,7 +134,7 @@ def from_profile(profile: dict) -> dict:
     a = {}
     for k in ("name", "age", "income_stability", "emergency_fund_months", "objective", "capital",
               "monthly_contribution", "horizon_years", "loss_reaction", "max_loss_pct", "knowledge_level",
-              "years_experience", "employment_sector"):
+              "years_experience", "employment_sector", "investment_mode", "fixed_rate_pct", "fixed_income_market"):
         if profile.get(k) not in (None, ""):
             a[k] = profile[k] if isinstance(profile[k], str) else f"{profile[k]:g}" if isinstance(profile[k], float) else str(profile[k])
     for k in ("products_held", "interests", "exclusions"):
@@ -131,4 +146,11 @@ def from_profile(profile: dict) -> dict:
     if profile.get("requested_positions"):
         t, w = next(iter(profile["requested_positions"].items()))
         a["request"] = (t, f"{100 * w:g}")
+    for b, ce in (profile.get("kyc_bets") or {}).items():   # snap to the option shown (dh.kyc.rank's tolerance)
+        opts = [o for o, _ in BY_ID[b].options if o != ""] if b in BY_ID else []
+        near = [o for o in opts if abs(o - float(ce)) <= 5e-4]
+        if near:
+            a[b] = near[0]
+    if profile.get("ev_answer_pct") is not None:
+        a["ev_answer_pct"] = f"{profile['ev_answer_pct']:g}"
     return a

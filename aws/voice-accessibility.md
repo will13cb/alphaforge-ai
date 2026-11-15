@@ -18,11 +18,13 @@ S3_BUCKET = "alphaforge-datathon-traces-7k2p"
 AWS_REGION = "us-east-1"
 ```
 
-Enable **Voice assistance** in the sidebar. Select English or French (Canada).
+Enable **Voice assistance** in the sidebar. Select the **recording language**, English or French (Canada).
 Speech is independent of `LLM_PROVIDER`: offline financial answers can still use AWS speech.
 No extra Python packages are needed. Microphones require HTTPS or localhost. The interface
-remains in English; the language selector controls speech, not UI translation. English
-output uses Polly Joanna; Canadian French output uses Chantal (standard engine).
+remains in English; the selector controls microphone transcription, not UI translation or playback.
+Playback reads the displayed English text with Joanna using Polly's neural engine. Explicitly French
+content can use Gabrielle (neural) via `read_aloud(..., language_code="fr-CA")`. No standard-engine
+fallback silently degrades voice quality.
 
 ## Permissions
 
@@ -63,7 +65,7 @@ or `"0"`; typing still works. Offline tests mock AWS and cannot establish live a
 
 1. Record up to 60 seconds with the native microphone control.
 2. Explicitly press **Transcribe recording** to send audio to Amazon Transcribe via S3.
-3. Press **Check transcript** to retrieve it, or **Discard recording** to clean up.
+3. The transcript appears automatically (status checked every two seconds); **Discard recording** cleans up.
 4. Review/edit names, amounts and percentages, then press **Use this transcript**.
 5. Submit with the normal profile/question button. Recognition is fallible; a confirmed
    transcript is treated as user input, not proof of identity or intent.
@@ -79,8 +81,11 @@ to cover abandoned sessions, crashes and failed cleanup. Never apply it to `raw/
 cleanup. No audio is written to local disk, shared caches, logs or git. Confirmed text
 still follows the engine's existing trace/log retention.
 
-Polly audio stays in session memory, one passage per read-aloud control. Playback never
-autostarts. Long explanations split into selectable passages without dropping text.
+Polly audio stays in session memory. **Listen** prepares audio and requests playback in one click;
+if browser autoplay policy blocks it, the player remains available. Navigation and unrelated reruns
+never request autoplay. Native controls pause, seek and replay. Long explanations are split at
+sentence boundaries for synthesis, then joined as raw PCM in one WAV recording so duration and
+seeking remain correct. Financial text is preserved; SSML only controls delivery and escapes user text.
 AWS speech usage is billable to the configured account. This is recorded-message
 assistance, not a streaming or hands-free assistant. Keyboard input and screen readers
 remain available; speech failure never hides the text.

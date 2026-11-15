@@ -223,7 +223,7 @@ div[data-testid="stChatInput"] textarea {{ color: var(--ink) !important; }}
   .stButton button, .stFormSubmitButton button, .stDownloadButton button {{ min-height: 46px; }}
   .stApp label[data-testid="stRadioOption"] {{ min-height: 40px; align-items: center; padding: 4px 0; }}
   .stApp div[data-testid="stExpander"] summary {{ min-height: 44px; }}
-  /* Only the current step pill; "Step x of 6" and the bar say the rest */
+  /* Only the current step pill; "Step x of n" and the bar say the rest */
   .af-step:not(.on) {{ display: none; }}
   /* Metrics: three in a row, smaller figures */
   div[data-testid="stHorizontalBlock"]:has(.af-metric) {{ flex-wrap: nowrap; gap: 0.6rem; }}

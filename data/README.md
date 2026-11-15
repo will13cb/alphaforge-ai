@@ -92,3 +92,57 @@ prices are already net of the fund's own fees). A fund without a figure is liste
 
 On a host without S3, `bootstrap.ensure_holdings()` downloads SPY's issuer file (State Street, direct .xlsx) and
 builds `etf_holdings.csv` at start (AF_AUTO_DATA=1). QQQ, ESGV and XIU.TO come from web pages: saved by hand only.
+
+
+## Canada/U.S. fixed income: held-to-maturity catalogue
+
+Run `make data-fixed-income` (or `python scripts/build_fixed_income.py`). This builds
+`data/raw/fixed_income/{instruments.csv,reference_snapshot.json,sources_metadata.csv,quality_report.csv}`.
+Upload all four files to `s3://YOUR_BUCKET/raw/fixed_income/`; `make data-up` includes this folder.
+On the hosted app, `S3_BUCKET`, AWS read credentials and `AF_AUTO_DATA=1` enable loading it independently
+of market-history files. Restart the app after replacing a catalogue; an existing local copy is reused.
+Raw datasets remain outside git. No upload to AWS is performed by the builder.
+
+The initial download includes Government of Canada nominal fixed-rate issues and U.S. nominal Treasury
+notes/bonds. Bank of Canada benchmark yields are dated mid-market references; TreasuryDirect
+yields are dated auction results, **not current secondary-market offers**. Neither proves inventory or an
+executable price. This is not every Canadian/U.S. bond or deposit: dealer inventory, corporate, provincial,
+municipal, GIC and CD offers require their own dated issuer/broker records. Public pages/API access is used
+for this educational prototype; no commercial redistribution licence is asserted.
+
+Sources (retrieval time and observation dates are saved in the generated files):
+- [Bank of Canada outstanding issues](https://www.bankofcanada.ca/markets/government-securities-auctions/goc-t-bills-bonds-outstanding/)
+- [Bank of Canada benchmark yields and bond terms](https://www.bankofcanada.ca/rates/interest-rates/canadian-bonds/)
+- [TreasuryDirect auction query](https://www.treasurydirect.gov/auctions/auction-query/), nominal Note/Bond search API
+- [Bank of Canada USD/CAD observations](https://www.bankofcanada.ca/valet/observations/FXUSDCAD/json?recent=5)
+
+To extend coverage, pass `--extra path/to/sourced_records.csv` (repeatable). Required columns:
+
+| Column | Meaning |
+|---|---|
+| instrument_id | Unique ISIN/CUSIP or source identifier |
+| issuer, country | Named issuer; country `Canada` or `United States` |
+| issuer_type | `sovereign`, `provincial`, `municipal`, `corporate`, `deposit` |
+| instrument_type | `bond`, `gic`, `cd`, `bill`, `strip`, `floating_rate`, `inflation_linked` |
+| currency | `CAD` or `USD` |
+| maturity | ISO date YYYY-MM-DD |
+| coupon_pct | Annual coupon/deposit rate in percentage points |
+| coupon_frequency | 1, 2, 4 or 12 for fixed-coupon bonds |
+| terms_source, terms_as_of | HTTPS source URL and ISO date |
+
+Optional `offer_price` is a positive **clean price per 100 face value**, never a dollar investment amount.
+`offer_yield_pct` is a dated offer yield. Supplying either requires `quote_source` (HTTPS) and `quote_as_of`
+(ISO date). `benchmark_yield_pct` requires `yield_as_of`; `auction_yield_pct` remains historical reference.
+`available_to_buy=false` and `callable=true` records are excluded from held-to-maturity matching.
+GIC/CD records require `cashflow_type=annual_payout` or `compound_at_maturity` plus a dated HTTPS offer source;
+issuer repayment is assumed and CDIC/FDIC coverage is not certified. Zero-loss requests only match sovereigns.
+
+Bills, strips, inflation-linked and floating-rate records can be catalogued but are not selected by this
+fixed-coupon cashflow model. Invalid/duplicate rows are excluded and listed in `quality_report.csv`.
+The app prefers CAD, matches maturity near the horizon, and shows a sourced income candidate or explains
+that no verified match exists in the loaded catalogue. A coupon alone never certifies the requested return:
+without a current price it uses an explicitly assumed par price plus accrued interest. Bond coupon dates
+are derived backwards from maturity, using a simplified day-based accrued-interest convention; actual
+broker settlement conventions, fees, taxes, minimum lots and payment calendars need a purchase quote.
+Deposit schedules assume a new purchase today and use the explicitly supplied payout/compounding type.
+The UI displays the exact maturity and stops cashflows there, rather than inventing a reinvestment rate.

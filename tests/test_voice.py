@@ -34,7 +34,7 @@ class AWS:
             if name == "get_object":
                 return {"Body": io.BytesIO(json.dumps({"results": {"transcripts": [{"transcript": "15% in Tesla"}]}}).encode())}
             if name == "synthesize_speech":
-                return {"AudioStream": io.BytesIO(b"mp3")}
+                return {"AudioStream": io.BytesIO(b"\x00\x00" * 160 if kwargs.get("OutputFormat") == "pcm" else b"mp3")}
             return {}
         return call
 
@@ -95,7 +95,8 @@ def test_failed_job_cleans_up(aws):
 def test_polly_reads_plain_text_only_and_does_not_truncate(aws):
     assert voice.speak("**Worst drop**: 15%", "fr-CA") == b"mp3"
     kw = aws.calls[-1][1]
-    assert kw["Text"] == "Worst drop : 15%" and kw["VoiceId"] == "Chantal" and kw["TextType"] == "text"
+    assert "Worst drop : 15%" in kw["Text"]
+    assert kw["VoiceId"] == "Gabrielle" and kw["Engine"] == "neural" and kw["TextType"] == "ssml"
     with pytest.raises(voice.VoiceError, match="too long"):
         voice.speak("x" * 3000, "en-CA")
 
@@ -114,3 +115,27 @@ def test_discarding_running_batch_job_defers_job_cleanup(aws):
     assert voice.cancel(ticket)  # S3 removal succeeds, running job cleanup is deferred
     assert any(name == "get_transcription_job" for name, _ in aws.calls)
     assert len([name for name, _ in aws.calls if name == "delete_object"]) == 2
+
+
+def test_narration_preserves_long_text_in_one_seekable_recording(aws):
+    text = "The worst historical loss was 15%. " * 180
+    audio, mime = voice.narrate(text)
+    calls = [kwargs for name, kwargs in aws.calls if name == "synthesize_speech"]
+    assert len(calls) > 1
+    assert all(c["OutputFormat"] == "pcm" and c["Engine"] == "neural" for c in calls)
+    from xml.etree import ElementTree
+    spoken = " ".join("".join(ElementTree.fromstring(c["Text"]).itertext()) for c in calls)
+    assert spoken == voice.plain_text(text)
+    assert mime == "audio/wav"
+    with wave.open(io.BytesIO(audio)) as recording:
+        assert recording.getnframes() == 160 * len(calls)
+        assert recording.getnchannels() == 1
+        assert recording.getframerate() == 16000
+
+
+def test_neural_speech_escapes_user_text_instead_of_executing_ssml(aws):
+    voice.speak("Return < 3% & <break time='10s'/>", "en-CA")
+    from xml.etree import ElementTree
+    root = ElementTree.fromstring(aws.calls[-1][1]["Text"])
+    assert root.find(".//break") is None
+    assert "Return < 3%" in "".join(root.itertext())

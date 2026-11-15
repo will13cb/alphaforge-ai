@@ -35,6 +35,7 @@ flowchart TB
         PF["3 · Portfolio<br/>up to 3 strategies = 3 risk levels<br/>split computed: largest growth share meeting the simulated horizon loss rule,<br/>capped by horizon, liquidity, safety net · says which one set it<br/>crypto only if asked + allowed + the data agrees"]
         CK["Checks C–F<br/>companies & sectors through the ETFs · geography ·<br/>duplicates · drawdown in % and $ · goal · profile fit"]
         EXR["Existing portfolio review<br/>same checks C–F and Guardian · fees in $ ·<br/>labelled stand-ins for funds without data ·<br/>rebuild into the first strategy, moves in $"]
+        FI["Fixed-income lookup<br/>bond-only preference: sourced Canada / U.S.<br/>government bonds held to maturity, cash flows in CAD<br/>no invented offer, no guarantee promised"]
         RQ["Request side by side<br/>'as asked' vs 'what fits', same checks<br/>pros & cons from the numbers only"]
     end
 
@@ -52,6 +53,8 @@ flowchart TB
 
     %% ---------- Flow ----------
     O --> PR
+    O -- "bond-only preference" --> FI
+    FI -- "matches or 'no supported match', with sources" --> UI
     PR -- "essentials missing (G1)" --> ASK["Ask the client"]
     PR --> MD --> PF --> CK --> GU
     GU -- "✘ strategy dropped, reason in the trace" --> DROP["Dropped"]
@@ -79,7 +82,7 @@ flowchart TB
     %% ---------- AWS ----------
     subgraph AWS["AWS (slide 7)"]
         BR["Amazon Bedrock<br/>Claude Opus 5.5 · us-east-1"]
-        S3[("Amazon S3<br/>traces/: one JSON per run<br/>raw/: data for the hosted app<br/>voice/: audio, deleted once transcribed")]
+        S3[("Amazon S3<br/>traces/: one JSON per run<br/>raw/: data and bond catalogue for the hosted app<br/>voice/: audio, deleted once transcribed")]
         TP["Amazon Transcribe · Amazon Polly<br/>speech → text · text → speech<br/>optional (AF_VOICE_ENABLED)"]
         AC["Bedrock AgentCore Runtime<br/>planned, NOT deployed"]
     end
@@ -123,10 +126,11 @@ limit or a number).
 | Extractor | yes (Strands, tool `check_profile`) | `profile` fields from free text; follow-up questions for what's missing; code checks every field (#29) |
 | Profiler | no | `limits`: risk level, loss limit, floors, per-company and crypto caps, each with a reason; KYC cross-check `limits["kyc"]` (#40) |
 | Market data | no | per-asset facts, `strategy_stats`, stress windows, goal outlook (Joud) |
-| Portfolio | no | up to 3 strategies = 3 risk levels (#32), split computed and says what set it (#17, #22, #33) |
+| Portfolio | no | up to 3 strategies = 3 risk levels (#32); growth ceiling = largest share whose simulated chance of a drop deeper than the loss limit over the horizon is ≤ 10% (#46), capped by the horizon rule, withdrawals and the safety net; says what set it (#33) |
 | Checks C–F | no | one shape per check: value, limit, status, reason, source (#20) |
-| Guardian | no | ✔ / ⚠ / ✘ per rule G1–G17 on each strategy; G11–G13 on the text |
+| Guardian | no | ✔ / ⚠ / ✘ per rule on each strategy (17 rules: G1–G16 and G18; G7 = simulated chance of a drop deeper than the loss limit over the horizon ≤ 10%, G18 = every number describes the final weights, #46); G11–G13 on the text |
 | Critic | yes (Strands, 11 tools) | ≤ 3 objections, each number backed by a cited tool result or the facts it was given (#45); one fix per strategy that reruns the whole calculation, re-checked by the Guardian, original kept if it fails (#30) |
+| Fixed-income lookup | no | for a bond-only preference: sourced Canadian and U.S. government bonds held to maturity (rate, maturity, cash flows in CAD); public references, not dealer offers; says when nothing matches |
 | Request side by side | no | the client's request "as asked" vs "what fits", same checks; pros and cons from the numbers (#28) |
 | Explainer | yes (Strands, tool `check_text`) | client text with number ids filled by code (strict G12, #27); template if a check fails (#23) |
 | Existing portfolio review | no (+ Critic, Explainer, Analyst) | what the client holds, with the same checks C–F and Guardian, fees in $, labelled stand-ins, and the moves in $ to the first strategy (#42, #44) |

@@ -45,6 +45,7 @@ def document(res: dict, profile: dict, persona: str = "") -> dict:
         "persona": persona,
         "parent_run_id": (res.get("stored") or {}).get("run_id"),
         "followups": res.get("followups", []),
+        "fixed_income_scenario": res.get("fixed_income_scenario"),
         "profile": profile,
         "limits": res.get("limits"),
         "verdict": res.get("verdict"),

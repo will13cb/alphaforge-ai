@@ -39,7 +39,7 @@ Where things go: official brief + our slides in `Datathon2026Infos/`, ideas/note
 6. **Small commits, merge often.** Pull main every ~2h. On conflict in a shared file, ask its lane.
 7. **Never commit or read secrets.** Don't `cat`/`grep`/`source` `.env` or AWS credentials, or dump `env`. Use `make <target>`, which loads `.env` for that command. The guard hook blocks the common cases, plus cloud deletes and force-push.
 8. **The app is a deliverable (Sun 23:59).** Get `make app` showing real output by Saturday night, then keep it working.
-9. **Before Monday 11:00:** `make backup` (pulls S3 traces, commits the demo cache). The AWS account closes ~11:30 (event dashboard), not 13:59.
+9. **Before Sun 23:59 (repo freeze):** `make backup` (pulls S3 traces, commits the demo cache). Nothing can be pushed after the freeze; the AWS account closes Mon 13:59.
 10. **Ask, don't guess.** If an official source (event site, rules, sponsor brief, data docs) can't be reached, or key facts are missing, stop and ask the user before building on search results or assumptions. Ask for the document, or for network access to the host.
 11. **One design doc per branch:** `notes/branches/<branch-name>.md` (`/` → `-`), from the template in
     `notes/branches/README.md`. Create it with the branch, update it before each merge (Done, Next, Decisions,
@@ -120,3 +120,4 @@ Explain this allocation's risk: ...", system="...")
 
 - Sun — Quantitative audit fixes R0–R10 integrated from `claude/nice-volta-4dwcp4`: ceiling = P(drop over the horizon > loss limit) ≤ 10% simulated, central premium 3%, goal statuses (never "> 100%"), levels share a defensive basket and must be safer, results stamped to the final weights (G18), G7 = D2 simulated / G17 merged, KYC common A grid, loss question peak-to-trough, one-measure frontier, MDD day-1 fix — theory audit; reviewed for integration (`notes/decisions.md` #46)
 - Sun — History from 2010: `harness.toml [data] start = "2010-01-04"`; `make data-long` and the host's rebuild start there; results, caches and deliverables to regenerate on the new data (`notes/decisions.md` #47)
+- Sun — Submission stays on the starter window 2021-2026: `harness.toml start = ""` (host rebuild = starter period), #47 reverted for the submission — docs, results, caches and video are on it; S3 raw/ must hold the starter files (`notes/decisions.md` #48)

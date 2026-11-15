@@ -26,9 +26,9 @@ from dh.data import load_config  # noqa: E402
 def files_to_upload(folder: Path) -> list[str]:
     """Paths under data/raw/ to upload: the top-level CSVs (+ BUILD_INFO.txt), then the research-mode folders."""
     out = sorted(p.name for p in folder.glob("*.csv")) + [f for f in ("BUILD_INFO.txt",) if (folder / f).exists()]
-    for sub in sorted([*folder.glob("products_*"), folder / "fundamentals"]):
+    for sub in sorted([*folder.glob("products_*"), folder / "fundamentals", folder / "fixed_income"]):
         if sub.is_dir():
-            out += sorted(f"{sub.name}/{p.name}" for p in sub.glob("*.csv"))
+            out += sorted(f"{sub.name}/{p.name}" for p in sub.iterdir() if p.suffix in (".csv", ".json"))
     return out
 
 

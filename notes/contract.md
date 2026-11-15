@@ -213,3 +213,19 @@ why, e.g. "risk level 2 (Cautious; tolerance 2, capacity 2) … Flags: request T
 **`res["followups"]`** (Analyst, decision #35): list of {`question`, `answer` (with the disclaimer), `status`
 (`valid` or `replaced: …`), `evidence` [call_ids], `tool_calls` [{`call_id`, `tool`, `args`, `result`}], `source`,
 `model`, `note`, `facts_hash`}. Two trace steps per question: Client → Analyst, Analyst → Client.
+
+
+## Held-to-maturity fixed-income path (2026-11-15)
+
+Optional profile fields: `investment_mode` (`market` default, `fixed_rate`),
+`fixed_rate_pct` (requested annual rate, 0–100), `fixed_income_market` (`both`, `canada`, `us`).
+A fixed-rate request routes to `dh.agents.fixed_income`, before market history/portfolio simulation.
+Result adds `fixed_income_scenario` containing status (`quote_required` or `unavailable`),
+requested rate/term, selected sourced instrument when available, allocation, dated references,
+pricing assumptions and deterministic payment schedule. Currency is explicit; CAD capital is
+converted using dated USD/CAD for a USD security. USD cashflows carry FX risk.
+`strategies` is empty because these contractual cashflows are not bond-fund backtests;
+`limits.scenario_only` is true and verdict is `warn`, never a zero-loss certification.
+The explainer uses deterministic headings/text (`source=fixed_rate`), with no Bedrock call or
+claim that an LLM/Guardian approved a guarantee. The sidecar is persisted in run traces.
+See `data/README.md` for catalogue validation, coverage and S3 keys.

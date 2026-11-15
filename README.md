@@ -7,7 +7,7 @@ Team: William Caron-Bastarache, Joud Katbe.
 > simulated strategies inside limits it can explain, and lets code (not the LLM) enforce those limits, so it can
 > tell Robert "no" to 25% in Tesla and show exactly which rule, number and source made it say so.
 
-**Simulation only.** Fictional profiles, no real transactions, not financial advice.
+**Live app:** https://alphaforge-ai-wj.streamlit.app/ · **Simulation only.** Fictional profiles, no real transactions, not financial advice.
 
 ## What it does
 
@@ -19,7 +19,7 @@ every number to the data.
 
 Example: Robert (59, about 4 years before he needs the money, accepts at most a 15% loss) asks for 25% in Tesla.
 - His horizon rule (a stated judgment, not a data result) allows at most about 15% in stocks: his first strategy is
-  about 15/85 and the second holds 10 points less in stocks (and still fell slightly more in the past: bonds, not cash); the trace says the horizon rule decided.
+  about 15/85 and the second holds 10 points less in stocks; the trace says the horizon rule decided.
 - Caps are computed, not fixed: Tesla's own worst drop was −70.9%, so 25% alone would have cost −17.7% of the
   portfolio, more than his whole 15% loss limit; it fits up to 3.1%.
 - The explanation (Claude Opus 5.5 on Amazon Bedrock) gives him those numbers and leaves the decision to him;
@@ -55,7 +55,7 @@ trace (steps, numbers, verdicts, never the model's raw reasoning).
 
 | Built | In progress |
 |---|---|
-| Profiler, market data, Portfolio (computed split, per-company caps, checks C–F, request side by side), Guardian loss and consistency controls, Strands agents on Bedrock (Opus 5.5): free-text extractor, Critic, Explainer (demo texts cached for offline replay), Analyst (app follow-ups), review of a portfolio the client already holds (labelled stand-ins, fees, rebuild in $), guided interface (optional voice: Amazon Transcribe + Polly), S3 trace store, demo app, `propose` / `explain` / `extract` / `ask` CLI, offline tests, 16 test profiles | Re-save the Bedrock demo caches on the final data (`make warm`); AgentCore hosting not deployed; ETF holdings for QQQ / ESGV / XIU (SPY loaded); KYC bets screens in the interface |
+| Profiler, market data, Portfolio (computed split, per-company caps, checks C–F, request side by side), Guardian loss and consistency controls, Strands agents on Bedrock (Opus 5.5): free-text extractor, Critic, Explainer (demo texts cached for offline replay), Analyst (app follow-ups), review of a portfolio the client already holds (labelled stand-ins, fees, rebuild in $), fixed-income lookup for a bond-only preference (sourced government bonds held to maturity), guided interface (optional voice: Amazon Transcribe + Polly; KYC bets and expected-value question as a cross-check, #40), S3 trace store, demo app, `propose` / `explain` / `extract` / `ask` CLI, offline tests, 16 test profiles | Re-save the Bedrock demo caches on the final data (`make warm`); AgentCore hosting not deployed; ETF holdings for QQQ / ESGV / XIU (SPY loaded) |
 
 Per-branch details: [`notes/branches/`](notes/branches/).
 

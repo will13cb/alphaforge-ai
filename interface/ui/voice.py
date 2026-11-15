@@ -1,4 +1,4 @@
-"""Accessible, explicit record → transcribe → review → use flow; no autoplay or auto-submit."""
+"""Optional listening and reviewed dictation. No unsolicited playback or submission."""
 from __future__ import annotations
 
 import hashlib
@@ -25,38 +25,50 @@ def discard_recording(prefix: str) -> bool:
     return True
 
 
+@st.fragment(run_every="2s")
+def _transcript_status(prefix: str) -> None:
+    ticket = st.session_state.get(prefix + "_job")
+    if not ticket:
+        return
+    try:
+        state, text = voice.poll(ticket)
+        if state == "done":
+            st.session_state[prefix + "_review"] = text
+            st.session_state.pop(prefix + "_job", None)
+            st.rerun()
+    except voice.VoiceError as error:
+        st.session_state[prefix + "_error"] = str(error)
+        st.session_state.pop(prefix + "_job", None)
+        st.rerun()
+    st.info("Transcribing… Your text will appear here automatically.")
+    if st.button("Discard recording", key=prefix + "_cancel") and discard_recording(prefix):
+        st.rerun()
+
+
 def dictation(prefix: str, target: str, max_chars: int = 3000) -> None:
     """Render before target widget; using a transcript never submits a profile or question."""
     if not active():
         return
     with st.expander("Record instead of typing"):
-        st.caption("Record up to 60 seconds. Only “Transcribe recording” sends audio to Amazon Transcribe via "
-                   "temporary S3 storage. Review names, amounts and percentages before using the transcript. "
-                   "Temporary audio and transcripts are deleted after retrieval or discarding; an abandoned "
-                   "recording may remain until the storage lifecycle removes it. AWS batch processing cannot be stopped once running; a discarded job may finish and its output needs lifecycle cleanup.")
+        st.caption("Record up to 60 seconds, then transcribe. Check names, amounts and percentages before using the text.")
+        with st.expander("How your recording is handled"):
+            st.caption("Transcribe recording sends audio to Amazon Transcribe through temporary S3 storage. "
+                       "Audio and transcripts are deleted after retrieval or discard. Abandoned recordings "
+                       "need the storage lifecycle to remove them; a running batch job may finish after discard.")
         ticket = st.session_state.get(prefix + "_job")
         audio = st.audio_input("Record your message", sample_rate=16000, key=prefix + "_audio", disabled=bool(ticket))
         if st.button("Transcribe recording", key=prefix + "_start", disabled=audio is None or bool(ticket)):
             try:
+                st.session_state.pop(prefix + "_error", None)
                 st.session_state[prefix + "_job"] = voice.start(audio.getvalue(), language())
                 st.rerun()
             except voice.VoiceError as e:
                 st.warning(str(e))
         if ticket:
-            st.info("Your recording is being transcribed. Check when ready; this usually takes a little time.")
-            check, cancel = st.columns(2)
-            if check.button("Check transcript", key=prefix + "_poll"):
-                try:
-                    state, text = voice.poll(ticket)
-                    if state == "done":
-                        st.session_state[prefix + "_review"] = text
-                        st.session_state.pop(prefix + "_job", None)
-                        st.rerun()
-                    st.info("Still processing. Please check again in a few seconds.")
-                except voice.VoiceError as e:
-                    st.warning(str(e))
-            if cancel.button("Discard recording", key=prefix + "_cancel") and discard_recording(prefix):
-                st.rerun()
+            _transcript_status(prefix)
+        error = st.session_state.get(prefix + "_error")
+        if error:
+            st.warning(error)
         review_key = prefix + "_review"
         if review_key in st.session_state:
             text = st.text_area("Review and edit transcript", key=review_key)
@@ -67,32 +79,25 @@ def dictation(prefix: str, target: str, max_chars: int = 3000) -> None:
                 st.success("Transcript copied below. Review it, then use the normal submit button.")
 
 
-def read_aloud(text: str, key: str) -> None:
+def read_aloud(text: str, key: str, language_code: str = "en-CA", label: str = "Listen") -> None:
+    """Read displayed text, independently of the microphone language selector."""
     if not active() or not text:
         return
-    parts = []
-    # Chunk without silently dropping the remainder of a long explanation.
-    clean = voice.plain_text(text)
-    while clean:
-        end = min(len(clean), voice.MAX_SPEECH)
-        if end < len(clean):
-            end = clean.rfind(" ", 0, end) or end
-        parts.append(clean[:end])
-        clean = clean[end:].lstrip()
-    lang = language()
-    fingerprint = hashlib.sha256((text + lang).encode()).hexdigest()
+    fingerprint = hashlib.sha256(("neural-v2" + text + language_code).encode()).hexdigest()
     cache_key = key + "_speech"
-    selected = st.selectbox("Passage to read", range(len(parts)), format_func=lambda i: f"Part {i + 1} of {len(parts)}",
-                            key=key + "_part") if len(parts) > 1 else 0
-    if st.button("Read aloud", key=key + "_read"):
-        try:
-            with st.spinner("Preparing audio…"):
-                audio = voice.speak(parts[selected], lang)
-            # One passage per control, kept only in this browser session; never a shared cache.
-            st.session_state[cache_key] = (fingerprint, selected, audio)
-        except voice.VoiceError as e:
-            st.warning(str(e))
+    requested = st.button(label, key=key + "_read", icon=":material/volume_up:")
     cached = st.session_state.get(cache_key)
-    if cached and cached[:2] == (fingerprint, selected):
-        st.audio(cached[2], format="audio/mp3")
-        st.caption("Press Play to listen. Use the audio controls to pause or replay. Full text remains above.")
+    if requested:
+        try:
+            if not cached or cached[0] != fingerprint:
+                with st.spinner("Preparing natural voice…"):
+                    audio, mime = voice.narrate(text, language_code)
+                cached = (fingerprint, audio, mime)
+                st.session_state[cache_key] = cached
+        except voice.VoiceError as error:
+            st.warning(str(error))
+    if cached and cached[0] == fingerprint:
+        # Autoplay only follows this explicit Listen click. Navigation, form edits
+        # and reruns never restart speech. Native controls provide pause/seek/replay.
+        st.audio(cached[1], format=cached[2], autoplay=requested)
+        st.caption("Pause or replay with the player. If your browser blocks playback, press Play.")

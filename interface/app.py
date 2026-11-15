@@ -35,13 +35,13 @@ SECTIONS = ["Welcome", "Your profile", "Your results", "Activity", "Assistant"]
 
 def welcome() -> None:
     st.markdown('<div class="af-eyebrow">AlphaForge AI &middot; Simulation</div>', unsafe_allow_html=True)
-    st.title("See how to invest, within limits you can explain")
-    st.markdown("Answer a few questions about your situation. We work out **how much risk you can carry**, propose "
+    title = "See how to invest, within limits you can explain"
+    introduction = ("Answer a few questions about your situation. We work out **how much risk you can carry**, propose "
                 "**up to three simulated ways to invest** that respect it, and explain every number in plain words. "
                 "Then you can ask questions.")
-    voice_ui.read_aloud("Welcome to AlphaForge AI. This is a simulation for learning. "
-                        "Describe your situation or choose the step-by-step questions. "
-                        "Review your profile, run the analysis, then ask about your results.", "welcome_intro")
+    st.title(title)
+    st.markdown(introduction)
+    voice_ui.read_aloud(title + ". " + introduction, "welcome_intro", label="Listen to this introduction")
     for col, (t, b) in zip(st.columns(3), [
             ("1 · A few questions", "About 5 minutes. Only what is needed, with help on each question."),
             ("2 · Your limits and strategies", f"Computed by rules and {period_label()} market data, not guessed."),
@@ -107,8 +107,8 @@ def sidebar() -> str:
                 st.toggle("Voice assistance", key="voice_mode",
                           help="Record messages and listen to text with AWS speech services. Always optional.")
                 if S.get("voice_mode"):
-                    st.selectbox("Speech language", list(voice.LANGUAGES), key="voice_language")
-                    st.caption("Microphone access is requested only when you record. Playback starts only when you press Play.")
+                    st.selectbox("Recording language", list(voice.LANGUAGES), key="voice_language")
+                    st.caption("Recording can be in English or French. Listen reads the displayed English text. Microphone access is requested only when you record.")
             else:
                 st.caption("Voice assistance is not enabled on this deployment. Typing remains available.")
         m = services.mode()

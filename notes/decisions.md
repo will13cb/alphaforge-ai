@@ -989,3 +989,16 @@ nothing. Covers the 2020 crash and 2022; not 2008 (use `START=2004-11-18` for th
 downloads it from S3); `results.csv`, the cached agent answers (`make warm`) and the deliverables' numbers are still on
 2021-2026 and must be regenerated on the new data before they are quoted. Assets that did not exist in 2010 start later
 (ZST.TO, ESGV with their stand-ins; SHOP.TO 2015, BTC 2014, ETH 2017 without).
+
+## 48. The submission stays on the starter pack's window (2021-2026) (Sun Nov 15, evening)
+
+**Decision:** `harness.toml [data] start = ""`, so a hosted rebuild downloads the starter's own window (2021-11-12 →
+2026-11-12), not 2010 (#47 reverted for the submission; `make data-long` with a start still works for research).
+
+**Why:** every number in the deliverables, `results.csv` (persona rows of commit 9a2febb), the video script and the
+committed agent answers is on 2021-2026. With 2010 data on the hosted app, the screens judges open would contradict the
+documents, and regenerating results, caches and every quoted number before the 23:59 freeze is the riskier path.
+The S3 `raw/` folder must hold the same starter files (`make data-up` from the starter pack).
+
+**Limit (unchanged, stated in the tech doc):** one 5-year window with one mild bear market (2022); 2008 and 2020 are
+not in it.

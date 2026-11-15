@@ -45,8 +45,11 @@ ENUMS = {
     "income_stability": ["stable", "variable", "uncertain"],
     "loss_reaction": ["sell_all", "sell_some", "hold", "buy_more"],
     "knowledge_level": ["none", "basic", "intermediate", "advanced"],
+    "investment_mode": ["market", "fixed_rate"],
+    "fixed_income_market": ["both", "canada", "us"],
 }
 NUMBERS = {  # field → (min, max); all must be grounded in the text
+    "fixed_rate_pct": (0, 100),
     "age": (16, 100), "horizon_years": (0.5, 60), "capital": (0, 1e9), "monthly_contribution": (0, 1e7),
     "target_amount": (1, 1e10), "emergency_fund_months": (0, 120), "max_loss_pct": (0, 100),
     "years_experience": (0, 80), "withdrawal_share_3y": (0, 1),
@@ -218,6 +221,13 @@ def validate(raw: dict, text: str) -> tuple[dict, list[str]]:
             out[k] = str(v)[:300]
         else:
             notes.append(f"{k}: not a profile field, dropped")
+    rate = re.search(r"(?:fixed(?:[- ]rate| return| interest| coupon)?|coupon|taux fixe)(?:\s+(?:of|at|de|à))?\s*(\d+(?:[.,]\d+)?)\s*%", text, re.I)
+    rate = rate or re.search(r"(?:bonds?|obligations?|gic|cpg)(?:\s+(?:at|à|a|de|paying|with|fixed|a fixed))*\s+(\d+(?:[.,]\d+)?)\s*%", text, re.I)
+    if rate and re.search(r"\bbonds?\b|obligations?|\bgic\b|\bcpg\b", text, re.I):
+        value = float(rate[1].replace(",", "."))
+        if 0 <= value <= 100:
+            out["investment_mode"] = "fixed_rate"
+            out["fixed_rate_pct"] = value
     return out, notes
 
 
@@ -385,6 +395,7 @@ SYSTEM_PROMPT = f"""You turn a fictional investor's own words into a JSON profil
 simulation. You only EXTRACT what the client said; you never judge risk, never advise, never set limits.
 
 Fields (omit any the client did not state or clearly imply):
+- investment_mode: market or fixed_rate (only for explicit fixed-rate bonds/deposits held to maturity); fixed_rate_pct: requested annual percentage; fixed_income_market: both, canada or us. A loss-limit percentage is not a requested interest rate.
 - name (str), age (int), horizon_years (number: years until most of the money is needed)
 - objective: one of {ENUMS['objective']}
 - capital, monthly_contribution, target_amount (CAD amounts)

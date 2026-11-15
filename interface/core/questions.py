@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable
 
+from dh import kyc
 from dh.agents import extractor
 
 
@@ -65,6 +66,18 @@ EXCLUSIONS = {"fossil_fuels": "Fossil fuels (oil, gas, pipelines)", "crypto": "C
               "single_stocks": "Individual company shares (funds only)"}
 SECTORS = {s: s for s in extractor.SECTORS} | {"": "I'd rather not say"}
 YESNO = (("no", "No"), ("yes", "Yes"))
+SKIP = ("", "I'd rather skip this one")
+# KYC bets (decision #40, Joud's questionnaire): wording and options come from dh.kyc, the same grid of attitudes on
+# every bet (R6). The engine reads them as a cross-check only: they never change a limit.
+BET_IDS = tuple(b.id for b in kyc.BETS)
+EV_BET = kyc.BETS[0]  # the expected-value question uses the first bet (profiler.expected_value_check)
+
+
+def _bet_question(b: kyc.Bet) -> Question:
+    return Question(b.id, b.text, "choice", required=False, default="",
+                    options=tuple((ce, b.label(ce)) for ce in b.options) + (SKIP,),
+                    help="There is no right answer. Each option is a guaranteed amount you would take instead of "
+                         "the uncertain investment; a higher one means you would rather keep the chance of the gain.")
 
 assert set(OBJECTIVES) == set(extractor.ENUMS["objective"])          # wording covers every value the engine knows
 assert set(INCOME) == set(extractor.ENUMS["income_stability"])
@@ -124,8 +137,27 @@ STEPS = (
         Question("products_held", "Which of these have you already owned?", "choices", required=False,
                  options=_opts(PRODUCTS), default=(),
                  visible_if=lambda a: a.get("knowledge_level") not in (None, "", "none")),
+        Question("ev_answer_pct", f"An investment ends the year at {EV_BET.up:+.0%} or at "
+                 f"{EV_BET.down:+.0%}".replace("-", "−") + ", with equal chances. On average, what return would you "
+                 "expect, in %?", "percent", "Digits only, e.g. 3.5 for 3.5%", required=False, bounds=(-100, 100),
+                 visible_if=lambda a: a.get("knowledge_level") not in (None, "", "none"),
+                 help="A quick check of how an average works. If the answer is off, your experience counts as "
+                      "intermediate at most. You can leave it empty."),
     )),
+    Step("attitude", "Three quick choices (optional)",
+         "Each time, choose between an uncertain investment and a guaranteed amount. These answers only check your "
+         "other answers: they never change your limits. Answer all three, or skip them all.",
+         tuple(_bet_question(b) for b in kyc.BETS)),
     Step("preferences", "Your preferences (optional)", "Tell us what you like or want to avoid. You can skip this step.", (
+        Question("investment_mode", "What kind of portfolio would you like?", "choice", required=False, default="market",
+                 options=(("market", "Market portfolio (stocks and/or bond funds)"),
+                          ("fixed_rate", "Bonds only, held to maturity"))),
+        Question("fixed_income_market", "Where should we look for bonds?", "choice", required=False, default="both",
+                 options=(("both", "Canada and U.S."), ("canada", "Canada only"), ("us", "U.S. only")),
+                 visible_if=lambda a: a.get("investment_mode") == "fixed_rate"),
+        Question("fixed_rate_pct", "What annual bond rate are you looking for, in %?", "decimal", "Ex.: 3",
+                 default="3", visible_if=lambda a: a.get("investment_mode") == "fixed_rate",
+                 help="We look for sourced Canadian and U.S. fixed-income instruments near your horizon. Unsupported rates are flagged, never invented."),
         Question("interests", "Is there anything you'd like to invest in?", "choices", required=False,
                  options=_opts(INTERESTS), default=()),
         Question("exclusions", "Is there anything you want to avoid?", "choices", required=False,

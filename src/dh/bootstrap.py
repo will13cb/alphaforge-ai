@@ -5,7 +5,7 @@ secrets), 2. rebuild with the organizers' script (works after the AWS account cl
 
 The data never goes in git (Yahoo's terms, decision #11), so a hosted app rebuilds it with the organizers' own script
 (`Datathon2026Infos/alphaforge_starter/build_dataset.py`, via `scripts/build_long_data.py`), from harness.toml [data]
-start (2010-01-04) to the official END, or 2021-11-12 if start is "". Only when AF_AUTO_DATA=1 (set it in the host's secrets): a laptop never downloads by surprise.
+start to the official END, or from 2021-11-12 if start is "" (the submission default, decision #48). Only when AF_AUTO_DATA=1 (set it in the host's secrets): a laptop never downloads by surprise.
 
     from dh.bootstrap import ensure_data
     ok, note = ensure_data()      # (True, "") when data/raw is ready
@@ -39,7 +39,7 @@ def required() -> list[str]:
 
 def optional() -> list[str]:
     sub, files = FUNDAMENTALS
-    return (list(OPTIONAL) + [f"products_{n}/{f}" for n in load_config().extra for f in EXTRA_OPTIONAL]
+    return (list(OPTIONAL) + [f"fixed_income/{f}" for f in ("instruments.csv", "reference_snapshot.json", "sources_metadata.csv", "quality_report.csv")] + [f"products_{n}/{f}" for n in load_config().extra for f in EXTRA_OPTIONAL]
             + ([f"{sub}/{f}" for f in files] if load_config().extra else []))
 _LOCK = threading.Lock()  # one build even if several visitors open the app at once
 
@@ -128,3 +128,38 @@ def ensure_holdings() -> str:
         return "built from " + ", ".join(got)
     except Exception as e:  # noqa: BLE001
         return f"not built ({type(e).__name__})"
+
+
+def ensure_fixed_income() -> str:
+    """Load the separate S3 catalogue even when market data is already present.
+
+    Explicit hosted opt-in only. Missing S3 files leave the public-source lookup
+    available; no market-history rebuild is required for this mode.
+    """
+    folder = load_config().data_dir / "fixed_income"
+    if (folder / "instruments.csv").exists():
+        return "present"
+    bucket = os.getenv("S3_BUCKET")
+    if os.getenv("AF_AUTO_DATA") != "1" or not bucket:
+        return "S3 catalogue not configured"
+    with _LOCK:
+        if (folder / "instruments.csv").exists():
+            return "present"
+        try:
+            import boto3
+            from botocore.config import Config
+            client = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"),
+                                  config=Config(connect_timeout=3, read_timeout=5, retries={"max_attempts": 0}))
+            folder.mkdir(parents=True, exist_ok=True)
+            # Publish instruments last: readers must not see a catalogue without
+            # its dated context/FX snapshot while downloading.
+            for name in ("reference_snapshot.json", "sources_metadata.csv", "quality_report.csv", "instruments.csv"):
+                temporary = folder / (name + ".download")
+                try:
+                    client.download_file(bucket, f"{PREFIX}/fixed_income/{name}", str(temporary))
+                    temporary.replace(folder / name)
+                except Exception:
+                    temporary.unlink(missing_ok=True)
+            return "loaded" if (folder / "instruments.csv").exists() else "S3 catalogue unavailable"
+        except Exception as error:
+            return f"S3 catalogue unavailable ({type(error).__name__})"

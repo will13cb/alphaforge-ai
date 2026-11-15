@@ -5,8 +5,9 @@ dir = "data/raw"              # starter CSVs land here (`make data`), gitignored
 base_currency = "CAD"         # returns are converted to this currency (CAD or USD)
 calendar = "weekdays"         # weekdays: crypto weekends dropped, holidays forward-filled
 extra = []                    # extra product catalogues, e.g. ["cadusa"] (`make data-products`, branch produit_cadusa)
-start = "2010-01-04"          # first day used and built: `make data-long` and the host's rebuild start here; with the
-                              # 2021-2026 starter pack it changes nothing. "" = everything in the files (decision #31, #47)
+start = ""                    # first day used and built: "" = everything in the files, and a host rebuild uses the
+                              # starter's own window (2021-11-12): the submission's numbers, results and caches are on it
+                              # (decision #48). Set e.g. "2010-01-04" + `make data-long` for a longer history (#31, #47)
 
 # Before an asset's FIRST real price only, use a documented stand-in so a strategy's history isn't cut to the youngest
 # asset's (decision #31). Never applied after the first real price. "cash" = Bank of Canada overnight target rate

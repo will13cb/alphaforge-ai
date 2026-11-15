@@ -515,6 +515,14 @@ def add_to_trace(res: dict, profile: dict, provider: str | None = None) -> dict:
     """Run the Explainer on a pipeline result and append its two hand-offs to res['trace'] (no pipeline.py change)."""
     from .trace import describe_checks
 
+    if res.get("fixed_income_scenario"):
+        from ..fixed_income import explanation as fixed_explanation
+        text = fixed_explanation(res["fixed_income_scenario"])
+        e = dict(text=text, source="fixed_rate", model="", check_calls=0, checks=[], verdict="warn",
+                 facts_hash="", note="Sourced fixed-income lookup and deterministic cash-flow illustration; purchase quote required.")
+        res["trace"].step("Fixed-income explainer", "Client", e["note"], output=text)
+        res["explanation"] = e
+        return e
     e = explain(res.get("strategies", []), res["limits"], profile, provider)
     src = e["source"] + (f", {e['check_calls']} self-check(s)" if e["check_calls"] else "")
     res["trace"].step("Explainer", "Guardian", f"client text ({len(e['text'])} characters, {src})"

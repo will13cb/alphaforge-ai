@@ -102,9 +102,13 @@ def run_analysis(profile: dict, on_step=None) -> dict:
     miss = extractor.missing(profile)
     if miss:
         raise UserError("Some answers are missing: " + ", ".join(m.replace("_", " ") for m in miss) + ".")
-    ok, msg = data_ready()
-    if not ok:
-        raise UserError(msg)
+    if profile.get("investment_mode") == "fixed_rate":
+        from dh.bootstrap import ensure_fixed_income
+        ensure_fixed_income()
+    else:
+        ok, msg = data_ready()
+        if not ok:
+            raise UserError(msg)
 
     def go():
         res = pipeline.run(profile, **({"on_step": on_step} if on_step is not None else {}))
@@ -185,6 +189,24 @@ def caps_shown(res: dict, profile: dict) -> dict:
     except Exception:  # noqa: BLE001
         logger().exception("caps")
         return {}
+
+
+def kyc_lines(limits: dict) -> list[str]:
+    """The Profiler's KYC cross-check (decision #40) in plain words: what the three choices point to and whether
+    they agree with the other answers. Read from limits['kyc']; nothing is scored here. Empty if not answered."""
+    k = (limits or {}).get("kyc") or {}
+    if "A" not in k:
+        return []
+    lo, hi = k["implied_tolerance"]
+    rel = ("That agrees with your other answers." if k["agrees"] else
+           "That is more cautious than your other answers: worth clarifying before investing."
+           if k["tolerance"] > hi else
+           "That is bolder than your other answers; your limits stay those of your other answers.")
+    out = [f"Your three choices between an uncertain investment and a guaranteed amount point to: {k['band']}. {rel}"]
+    # the bets' own flags (disagreeing bets, behaviour vs bets); "more cautious than the tolerance" is said above
+    out += ["To clarify: " + f.removeprefix("KYC bets: ") for f in k.get("flags", []) if f.startswith("KYC bets: ")]
+    out.append("These choices are a cross-check only: they did not change your limits.")
+    return out
 
 
 def known_tickers() -> set[str]:
