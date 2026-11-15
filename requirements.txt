@@ -1,3 +1,3 @@
 # For Streamlit Community Cloud (and any pip-based host): the project and its agents extra (Strands for Bedrock).
 # Python 3.12+ (choose it in the host's settings). Locally, `make setup` does the same.
-.[agents]
+-e .[agents]

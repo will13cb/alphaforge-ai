@@ -22,7 +22,23 @@ from pathlib import Path
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def _find_root() -> Path:
+    """The project root (folder holding harness.toml).
+
+    Normally two levels above this file (src/dh/data.py). If `dh` was installed as a copy into
+    site-packages (e.g. Streamlit Cloud with a non-editable install), search upward from the
+    working directory instead; fall back to the package-relative path.
+    """
+    here = Path(__file__).resolve().parents[2]
+    if (here / "harness.toml").exists():
+        return here
+    for d in (Path.cwd().resolve(), *Path.cwd().resolve().parents):
+        if (d / "harness.toml").exists():
+            return d
+    return here
+
+
+ROOT = _find_root()
 RESULTS = ROOT / "results.csv"
 STARTER = ROOT / "Datathon2026Infos" / "alphaforge_starter"
 DEFAULT_LABEL = "2021-2026"   # the starter-pack window, used in texts when no data is loaded (tests, fresh clone)
