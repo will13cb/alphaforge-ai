@@ -12,6 +12,7 @@ import streamlit as st
 
 from interface.core import services
 from interface.ui import components as ui
+from interface.ui import voice as voice_ui
 
 S = st.session_state
 VERDICT = {"pass": ("Approved by the checks", "good"), "warn": ("Approved, with points to know", "warn"),
@@ -177,6 +178,7 @@ def explanation(res: dict) -> None:
         return
     st.subheader("In plain words")
     st.markdown(e["text"])
+    voice_ui.read_aloud(e["text"], "results_explanation")
     src = {"bedrock": "Claude on Amazon Bedrock (live)", "cache (explainer)": "Claude on Amazon Bedrock (saved answer)",
            "template": "a fixed template (no AI model)"}.get(e.get("source"), e.get("source", ""))
     lab, tone = VERDICT.get(e.get("verdict"), ("", "info"))
@@ -233,12 +235,17 @@ def render() -> None:
         ui.notice("No strategy fits all your limits. The details below say which limit blocks.", "bad")
     else:
         ui.notice(f"<b>{ui.esc(lab)}.</b> Below: your limits, the strategies that respect them, and why.", tone, safe=True)
-    essentials(res, profile)
-    request(res)
-    existing(res)
-    explanation(res)
+    st.title("Your investment overview")
+    overview, summary, evidence = st.tabs(["Strategies & limits", "Plain-language summary", "Checks & holdings"])
+    with overview:
+        essentials(res, profile)
+        request(res)
+        existing(res)
+    with summary:
+        explanation(res)
+    with evidence:
+        details(res)
     if res.get("strategies") and st.button("Ask the assistant about these results →", type="primary"):
         S.goto = "Assistant"
         st.rerun()
-    st.divider()
-    details(res)
+

@@ -36,10 +36,10 @@ def palette(mode: str = "light") -> dict:
     return PALETTES.get(mode, PALETTES["light"])
 
 
-def css(mode: str = "light") -> str:
+def css(mode: str = "light", large: bool = False) -> str:
     p = palette(mode)
     tokens = "; ".join(f"--{k}:{v}" for k, v in p.items() if k not in ("heading", "heading_weight", "scheme"))
-    return f"""
+    base = f"""
 <style>
 {FONTS}
 :root {{ {tokens}; }}
@@ -50,6 +50,10 @@ def css(mode: str = "light") -> str:
 .stApp p, .stApp li, .stApp label, .stApp input, .stApp textarea, .stApp button p, .stApp td, .stApp th,
 .stApp .af-card, .stApp .af-note {{ font-family: {SANS} !important; }}
 header[data-testid="stHeader"] {{ background: var(--bg); }}
+.stApp [data-testid="stExpander"] summary {{ background:var(--panel);color:var(--ink); }}
+.stApp [data-testid="stExpander"] summary:hover {{ color:var(--acc); }}
+.stApp [data-baseweb="select"] span {{ background:var(--field);color:var(--ink); }}
+
 .block-container {{ max-width: 960px; padding-top: 4rem; padding-bottom: 6rem; }}
 
 /* Type */
@@ -242,6 +246,12 @@ div[data-testid="stChatInput"] textarea {{ color: var(--ink) !important; }}
 }}
 </style>
 """
+    return base + ("""<style>
+html { font-size:19px; }
+.stApp p,.stApp li,.stApp label,.stApp input,.stApp textarea,.stApp button p {
+    font-size:1.08rem!important; line-height:1.65!important;
+}
+</style>""" if large else "")
 
 
 CSS = css("light")  # kept for callers that import the constant
@@ -285,3 +295,4 @@ def style_chart(chart, mode: str = "light"):
         return kind.from_dict(spec, validate=False)
     except Exception:  # noqa: BLE001 — a chart keeps its engine colours rather than breaking the page
         return chart
+

@@ -15,7 +15,7 @@ import streamlit as st
 
 from interface.core import services
 from interface.ui import components as ui
-from interface.ui import theme
+from interface.ui import theme, voice as voice_ui
 
 S = st.session_state
 SUGGESTIONS = ["Explain my results", "What if I put 10% in Tesla?", "What is volatility?",
@@ -48,11 +48,12 @@ def chart_for(turn: dict):
     return None
 
 
-def show_answer(t: dict) -> None:
+def show_answer(t: dict, key: str = "answer") -> None:
     if t.get("status") == "error":
         ui.notice(t["error"], "bad")
         return
     st.markdown(t["text"])
+    voice_ui.read_aloud(t["text"], key)
     ch = chart_for(t)
     if ch is not None:
         ui.chart(ch, height=130)
@@ -85,11 +86,24 @@ def answer(t: dict, history: list[dict]) -> None:
         t.update(status="error", error="Something went wrong on our side. Please try again.")
 
 
+def send_voice_question() -> None:
+    question = S.get("voice_question", "").strip()
+    if question:
+        S.setdefault("chat", []).append({"question": question, "status": "pending"})
+        S["voice_question"] = ""
+        S.pop("chat_voice_review", None)
+
+
 def render() -> None:
     m = services.mode()
     head, new = st.columns([4, 1.4])
     head.subheader("Ask the assistant")
     if new.button("New conversation", width="stretch", disabled=not S.get("chat")):
+        if not voice_ui.discard_recording("chat_voice"):
+            return
+        for key in list(S):
+            if str(key).startswith(("answer_", "chat_voice_", "voice_question")):
+                del S[key]
         S.chat = []
         st.rerun()
     ui.notice(f"<b>{ui.esc(m['label'])}.</b> {ui.esc(m['help'])}", "info" if m["live"] else "warn", safe=True)
@@ -115,7 +129,12 @@ def render() -> None:
         with st.chat_message("assistant"):
             if t.get("status") == "pending":
                 answer(t, answered(chat[:i]))
-            show_answer(t)
+            show_answer(t, f"answer_{i}")
+    if voice_ui.active():
+        voice_ui.dictation("chat_voice", "voice_question", max_chars=services.MAX_QUESTION)
+        spoken = st.text_area("Your reviewed voice question", key="voice_question")
+        st.button("Send reviewed question", type="primary", disabled=not spoken.strip(),
+                  on_click=send_voice_question)
     q = st.chat_input("Type your question and press Enter")
     if q is not None:
         if not q.strip():
@@ -123,3 +142,4 @@ def render() -> None:
         else:
             chat.append({"question": q.strip(), "status": "pending"})
             st.rerun()
+

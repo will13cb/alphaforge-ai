@@ -6,8 +6,6 @@ app/app.py (pipeline, Explainer, Analyst); this app only asks, checks what was t
 
 from __future__ import annotations
 
-from dh.data import period_label
-
 import os
 import sys
 from pathlib import Path
@@ -21,15 +19,16 @@ import streamlit as st  # noqa: E402
 import streamlit.components.v1 as components  # noqa: E402
 
 from dh import bootstrap  # noqa: E402
+from dh.data import period_label  # noqa: E402
 from dh.personas import DISCLAIMER  # noqa: E402
-from interface.core import services  # noqa: E402
+from interface.core import services, voice  # noqa: E402
 from interface.ui import components as ui  # noqa: E402
-from interface.ui import theme  # noqa: E402
+from interface.ui import theme, voice as voice_ui  # noqa: E402
 from interface.views import chat, holdings_input, profile, results  # noqa: E402
 
 st.set_page_config(page_title="AlphaForge AI", page_icon=":material/account_balance:", layout="centered")
 S = st.session_state
-st.markdown(theme.css(theme.mode(S)), unsafe_allow_html=True)  # before any widget: the switch applies at once
+st.markdown(theme.css(theme.mode(S), S.get("large_text", False)), unsafe_allow_html=True)  # before any widget: the switch applies at once
 SECTIONS = ["Welcome", "Your profile", "Your results", "Assistant"]
 
 
@@ -39,6 +38,9 @@ def welcome() -> None:
     st.markdown("Answer a few questions about your situation. We work out **how much risk you can carry**, propose "
                 "**up to three simulated ways to invest** that respect it, and explain every number in plain words. "
                 "Then you can ask questions.")
+    voice_ui.read_aloud("Welcome to AlphaForge AI. This is a simulation for learning. "
+                        "Describe your situation or choose the step-by-step questions. "
+                        "Review your profile, run the analysis, then ask about your results.", "welcome_intro")
     for col, (t, b) in zip(st.columns(3), [
             ("1 · A few questions", "About 5 minutes. Only what is needed, with help on each question."),
             ("2 · Your limits and strategies", f"Computed by rules and {period_label()} market data, not guessed."),
@@ -58,6 +60,7 @@ def welcome() -> None:
         st.markdown('<p class="af-muted">Describe your situation in a few sentences. We fill in what we can and '
                     'ask only what is missing. Nothing is invented: a number is kept only if you wrote it.</p>',
                     unsafe_allow_html=True)
+        voice_ui.dictation("welcome_voice", "welcome_text")
         text = st.text_area("Your situation", key="welcome_text", height=130, label_visibility="collapsed",
                             placeholder="e.g. I'm 59 and retiring in about 4 years. I have $400,000 saved and 12 months "
                                         "of expenses set aside. I can't lose more than 15%. I'd like 25% in Tesla.")
@@ -97,6 +100,16 @@ def sidebar() -> str:
             st.caption("Analysis ready")
         st.divider()
         st.toggle("Dark mode", key="dark_mode", help="Switch between the light and the dark display.")
+        with st.expander("Accessibility"):
+            st.toggle("Larger text", key="large_text")
+            if voice.enabled():
+                st.toggle("Voice assistance", key="voice_mode",
+                          help="Record messages and listen to text with AWS speech services. Always optional.")
+                if S.get("voice_mode"):
+                    st.selectbox("Speech language", list(voice.LANGUAGES), key="voice_language")
+                    st.caption("Microphone access is requested only when you record. Playback starts only when you press Play.")
+            else:
+                st.caption("Voice assistance is not enabled on this deployment. Typing remains available.")
         m = services.mode()
         st.caption(f"Assistant: {m['label']}")
         st.caption(DISCLAIMER)
@@ -149,3 +162,4 @@ def main() -> None:
 
 
 main()
+

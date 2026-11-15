@@ -7,6 +7,7 @@ import streamlit as st
 from interface.core import services, wizard
 from interface.core.questions import ALL_STEPS, BY_ID, STEPS
 from interface.ui import components as ui
+from interface.ui import voice as voice_ui
 
 S = st.session_state
 
@@ -63,6 +64,7 @@ def quick_start() -> None:
             prefill(demos[pick][1])
             st.rerun()
         st.markdown("**Or describe your situation** — we fill in what we can, you check the rest.")
+        voice_ui.dictation("profile_voice", "free_text")
         text = st.text_area("Your situation", key="free_text", height=110, label_visibility="collapsed",
                             placeholder="e.g. I'm 45, I have 50,000 $ to invest for my retirement in 20 years. "
                                         "I could accept a drop of 20%. My income is stable.")
@@ -121,6 +123,8 @@ def step_form(i: int) -> None:
     sync(i)
     st.subheader(step.title)
     st.markdown(f'<p class="af-muted">{ui.esc(step.intro)}</p>', unsafe_allow_html=True)
+    voice_ui.read_aloud(step.title + ". " + step.intro + " " + " ".join(
+        q.label for q in step.questions if q.visible_if is None or q.visible_if(S.answers)), f"profile_step_{i}")
     errs = wizard.check_step(i, S.answers)[1] if i in S.tried else {}
     advanced = []
     for q in step.questions:              # in order: an answer can show or hide the questions after it
@@ -145,7 +149,7 @@ def step_form(i: int) -> None:
 
 def review() -> None:
     st.subheader("Check your answers")
-    st.markdown('<p class="af-muted">Change anything with “Edit”. Nothing is saved after you close the page.</p>',
+    st.markdown('<p class="af-muted">Review names and amounts carefully. Change any answer with “Edit” before running the simulation.</p>',
                 unsafe_allow_html=True)
     _, errors = wizard.all_values(S.answers)
     for i, step in enumerate(STEPS):
@@ -197,3 +201,4 @@ def render() -> None:
         step_form(i)
     else:
         review()
+
