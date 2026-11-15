@@ -1,5 +1,5 @@
 """Your results: the essentials first (limits, strategies, the explanation), then details for those who want them.
-Every number is read from the engine's result; nothing is computed here."""
+Weights and metrics come from the engine; displayed CAD amounts are capital times weight."""
 
 from __future__ import annotations
 
@@ -40,12 +40,42 @@ def unique(lines: list[str]) -> list[str]:
     return out
 
 
+FUND_LABELS = {
+    "ZST.TO": "Short-term bond fund", "XBB.TO": "Canadian bond fund",
+    "XIU.TO": "Canadian stock fund", "SPY": "U.S. stock fund",
+    "QQQ": "Nasdaq stock fund", "GLD": "Gold fund",
+}
+
+
+def investment_names() -> dict[str, str]:
+    try:
+        frame = services.loaded_universe()
+        return dict(zip(frame["ticker"], frame["name"]))
+    except (services.UserError, services.InternalError, KeyError):
+        return {}  # saved results must remain readable without market-data files
+
+
+def allocation_table(weights: dict, capital: float | None = None, names: dict | None = None) -> None:
+    names = names or {}
+    rows = []
+    for ticker, weight in sorted(weights.items(), key=lambda item: (-item[1], item[0])):
+        name = FUND_LABELS.get(ticker) or names.get(ticker)
+        row = {"Investment": f"{name} ({ticker})" if name else ticker, "Share": pct(weight, 1)}
+        if capital is not None:
+            row["Amount (CAD)"] = money(float(capital) * weight)
+        rows.append(row)
+    total = {"Investment": "Total", "Share": pct(sum(weights.values()), 1)}
+    if capital is not None:
+        total["Amount (CAD)"] = money(float(capital) * sum(weights.values()))
+    st.table(pd.DataFrame([*rows, total]).set_index("Investment"))
+
+
 def essentials(res: dict, profile: dict) -> None:
     lim, strategies = res["limits"], res.get("strategies", [])
     name = profile.get("name") or "you"
     st.subheader(f"Your limits, {name}" if name != "You" else "Your limits")
     c = st.columns(3)
-    ui.metric(c[0], pct(lim.get("loss_limit")), "loss threshold used in the simulations"
+    ui.metric(c[0], pct(lim.get("loss_limit")), "loss limit used for your options"
               + (f" (about {money(lim.get('loss_limit_cad'))})" if lim.get("loss_limit_cad") else ""))
     ui.metric(c[1], pct(lim.get("min_defensive")), "at least, kept in safer investments")
     ui.metric(c[2], pct(lim.get("horizon_max_growth")), "at most in stocks, given your horizon")
@@ -64,17 +94,18 @@ def essentials(res: dict, profile: dict) -> None:
                         unsafe_allow_html=True)
 
     st.subheader(f"{len(strategies)} way{'s' if len(strategies) != 1 else ''} to invest within these limits")
-    st.markdown(f'<p class="af-muted">Simulated on {period_label()} market data, from the most growth your limits allow '
-                'to the least in stocks. Less in stocks did not always mean smaller past drops: compare them. Past ups and downs, not a forecast.</p>',
+    st.markdown('<p class="af-muted">Compare how your money is split and how each option performed in the past. '
+                'Bond funds can also lose value. Past performance does not predict future results.</p>',
                 unsafe_allow_html=True)
     if strategies:
         # Side by side, one card per option, the same rows in the same order so they read across (on a phone,
         # Streamlit stacks the columns). Long text (pros, cons, checks) sits in an expander so the cards line up.
         st.markdown(CARD_CSS, unsafe_allow_html=True)
+        names = investment_names()
         cols = st.columns(len(strategies), gap="small")
         for i, (col, s) in enumerate(zip(cols, strategies), 1):
             with col, st.container(border=True, key=f"af_card_{i}"):
-                card(s, i, len(strategies))
+                card(s, i, len(strategies), capital=profile.get("capital"), names=names)
         st.caption("\\* Without assuming past average returns repeat: only the past swings are replayed.")
 
 
@@ -95,13 +126,13 @@ CARD_CSS = """<style>
 </style>"""
 
 
-def card(s: dict, i: int, n: int) -> None:
+def card(s: dict, i: int, n: int, capital: float | None = None, names: dict | None = None) -> None:
     """One option: what it holds (bar), three numbers to compare, what set the split, then pros/cons on demand."""
     stt, g = s["stats"], s["split"]["growth"]
     gp = round(100 * g)
     tag = " · most growth" if i == 1 and n > 1 else " · least in stocks" if i == n and n > 1 else ""
     st.markdown(
-        f'<div class="af-opt">Option {i} of {n}{tag}</div><div class="af-opt-name">{ui.esc(s["name"])}</div>'
+        f'<div class="af-opt">Option {i} of {n}{tag}</div><div class="af-opt-name">{ui.esc(s["name"].split(":", 1)[0])}</div>'
         f'<div class="af-split" role="img" aria-label="{gp}% stocks, {100 - gp}% safer investments">'
         f'<div class="g" style="width:{gp}%"></div><div class="d" style="width:{100 - gp}%"></div></div>'
         f'<div class="af-split-l"><span><b>{gp}%</b> stocks</span><span><b>{100 - gp}%</b> safer</span></div>'
@@ -110,21 +141,27 @@ def card(s: dict, i: int, n: int) -> None:
                                ("Result in 2022, a bad year", pct(stt.get("return_2022"), 1)),
                                ("Chance of ending below what you put in*", pct(stt.get("prob_loss")))]),
         unsafe_allow_html=True)
+    weights = s.get("weights") or {}
+    if weights:
+        st.markdown("**How your money is split**")
+        allocation_table(weights, capital, names)
     r = s.get("split_range") or {}
-    if r.get("set_by_text"):  # which constraint set the split (decision #33), as in app/app.py
-        st.markdown(f'<div class="af-setby">Why {gp}%: set by {ui.esc(r["set_by_text"])}'
-                    + (f'; the loss test alone would allow {pct(r["data_ceiling"])}.'
-                       if r.get("set_by") != "worst_drop" and r.get("data_ceiling") is not None else ".")
-                    + "</div>", unsafe_allow_html=True)
+    reason = {
+        "horizon": "Your investment timeframe limits how much can go into stocks.",
+        "level": "This option puts less in stocks than the first option.",
+        "worst_drop": "The loss checks limit how much can go into stocks.",
+    }.get(r.get("set_by"))
+    if reason:
+        st.caption(reason)
     pros, cons = s.get("pros", []), unique(s.get("cons", []))
     said = " ".join(cons).lower()
     bad = [c for c in s.get("checks", []) if c["status"] != "pass" and c["reason"].lower().rstrip(".") not in said]
     if pros or cons or bad:
-        with st.expander(f"Pros and cons ({len(pros)} + {len(cons) + len(bad[:3])})"):
+        with st.expander("Benefits and things to know"):
             if pros:
-                st.markdown("**For**\n" + "\n".join(f"- {x}" for x in pros))
+                st.markdown("**Benefits**\n" + "\n".join(f"- {x}" for x in pros))
             if cons:
-                st.markdown("**Against**\n" + "\n".join(f"- {x}" for x in cons))
+                st.markdown("**Things to know**\n" + "\n".join(f"- {x}" for x in cons))
             for c in bad[:3]:
                 ui.notice(f"{STATUS[c['status']]}: {c['reason'][:1].upper()}{c['reason'][1:]}",
                           "bad" if c["status"] == "fail" else "warn")
@@ -233,29 +270,32 @@ def explanation(res: dict) -> None:
 
 
 def details(res: dict) -> None:
-    st.subheader("Details")
-    st.markdown('<p class="af-muted">For those who want to see how it was computed.</p>', unsafe_allow_html=True)
+    st.subheader("More about your options")
+    st.caption("Explore past performance. The calculation details are available below if you want to review them.")
     ch = services.charts(res)
     with st.expander(f"How the strategies would have moved, {period_label()}"):
         if "growth" in ch:
             ui.chart(ch["growth"])
         else:
             st.caption("Chart unavailable.")
+    names = investment_names()
     for s in res.get("strategies", []):
-        with st.expander(f"{s['name']}: what it holds and every check"):
-            st.table(pd.DataFrame({"share": [pct(w, 1) for w in s["weights"].values()]}, index=list(s["weights"])))
-            if ("split", s["key"]) in ch:
-                ui.chart(ch[("split", s["key"])])
-            if ("outcome", s["key"]) in ch:
-                ui.chart(ch[("outcome", s["key"])])
-            st.markdown("**Checks**")
-            st.markdown("\n".join(f"- <span class=\"af-st {c['status']}\">{STATUS[c['status']]}</span> **{ui.esc(c['check'])}** "
-                                  f"{ui.esc(c['reason'])}" for c in s.get("checks", [])), unsafe_allow_html=True)
-            g = s.get("guardian", {})
-            if g:
-                st.markdown(f"**Final rules (Guardian):** {VERDICT.get(g.get('verdict'), ('–',))[0]}")
-            if s.get("adjustments"):
-                st.markdown("**Why it holds this**\n" + "\n".join(f"- {x}" for x in s["adjustments"]))
+        with st.expander(f"{s['name'].split(':', 1)[0]} — details"):
+            st.markdown("**How your money is split**")
+            allocation_table(s["weights"], (S.get("profile") or {}).get("capital"), names)
+            with st.expander("How this option was calculated (technical)"):
+                if ("split", s["key"]) in ch:
+                    ui.chart(ch[("split", s["key"])])
+                if ("outcome", s["key"]) in ch:
+                    ui.chart(ch[("outcome", s["key"])])
+                st.markdown("**Checks**")
+                st.markdown("\n".join(f"- <span class=\"af-st {c['status']}\">{STATUS[c['status']]}</span> **{ui.esc(c['check'])}** "
+                                      f"{ui.esc(c['reason'])}" for c in s.get("checks", [])), unsafe_allow_html=True)
+                g = s.get("guardian", {})
+                if g:
+                    st.markdown(f"**Final rules (Guardian):** {VERDICT.get(g.get('verdict'), ('–',))[0]}")
+                if s.get("adjustments"):
+                    st.markdown("**Why it holds this**\n" + "\n".join(f"- {x}" for x in s["adjustments"]))
     for s in res.get("dropped", []):
         ui.notice(f"“{s['name']}” was removed: it broke one of your limits.", "warn")
     with st.expander("Full record of every step (for review)"):
@@ -289,12 +329,12 @@ def render() -> None:
     if not res.get("strategies"):
         ui.notice("No strategy fits all your limits. The details below say which limit blocks.", "bad")
     else:
-        ui.notice(f"<b>{ui.esc(lab)}.</b> Below: your limits, the strategies that respect them, and why.", tone, safe=True)
+        ui.notice("These options fit the limits checked. Review the points to know before choosing.", tone)
     st.title("Your investment overview")
     if st.button("See how this analysis was built →"):
         S.goto = "Activity"
         st.rerun()
-    overview, summary, evidence = st.tabs(["Strategies & limits", "Plain-language summary", "Checks & holdings"])
+    overview, summary, evidence = st.tabs(["Your options", "In plain words", "Details"])
     with overview:
         essentials(res, profile)
         request(res)

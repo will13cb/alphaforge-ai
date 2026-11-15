@@ -59,7 +59,7 @@ def test_reviewed_voice_question_uses_existing_analyst(monkeypatch):
     app.toggle(key="voice_mode").set_value(True).run()
     app.session_state["res"] = {"strategies": [{}]}
     app.session_state["profile"] = {}
-    app.sidebar.radio[0].set_value("Assistant").run()
+    app.radio(key="section").set_value("Assistant").run()
     app.session_state["chat_voice_review"] = "What is volatility?"
     app.run()
     app.button(key="chat_voice_use").click().run()

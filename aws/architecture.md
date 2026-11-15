@@ -1,98 +1,91 @@
-> **Release update:** G7/D2 now uses a horizon bootstrap on final weights (10% model exceedance threshold, cash + 3% growth premium assumption); G18 checks consistency, research G19 dividends. Activity and optional Transcribe/Polly speech are integrated. Refresh the rendered PNG before presenting it.
+# Architecture : ce qui fonctionne aujourd'hui (15 novembre; décisions #14, #30, #40, #42, #46, #49)
 
-# Architecture: what runs today (updated Sun Nov 15, evening; decisions #14, #30, #40)
-
-**Strands agents for the steps that decide, a fixed pipeline for the orchestration, models on Amazon Bedrock, every
-run's trace kept on Amazon S3.** The two Streamlit apps run locally and on Streamlit Community Cloud, which reads the
-data from S3 at first start (`src/dh/bootstrap.py`); a CLI runs the same pipeline. Bedrock AgentCore Runtime
-was planned "if working by Sunday midday" (#14) and is **not deployed**. "Agents investigate and argue, code enforces."
-Dashed = not built / not deployed. Keep this in sync with what actually runs: the jury compares it to the demo.
+**Des agents Strands pour les étapes qui décident, un pipeline fixe pour l'orchestration, des modèles sur Amazon
+Bedrock, la trace de chaque exécution conservée dans Amazon S3.** Les deux applications Streamlit fonctionnent en
+local et sur Streamlit Community Cloud, qui lit les données dans S3 au premier démarrage; une ligne de commande exécute
+le même pipeline. Bedrock AgentCore Runtime était prévu et n'est **pas déployé**. « Les agents enquêtent et
+argumentent, le code fait respecter. » Pointillés = non construit, non déployé ou facultatif.
+Image : [`architecture.png`](architecture.png) · *English: [`architecture.en.md`](architecture.en.md)*
 
 ```mermaid
 %%{init: {"flowchart": {"wrappingWidth": 320, "nodeSpacing": 40, "rankSpacing": 50}}}%%
 flowchart TB
-    %% ---------- 0 · Input ----------
-    subgraph L0["0 · Input · app/ and interface/"]
+    subgraph L0["0 · Entrée · app/ et interface/"]
         direction LR
-        P0["Fictional personas<br/>Amira · Mateo · Robert"]
-        Q["Guided questions<br/>checked with the engine's own limits"]
-        VO["Voice, optional<br/>speak, hear the answer"] --> T
-        H["'I already have a portfolio'<br/>holdings line by line or in words"]
-        T["Free text"] --> EXT["Extractor · Strands agent<br/>tool: check_profile<br/>missing facts → ask, don't guess"]
+        P0["Personas fictifs<br/>Amira · Mateo · Robert"]
+        Q["Questions guidées<br/>vérifiées avec les limites du moteur"]
+        VO["Voix, facultative<br/>parler, écouter la réponse"] --> T
+        H["« J'ai déjà un portefeuille »<br/>placements ligne par ligne ou en mots"]
+        T["Texte libre"] --> EXT["Extracteur · agent Strands<br/>outil : check_profile<br/>fait manquant → on demande, on ne devine pas"]
     end
 
-    O{{"Orchestrator · pipeline.py<br/>fixed order · one round · Guardian always runs"}}
+    O{{"Orchestrateur · pipeline.py<br/>ordre fixe · une ronde · le Gardien s'exécute toujours"}}
     P0 --> O
     H --> O
     Q --> O
     EXT --> O
 
-    %% ---------- Deterministic core ----------
-    subgraph CORE["Deterministic core · no LLM"]
+    subgraph CORE["Cœur déterministe · sans LLM"]
         direction TB
-        PR["1 · Profiler<br/>tolerance · capacity · knowledge → limits, each with its reason<br/>loss limit · defensive floor · per-company and crypto caps<br/>KYC bets → A: cross-check only · expected-value question"]
-        MD["2 · Market data<br/>31 assets in CAD · vol · worst drop · CVaR · correlations<br/>2022 stress (2008 / 2020 when covered) · goal outlook"]
-        PF["3 · Portfolio<br/>up to 3 strategies = 3 risk levels<br/>split computed: largest growth share meeting the simulated horizon loss rule,<br/>capped by horizon, liquidity, safety net · says which one set it<br/>crypto only if asked + allowed + the data agrees"]
-        CK["Checks C–F<br/>companies & sectors through the ETFs · geography ·<br/>duplicates · drawdown in % and $ · goal · profile fit"]
-        EXR["Existing portfolio review<br/>same checks C–F and Guardian · fees in $ ·<br/>labelled stand-ins for funds without data ·<br/>rebuild into the first strategy, moves in $"]
-        FI["Fixed-income lookup<br/>bond-only preference: sourced Canada / U.S.<br/>government bonds held to maturity, cash flows in CAD<br/>no invented offer, no guarantee promised"]
-        RQ["Request side by side<br/>'as asked' vs 'what fits', same checks<br/>pros & cons from the numbers only"]
+        PR["1 · Profileur<br/>tolérance · capacité · connaissances → limites, chacune avec sa raison<br/>limite de perte · plancher défensif · plafonds par société et crypto<br/>choix KYC → A : contre-vérification · question d'espérance"]
+        MD["2 · Données de marché<br/>31 actifs en CAD · volatilité · pire baisse · CVaR · corrélations<br/>crise de 2022 · perspective d'objectif"]
+        PF["3 · Portefeuille<br/>jusqu'à 3 stratégies = 3 niveaux de risque<br/>répartition calculée : plus grande part de croissance qui respecte la règle de perte simulée sur l'horizon,<br/>plafonnée par l'horizon, la liquidité, le filet de sécurité · dit laquelle a décidé<br/>crypto seulement si demandée + permise + appuyée par les données"]
+        CK["Contrôles C–F<br/>sociétés et secteurs à travers les FNB · géographie ·<br/>doublons · baisse en % et en $ · objectif · adéquation au profil"]
+        EXR["Revue d'un portefeuille déjà détenu<br/>mêmes contrôles C–F et Gardien · frais en $ ·<br/>substituts identifiés pour les fonds sans données ·<br/>reconstruction vers la première stratégie, mouvements en $"]
+        FI["Recherche d'obligations<br/>préférence « obligations seulement » : titres gouvernementaux<br/>canadiens et américains sourcés, détenus jusqu'à l'échéance, flux en CAD<br/>aucune offre inventée, aucune garantie promise"]
+        RQ["Demande côte à côte<br/>« telle que demandée » et « ce qui convient », mêmes contrôles<br/>avantages et inconvénients tirés des nombres"]
     end
 
-    GU{{"Guardian · loss + consistency controls<br/>modelled on NI 31-103 KYC / suitability<br/>✔ pass · ⚠ disclose · ✘ block"}}
+    GU{{"Gardien · contrôles de perte et de cohérence<br/>calqués sur le Règlement 31-103 (KYC / convenance)<br/>✔ réussi · ⚠ à divulguer · ✘ bloque"}}
 
-    %% ---------- Strands agents ----------
-    subgraph AG["Strands agents · tools capped, traced"]
+    subgraph AG["Agents Strands · outils plafonnés et tracés"]
         direction TB
-        CR["4 · Critic<br/>investigates before objecting · ≤ 6 tool calls<br/>≤ 3 objections, numbers backed by tools or facts<br/>fix menu: merge · trim · shift · disclose"]
-        EX["5 · Explainer<br/>writes ids, never numbers ({n7})<br/>self-checks with G11–G13"]
-        AN["Analyst · follow-up questions<br/>what-ifs re-run the whole pipeline"]
+        CR["4 · Critique<br/>enquête avant d'objecter · ≤ 6 appels d'outils<br/>≤ 3 objections, nombres appuyés par les outils ou les faits<br/>menu de corrections : fusionner · réduire · déplacer · divulguer"]
+        EX["5 · Explicateur<br/>écrit des identifiants, jamais des nombres ({n7})<br/>s'autovérifie avec G11–G13"]
+        AN["Analyste · questions de suivi<br/>les scénarios relancent tout le pipeline"]
     end
 
-    TOOLS["Tools = deterministic functions, JSON in / out<br/>market: asset_facts · portfolio_stats · stress_test · correlation_between ·<br/>goal_check · required_return · list_assets<br/>run views: look_through · strategy_checks · limit_reason ·<br/>risk_contributions (covariance only, no forecast)<br/>Analyst only: what_if_position · what_if_profile (re-run the pipeline)"]
+    TOOLS["Outils = fonctions déterministes, JSON en entrée et en sortie<br/>marché : asset_facts · portfolio_stats · stress_test · correlation_between ·<br/>goal_check · required_return · list_assets<br/>vues sur l'exécution : look_through · strategy_checks · limit_reason ·<br/>risk_contributions (covariance seulement, aucune prévision)<br/>Analyste seulement : what_if_position · what_if_profile (relancent le pipeline)"]
 
-    %% ---------- Flow ----------
     O --> PR
-    O -- "bond-only preference" --> FI
-    FI -- "matches or 'no supported match', with sources" --> UI
-    PR -- "essentials missing (G1)" --> ASK["Ask the client"]
+    O -- "préférence obligations seulement" --> FI
+    FI -- "correspondances ou « aucune correspondance appuyée », avec sources" --> UI
+    PR -- "éléments essentiels manquants (G1)" --> ASK["On interroge le client"]
     PR --> MD --> PF --> CK --> GU
-    GU -- "✘ strategy dropped, reason in the trace" --> DROP["Dropped"]
+    GU -- "✘ stratégie retirée, raison dans la trace" --> DROP["Retirée"]
     GU -- "✔ / ⚠" --> CR
-    CR -- "one fix per strategy:<br/>tighten an input, rerun the whole calculation" --> PF
-    CR -- "objections not fixed → cons" --> RQ
+    CR -- "une correction par stratégie :<br/>resserrer une donnée, relancer tout le calcul" --> PF
+    CR -- "objections non corrigées → inconvénients" --> RQ
     RQ --> EX
-    PF -- "first strategy = rebuild target" --> EXR
-    EXR -- "section 'the portfolio you already have'" --> EX
-    CR -. "reviews it too, disclose only" .-> EXR
-    EX --> GU2{{"Guardian G11–G13<br/>disclaimer · every number traced ·<br/>every request answered"}}
-    GU2 -- "✘ → deterministic template, said in the trace" --> UI
-    GU2 -- "✔" --> UI["Apps: limits & reasons · strategies & charts ·<br/>explanation · Analyst · trace"]
-    UI -- "follow-up question" --> AN
-    AN -- "what-if → same pipeline, Guardian included" --> O
-    AN -- "answer: every number from a cited tool result, checked by code" --> UI
+    PF -- "première stratégie = cible de reconstruction" --> EXR
+    EXR -- "section « le portefeuille que vous avez déjà »" --> EX
+    CR -. "le revoit aussi, divulgation seulement" .-> EXR
+    EX --> GU2{{"Gardien G11–G13<br/>avertissement · chaque nombre tracé ·<br/>chaque demande expliquée"}}
+    GU2 -- "✘ → gabarit déterministe, dit dans la trace" --> UI
+    GU2 -- "✔" --> UI["Applications : limites et raisons · stratégies et graphiques ·<br/>explication · Analyste · trace · Français ⇄ English"]
+    UI -- "question de suivi" --> AN
+    AN -- "scénario → même pipeline, Gardien compris" --> O
+    AN -- "réponse : chaque nombre vient d'un résultat d'outil cité, vérifié par le code" --> UI
 
-    CR -. calls .-> TOOLS
-    AN -. calls .-> TOOLS
+    CR -. appelle .-> TOOLS
+    AN -. appelle .-> TOOLS
 
-    %% ---------- Trace ----------
-    TR[("Trace · one line per hand-off<br/>tool calls · numbers · verdicts<br/>never raw model reasoning")]
-    O -. writes .-> TR
+    TR[("Trace · une ligne par relais<br/>appels d'outils · nombres · verdicts<br/>jamais le raisonnement brut du modèle")]
+    O -. écrit .-> TR
 
-    %% ---------- AWS ----------
-    subgraph AWS["AWS (slide 7)"]
+    subgraph AWS["AWS (diapositive 7)"]
         BR["Amazon Bedrock<br/>Claude Opus 5.5 · us-east-1"]
-        S3[("Amazon S3<br/>traces/: one JSON per run<br/>raw/: data and bond catalogue for the hosted app<br/>voice/: audio, deleted once transcribed")]
-        TP["Amazon Transcribe · Amazon Polly<br/>speech → text · text → speech<br/>optional (AF_VOICE_ENABLED)"]
-        AC["Bedrock AgentCore Runtime<br/>planned, NOT deployed"]
+        S3[("Amazon S3<br/>traces/ : un JSON par exécution<br/>raw/ : données et catalogue d'obligations de l'app hébergée<br/>voice/ : audio, supprimé une fois transcrit")]
+        TP["Amazon Transcribe · Amazon Polly<br/>parole → texte · texte → parole<br/>facultatif (AF_VOICE_ENABLED)"]
+        AC["Bedrock AgentCore Runtime<br/>prévu, NON déployé"]
     end
-    AG -. "models" .-> BR
-    EXT -. "model" .-> BR
-    TR -- "every run (local copy if S3 is unreachable)" --> S3
-    O -. "not deployed" .-> AC
-    HOST["Streamlit Community Cloud<br/>the hosted apps"]
-    UI -. "hosted on" .-> HOST
-    S3 -. "raw/ data at first start" .-> HOST
+    AG -. "modèles" .-> BR
+    EXT -. "modèle" .-> BR
+    TR -- "chaque exécution (copie locale si S3 est inaccessible)" --> S3
+    O -. "non déployé" .-> AC
+    HOST["Streamlit Community Cloud<br/>les applications hébergées"]
+    UI -. "hébergée sur" .-> HOST
+    S3 -. "données raw/ au premier démarrage" .-> HOST
     VO -. "audio" .-> TP
 
     style AC stroke-dasharray: 5 5
@@ -106,39 +99,42 @@ flowchart TB
     style EXT fill:#dbeafe,stroke:#1d4ed8,color:#000
 ```
 
-Yellow = where code decides (orchestrator, Guardian). Blue = Strands agents (they decide which tools to call, never a
-limit or a number).
+Jaune = là où le code décide (orchestrateur, Gardien). Bleu = agents Strands (ils décident quels outils appeler,
+jamais une limite ni un nombre).
 
-## Layers at a glance
+## Les couches en bref
 
-| Layer | Question it answers | Built with |
+| Couche | Question à laquelle elle répond | Construite avec |
 |---|---|---|
-| Orchestration | In what order do the steps run, what happens on a ✘? | `src/dh/agents/pipeline.py`: fixed order, one Critic round, the Guardian can't be skipped. A ✘ on a strategy drops it (reason in the trace); a ✘ on the text swaps in the template |
-| Agents that decide | Which tools to call, and when they're done | **Strands Agents** on Bedrock: Extractor, Critic, Explainer, Analyst. Tool calls capped and traced; demo answers cached and committed (`cache/`) so the demo replays without AWS |
-| Deterministic steps | The numbers and the rules | Plain Python: Profiler, market data, Portfolio, checks C–F, request side by side, Guardian. The agents call them as tools |
-| Model | The LLM | **Amazon Bedrock**: `global.anthropic.claude-opus-5-5` (Claude Opus 5.5), us-east-1, text and tool use verified 2026-11-14 (`make bedrock-check`). Critic/Analyst model switchable with `BEDROCK_CRITIC_MODEL_ID` |
-| Hosting | Where the pipeline runs | **Streamlit Community Cloud** (the hosted apps) and **locally**: demo app (`make app`), guided interface (`make ui`), CLI (`python -m dh explain`). Data from `s3://$S3_BUCKET/raw/` (`make data-up`) at first start. Bedrock AgentCore Runtime: **not deployed** |
-| Traces and data | Where runs and data are kept | **Amazon S3**: `traces/` every run from both apps and the CLI (`dh.tracestore`, #25; local copy if S3 is unreachable); `raw/` the data for the hosted app; `voice/` audio for transcription, deleted once done |
-| Voice (optional) | Speak instead of type | **Amazon Transcribe** (speech → text, English or French Canada) and **Amazon Polly** (the answer read aloud), in the guided interface, off unless `AF_VOICE_ENABLED=1` |
+| Orchestration | Dans quel ordre s'exécutent les étapes, que se passe-t-il sur un ✘ ? | `src/dh/agents/pipeline.py` : ordre fixe, une ronde du Critique, le Gardien ne peut pas être contourné. Un ✘ sur une stratégie la retire (raison dans la trace); un ✘ sur le texte le remplace par le gabarit |
+| Agents qui décident | Quels outils appeler, et quand s'arrêter | **Strands Agents** sur Bedrock : Extracteur, Critique, Explicateur, Analyste. Appels plafonnés et tracés; réponses de démonstration enregistrées et versionnées (`cache/`) pour rejouer sans AWS |
+| Étapes déterministes | Les nombres et les règles | Python ordinaire : Profileur, données de marché, Portefeuille, contrôles C–F, demande côte à côte, Gardien. Les agents les appellent comme outils |
+| Modèle | Le LLM | **Amazon Bedrock** : `global.anthropic.claude-opus-5-5` (Claude Opus 5.5), us-east-1, texte et outils vérifiés le 2026-11-14 (`make bedrock-check`) |
+| Hébergement | Où s'exécute le pipeline | **Streamlit Community Cloud** (applications hébergées) et **en local** (`make app`, `make ui`, ligne de commande). Données tirées de `s3://$S3_BUCKET/raw/` au premier démarrage. Bedrock AgentCore Runtime : **non déployé** |
+| Traces et données | Où sont conservées les exécutions et les données | **Amazon S3** : `traces/` chaque exécution des deux applications et de la ligne de commande (copie locale si S3 est inaccessible); `raw/` les données de l'application hébergée; `voice/` l'audio à transcrire, supprimé ensuite |
+| Voix (facultative) | Parler au lieu de taper | **Amazon Transcribe** (parole → texte, français ou anglais du Canada) et **Amazon Polly** (réponse lue à voix haute), dans l'interface guidée, désactivée sauf si `AF_VOICE_ENABLED=1` |
+| Langue | Français ou anglais | Bouton Français ⇄ English dans les deux applications, français par défaut (`AF_LANG`); les textes produits par le moteur et les agents restent en anglais, car le Gardien vérifie ce texte-là (#49) |
 
-| Component | LLM? | Output |
+| Composant | LLM ? | Résultat |
 |---|---|---|
-| Extractor | yes (Strands, tool `check_profile`) | `profile` fields from free text; follow-up questions for what's missing; code checks every field (#29) |
-| Profiler | no | `limits`: risk level, loss limit, floors, per-company and crypto caps, each with a reason; KYC cross-check `limits["kyc"]` (#40) |
-| Market data | no | per-asset facts, `strategy_stats`, stress windows, goal outlook (Joud) |
-| Portfolio | no | up to 3 strategies = 3 risk levels (#32); growth ceiling = largest share whose simulated chance of a drop deeper than the loss limit over the horizon is ≤ 10% (#46), capped by the horizon rule, withdrawals and the safety net; says what set it (#33) |
-| Checks C–F | no | one shape per check: value, limit, status, reason, source (#20) |
-| Guardian | no | ✔ / ⚠ / ✘ per rule on each strategy (17 rules: G1–G16 and G18; G7 = simulated chance of a drop deeper than the loss limit over the horizon ≤ 10%, G18 = every number describes the final weights, #46); G11–G13 on the text |
-| Critic | yes (Strands, 11 tools) | ≤ 3 objections, each number backed by a cited tool result or the facts it was given (#45); one fix per strategy that reruns the whole calculation, re-checked by the Guardian, original kept if it fails (#30) |
-| Fixed-income lookup | no | for a bond-only preference: sourced Canadian and U.S. government bonds held to maturity (rate, maturity, cash flows in CAD); public references, not dealer offers; says when nothing matches |
-| Request side by side | no | the client's request "as asked" vs "what fits", same checks; pros and cons from the numbers (#28) |
-| Explainer | yes (Strands, tool `check_text`) | client text with number ids filled by code (strict G12, #27); template if a check fails (#23) |
-| Existing portfolio review | no (+ Critic, Explainer, Analyst) | what the client holds, with the same checks C–F and Guardian, fees in $, labelled stand-ins, and the moves in $ to the first strategy (#42, #44) |
-| Analyst | yes (Strands, tools) | answers to follow-ups; what-ifs re-run the pipeline, Guardian included; every number from a cited tool result (#35) |
+| Extracteur | oui (Strands, outil `check_profile`) | champs du `profile` à partir du texte libre; questions de suivi pour ce qui manque; le code vérifie chaque champ (#29) |
+| Profileur | non | `limits` : niveau de risque, limite de perte, planchers, plafonds par société et crypto, chacun avec sa raison; contre-vérification KYC (#40) |
+| Données de marché | non | faits par actif, `strategy_stats`, périodes de crise, perspective d'objectif (Joud) |
+| Portefeuille | non | jusqu'à 3 stratégies = 3 niveaux de risque (#32); plafond de croissance = plus grande part dont la probabilité simulée d'une baisse plus forte que la limite de perte sur l'horizon est ≤ 10 % (#46), plafonnée par la règle d'horizon, les retraits et le filet de sécurité; dit ce qui a décidé (#33) |
+| Contrôles C–F | non | même forme pour chaque contrôle : valeur, limite, statut, raison, source (#20) |
+| Gardien | non | ✔ / ⚠ / ✘ par règle sur chaque stratégie (17 règles : G1–G16 et G18; G7 = probabilité simulée d'une baisse plus forte que la limite de perte sur l'horizon ≤ 10 %, G18 = chaque nombre décrit les pondérations finales, #46); G11–G13 sur le texte |
+| Critique | oui (Strands, 11 outils) | ≤ 3 objections, chaque nombre appuyé par un résultat d'outil cité ou par les faits reçus (#45); une correction par stratégie qui relance tout le calcul, revérifiée par le Gardien, l'original conservé en cas d'échec (#30) |
+| Recherche d'obligations | non | pour une préférence « obligations seulement » : titres gouvernementaux canadiens et américains sourcés, détenus jusqu'à l'échéance (taux, échéance, flux en CAD); références publiques, pas des offres de courtiers; dit quand rien ne correspond |
+| Demande côte à côte | non | la demande du client « telle que demandée » et « ce qui convient », mêmes contrôles; avantages et inconvénients tirés des nombres (#28) |
+| Explicateur | oui (Strands, outil `check_text`) | texte au client avec des identifiants de nombres remplis par le code (G12 strict, #27); gabarit si un contrôle échoue (#23) |
+| Revue d'un portefeuille déjà détenu | non (+ Critique, Explicateur, Analyste) | ce que le client détient, avec les mêmes contrôles C–F et le Gardien, les frais en $, des substituts identifiés et les mouvements en $ vers la première stratégie (#42, #44) |
+| Analyste | oui (Strands, outils) | réponses aux questions de suivi; les scénarios relancent le pipeline, Gardien compris; chaque nombre vient d'un résultat d'outil cité (#35) |
 
-**Not in the demo:** the Markowitz optimiser (branch `optimisation-markowitz`, Joud) was tested and set aside (#37):
-with historical average returns its weights move with the window and lost to equal weights out of sample. What
-doesn't depend on average returns is used: risk contributions (Critic tool) and the KYC bets (Profiler cross-check), #40.
+**Hors de la démonstration :** l'optimiseur de Markowitz (branche `optimisation-markowitz`, Joud) a été testé et
+écarté (#37) : avec des rendements moyens historiques, ses pondérations changeaient avec la période et ont perdu contre
+l'équipondération hors échantillon. Ce qui ne dépend pas des rendements moyens est utilisé : les contributions au
+risque (outil du Critique) et les choix KYC (contre-vérification du Profileur), #40.
 
-Why not let an agent orchestrate: a supervisor agent choosing the next step looks more agentic, but nothing would
-guarantee the Guardian runs every time, and the 16 test scenarios would stop being reliable (`notes/decisions.md` #14).
+Pourquoi ne pas laisser un agent orchestrer : un agent superviseur qui choisit l'étape suivante paraît plus agentique,
+mais rien ne garantirait que le Gardien s'exécute à chaque fois, et les 16 scénarios de test ne seraient plus fiables
+(`notes/decisions.md` #14).

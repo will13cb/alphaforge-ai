@@ -28,3 +28,4 @@
 
 ## How to check
 `make ui`, then the "Dark mode" switch in the sidebar. Mockups: `python interface/mockups/build.py && NODE_PATH=$(npm root -g) node interface/mockups/shoot.js`
+- (Sun evening) Mockups removed from the submission tree; they remain in git history (commit bec7e89).

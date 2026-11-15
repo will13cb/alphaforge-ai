@@ -27,6 +27,9 @@ from dh.agents.trace import ICON
 from dh.personas import DISCLAIMER, PERSONAS, describe
 
 st.set_page_config(page_title="AlphaForge AI", page_icon=":material/account_balance:", layout="wide")
+from dh import i18n  # noqa: E402  (Français / English, decision #49)
+i18n.install()
+i18n.language_selector()  # top of the sidebar, before anything can stop the page
 
 # One look for both front ends: the interface's colour tokens, light/dark modes and styles (interface/ui/theme.py),
 # plus what a wide, tabbed jury view needs. The mode follows the sidebar switch (session state `dark_mode`).

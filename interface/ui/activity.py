@@ -7,6 +7,7 @@ from html import escape
 import streamlit as st
 
 from interface.ui import components as ui
+from interface.ui import flow
 
 STAGES = ["Profiler", "Market data", "Portfolio", "Guardian", "Critic", "Explainer", "Trace store"]
 
@@ -19,16 +20,23 @@ def event_html(step: dict) -> str:
             f'<p>{escape(step.get("summary", ""))}</p></div>')
 
 
+def _short(text: str, n: int = 160) -> str:
+    return text if len(text) <= n else text[:n].rsplit(" ", 1)[0] + "…"
+
+
 @contextmanager
 def live_run():
     """Yield a callback for Trace.step; failures keep completed events visible."""
     with st.status("Analysis running · checking your profile and market history…", expanded=True) as status:
         st.caption("Live activity · each entry appears after a real hand-off completes. Longer steps may take a moment.")
+        graph = st.empty()
+        graph.markdown(flow.svg([]), unsafe_allow_html=True)
         feed = st.empty()
         events = []
 
         def on_step(step):
             events.append(step)
+            graph.markdown(flow.svg(events, caption=_short(step.get("summary", ""))), unsafe_allow_html=True)
             feed.markdown("".join(event_html(s) for s in events), unsafe_allow_html=True)
             status.update(label=f"{step['agent']} completed a hand-off · {len(events)} recorded")
 
@@ -38,6 +46,7 @@ def live_run():
             status.update(label="Analysis interrupted · completed steps are shown below", state="error", expanded=True)
             raise
         else:
+            graph.markdown(flow.svg(events, finished=True), unsafe_allow_html=True)
             status.update(label=f"Analysis complete · {len(events)} hand-offs recorded", state="complete", expanded=False)
 
 
@@ -57,10 +66,7 @@ def render_record(res: dict, profile: dict, *, download_key: str = "activity_dow
     st.subheader("Your analysis, in motion")
     st.caption("Completed run · recorded actions, checks and sources. Times are UTC. No internal model reasoning.")
     summary(res)
-    stages = {s["agent"] for s in res["trace"].steps}
-    st.markdown('<div class="af-flow">' + "".join(
-        f'<span>{escape(name)} · {"recorded" if name in stages else "no hand-off"}</span>' for name in STAGES
-    ) + '</div>', unsafe_allow_html=True)
+    st.markdown(flow.svg(res["trace"].steps, finished=True), unsafe_allow_html=True)
     with st.expander("Profile used for this run"):
         st.json(profile, expanded=False)
     for i, step in enumerate(res["trace"].steps):

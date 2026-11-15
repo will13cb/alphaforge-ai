@@ -1,5 +1,9 @@
 """Offline and stable: the company caps (#24) use a fixed copy of the worst drops, never data/raw."""
+import os
+
 import pytest
+
+os.environ.setdefault("AF_LANG", "en")  # app tests read the English UI; French is tested in test_i18n.py (#49)
 
 from dh.agents import profiler
 from dh.agents.scenarios import DROPS_DEMO

@@ -31,7 +31,7 @@ def errors(at):
 
 
 def go(at, section):
-    at.sidebar.radio[0].set_value(section).run()
+    at.radio(key="section").set_value(section).run()
     assert not at.exception
 
 

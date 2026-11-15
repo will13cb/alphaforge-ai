@@ -28,6 +28,8 @@ from interface.ui import theme, voice as voice_ui  # noqa: E402
 from interface.views import chat, holdings_input, profile, results  # noqa: E402
 
 st.set_page_config(page_title="AlphaForge AI", page_icon=":material/account_balance:", layout="centered")
+from dh import i18n  # noqa: E402  (Français / English, decision #49)
+i18n.install()
 S = st.session_state
 st.markdown(theme.css(theme.mode(S), S.get("large_text", False)), unsafe_allow_html=True)  # before any widget: the switch applies at once
 SECTIONS = ["Welcome", "Your profile", "Your results", "Activity", "Assistant"]
@@ -96,6 +98,7 @@ def sidebar() -> str:
     S.setdefault("section", "Welcome")
     with st.sidebar:
         st.markdown('<div class="af-brand"><span class="mark"></span>AlphaForge AI</div>', unsafe_allow_html=True)
+        i18n.language_selector(st)
         sec = st.radio("Go to", SECTIONS, key="section", label_visibility="collapsed")
         if S.get("res"):
             st.caption("Analysis ready")
