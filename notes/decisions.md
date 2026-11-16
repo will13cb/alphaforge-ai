@@ -1025,3 +1025,34 @@ number unchanged, then a phrase table; French number style only outside HTML tag
 app is French (Explainer and Critic get a `language` field and a French instruction; the Analyst gets the French
 question); French answers have their own cache keys, English keys are unchanged; `make warm` fills both. G11 accepts
 the French disclaimer; G12 still checks the numbers before display formatting. The fallback template exists in French.
+
+## 50. “What if March 2020 happened again?”: the COVID crash replayed on the proposed strategies (Mon Nov 16, Joud with Claude, `claude/stress-test-outside-window-m82zt0`)
+
+**Decision:** every calculation stays on 2021-2026 (#48). A separate history, `data/raw_stress/` (2019-12-02 →
+2020-06-30, the organizers' `build_dataset.py` through `scripts/build_long_data.py`, `make data-stress`), is used only
+to replay the weights the Portfolio already chose through the COVID crash (S&P 500 peak 2020-02-19 → trough
+2020-03-23, the same dates as `market.STRESS_MORE["2020"]`). `src/dh/stress.py`: `replay(weights, loss_limit,
+capital)` → worst drop inside the window, in % and CAD, against the client's own loss limit, the three holdings that
+pulled most, USD/CAD over the window, the path for the chart; `sentence(res, lang)` writes the one-liner with numbers
+filled by code. Results page (`interface/views/results.py`, tab "Your options"): section "What if March 2020 happened
+again?" with the sentence, one figure per option next to its 2021-2026 worst drop, the chart with the loss limit line,
+assumptions and source.
+
+**Why:** the audit's main data limit: one 5-year window with one mild bear market (2022), even milder in CAD. 2020 is
+sharper and faster, and outside the window the options were built on, so it is an out-of-sample check judges read at
+once ("−9.2%, under your 15% limit"). Replaying instead of recomputing keeps every quoted number of the submission.
+
+**Same engine:** `dh.data` reads the second folder through `Config.data_dir` (CAD, weekday calendar, FX carried
+forward, stand-ins), `dh.metrics.portfolio_returns` (daily rebalanced), `quant_toolkit.scenario_analysis`. A holding
+with no 2020 price → no replay ("no 2020 prices for X"), never a 0% fill (#31). Nothing here sets a weight or a limit.
+
+**Host:** with `AF_AUTO_DATA=1` the first results page builds `data/raw_stress/` once (spinner); without it, or if
+Yahoo fails, the section says why and the rest of the page is unchanged. Data never in git (#11).
+
+**Limits:** one past episode on today's weights; daily rebalancing in a crash loses a little more than buy-and-hold;
+the weaker CAD in March 2020 softened U.S. holdings (stated when the data shows it); survivorship (2026's names).
+
+**Numbers (`results.csv`, experiment `stress-covid-2020`, first option of each demo persona, built 2026-11-16):**
+Robert −9.2% (≈ 36 989 $, limit 15% / 60 000 $; 2021-2026 worst −8.6%), Mateo −19.6% (limit 25%; 2021-2026
+−13.3%), Amira −11.0% (limit 40%; 2021-2026 −14.8%).
+

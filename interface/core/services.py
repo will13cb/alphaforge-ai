@@ -16,7 +16,7 @@ import os
 import uuid
 from pathlib import Path
 
-from dh import data, tracestore
+from dh import data, stress, tracestore
 from dh.agents import analyst, explainer, extractor, pipeline
 from dh.agents.scenarios import DEMO_LABELS, DEMO_PROFILES
 from dh.personas import DISCLAIMER
@@ -180,6 +180,25 @@ def charts(res: dict) -> dict:
         except (Exception, SystemExit):  # missing CSVs must not terminate Streamlit
             logger().exception("strategy chart %s", s.get("key"))
     return out
+
+
+def stress_2020(res: dict, profile: dict) -> dict:
+    """“What if March 2020 happened again?” (decision #50): each proposed strategy replayed through the COVID crash,
+    from data/raw_stress/ (built on a host with AF_AUTO_DATA=1). {"ready", "note", "rows": [replay + name + 2021-2026
+    worst drop]}. Never raises: a missing or broken stress history becomes a note, the rest of the results stay."""
+    lim = res.get("limits") or {}
+    try:
+        ready, note = stress.ensure()
+        rows = []
+        if ready:
+            for s in res.get("strategies") or []:
+                r = stress.replay(s.get("weights") or {}, lim.get("loss_limit"), profile.get("capital"))
+                rows.append({**r, "name": s["name"].split(":", 1)[0],
+                             "worst_2021_2026": (s.get("stats") or {}).get("max_drawdown")})
+        return {"ready": ready, "note": note, "rows": rows}
+    except Exception:  # noqa: BLE001 — extra evidence only: never take the results page down
+        logger().exception("while replaying March 2020")
+        return {"ready": False, "note": "the March 2020 replay failed (see the log)", "rows": []}
 
 
 def caps_shown(res: dict, profile: dict) -> dict:

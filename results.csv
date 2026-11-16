@@ -324,6 +324,15 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1115-210036-william-31ab,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_stress_2022,-0.0701,Income / dividends: less in stocks
 1115-210036-william-49e8,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_ann_vol,0.0341,Income / dividends: less in stocks
 1115-210036-william-11e5,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_prob_loss,0.0175,Income / dividends: less in stocks
+1116-001717-claude-85f3,2026-11-16T00:17:17+00:00,Claude,d82d3ab,stress-covid-2020,amira,deepest_drop,-0.109595,
+1116-001717-claude-e7cc,2026-11-16T00:17:17+00:00,Claude,d82d3ab,stress-covid-2020,amira,deepest_drop_cad,3288,
+1116-001717-claude-afa4,2026-11-16T00:17:17+00:00,Claude,d82d3ab,stress-covid-2020,amira,within_loss_limit,1,
+1116-001722-claude-4f5b,2026-11-16T00:17:22+00:00,Claude,d82d3ab,stress-covid-2020,mateo,deepest_drop,-0.19642,
+1116-001722-claude-7ee1,2026-11-16T00:17:22+00:00,Claude,d82d3ab,stress-covid-2020,mateo,deepest_drop_cad,29463,
+1116-001722-claude-ef6c,2026-11-16T00:17:22+00:00,Claude,d82d3ab,stress-covid-2020,mateo,within_loss_limit,1,
+1116-001724-claude-f56e,2026-11-16T00:17:24+00:00,Claude,d82d3ab,stress-covid-2020,robert,deepest_drop,-0.092472,
+1116-001724-claude-65a8,2026-11-16T00:17:24+00:00,Claude,d82d3ab,stress-covid-2020,robert,deepest_drop_cad,36989,
+1116-001724-claude-bb4c,2026-11-16T00:17:24+00:00,Claude,d82d3ab,stress-covid-2020,robert,within_loss_limit,1,
 1116-000618-claude-17be,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,scenarios_rate,1,scripts/evaluate.py
 1116-000618-claude-811a,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,fidelity,1,scripts/evaluate.py
 1116-000618-claude-c89c,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,inject_caught_g12,1,scripts/evaluate.py

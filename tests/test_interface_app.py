@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
+from dh import stress  # noqa: E402
 from interface.core import services  # noqa: E402
 from interface.core.questions import STEPS  # noqa: E402
 
@@ -129,3 +130,17 @@ def test_welcome_text_goes_through_the_extractor_to_the_form():
     assert not at.exception, at.exception
     assert at.session_state["section"] == "Your profile"
     assert at.session_state["free_text_notes"]["profile"]["age"] == 59
+
+
+@needs_data
+@pytest.mark.skipif(not stress.available(), reason="no data/raw_stress (make data-stress)")
+def test_results_show_march_2020_replay():
+    """Decision #50: the example client's options replayed through the COVID crash, next to their limit."""
+    at = start()
+    btn(at, "Try with an example client").click().run()
+    btn(at, "Run the analysis").click().run()
+    assert not at.exception
+    assert "What if March 2020 happened again?" in [s.value for s in at.subheader]
+    md = " ".join(m.value for m in at.markdown)
+    assert "Between February 19 and March 23, 2020, this strategy would have lost at worst" in md
+    assert "within your 15% limit" in md

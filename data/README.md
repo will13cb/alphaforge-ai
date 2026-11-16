@@ -51,6 +51,15 @@ Limits: survivorship bias is unchanged (2026's names over a longer past, which f
 (`make explain P=robert SAVE=1`) after the rebuild. Terms: Yahoo forbids redistribution (decision #11), Bank of Canada
 https://www.bankofcanada.ca/terms/, FRED https://fred.stlouisfed.org/legal/.
 
+## March 2020 replay (decision #50)
+
+`make data-stress` writes `data/raw_stress/` (never committed): the same 31 assets and 6 files, 2019-12-02 →
+2020-06-30, built by the organizers' `build_dataset.py` through `scripts/build_long_data.py` (Yahoo Finance adj_close,
+Bank of Canada FXUSDCAD, Bank of Canada Valet and FRED macro). Used only by `dh.stress` to replay a strategy through
+the COVID crash (2020-02-19 → 2020-03-23); every other number stays on `data/raw/` (2021-2026). On a host,
+`AF_AUTO_DATA=1` builds it at the first results page. Known data note: ETH-USD −42% on 2020-03-12 (real, "Black
+Thursday"). Terms as for the longer history above.
+
 ## Extra products listed in Canada or the U.S. (optional, branch produit_cadusa)
 
 `make data-products` writes `data/raw/products_cadusa/` for the 60 products of `src/dh/product_catalogue.py`

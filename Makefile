@@ -2,7 +2,7 @@ SHELL := /bin/bash
 ENV   := set -a; [ -f .env ] && . ./.env; set +a;
 PY    := .venv/bin/python
 .DEFAULT_GOAL := help
-.PHONY: help setup data data-long data-up check board scenarios bedrock-check explain warm extract app ui test worktrees backup scan claude
+.PHONY: help setup data data-long data-stress data-up check board scenarios bedrock-check explain warm extract app ui test worktrees backup scan claude
 
 help: ## List targets
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
@@ -18,6 +18,9 @@ data: ## Starter CSVs into data/raw/ (copy, S3, or rebuild)
 
 data-long: ## Longer history into data/raw/ (official build script, from harness.toml start = 2010-01-04 unless START=; needs internet)
 	@$(PY) scripts/build_long_data.py $(if $(START),--start $(START))
+
+data-stress: ## 2020 crash history into data/raw_stress/ for the "what if March 2020 happened again?" replay (needs internet)
+	@$(PY) -c "from dh import stress; raise SystemExit(stress.build())"
 
 data-products: ## Extra products listed in Canada/U.S. into data/raw/products_cadusa/ (needs internet; then harness.toml [data] extra)
 	@$(PY) scripts/build_products.py $(if $(START),--start $(START))

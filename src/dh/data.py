@@ -126,10 +126,25 @@ def macro(series_id: str | None = None) -> pd.DataFrame:
     return m[m.series_id == series_id] if series_id else m
 
 
+@lru_cache(maxsize=2)
+def _files_at(cfg: Config) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """prices, universe, fx read from cfg.data_dir (a second history, e.g. the 2020 stress replay's data/raw_stress)."""
+    return (_with_extras("prices_daily.csv", cfg, parse_dates=["date"]), _with_extras("assets_universe.csv", cfg),
+            _read("fx_usdcad_daily.csv", cfg, parse_dates=["date"]).set_index("date")["usdcad"])
+
+
+def _files(cfg: Config) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """The harness's own files through the public loaders (one cache, patchable in tests), any other folder apart."""
+    if cfg.data_dir == load_config().data_dir:
+        return prices(), universe(), fx()
+    return _files_at(cfg)
+
+
 @lru_cache(maxsize=4)
 def _panel(cfg: Config) -> pd.DataFrame:
     """adj_close of the whole universe in base currency, on one calendar (cached: every agent reuses it)."""
-    wide = prices().pivot(index="date", columns="ticker", values="adj_close").sort_index()
+    px, uni, fxs = _files(cfg)
+    wide = px.pivot(index="date", columns="ticker", values="adj_close").sort_index()
     if cfg.calendar == "weekdays":
         wide = wide[wide.index.day_of_week < 5]
     if cfg.start:
@@ -137,8 +152,8 @@ def _panel(cfg: Config) -> pd.DataFrame:
     wide = wide.ffill()  # holidays and gaps carry the last price forward; before the first price stays NaN
     # FX: carried forward only. No backward fill: a USD price before the first FX quote has no CAD value (NaN),
     # instead of being converted at a rate from the future.
-    rate = fx().reindex(wide.index.union(fx().index)).sort_index().ffill().reindex(wide.index)
-    ccy = universe().set_index("ticker")["currency"]
+    rate = fxs.reindex(wide.index.union(fxs.index)).sort_index().ffill().reindex(wide.index)
+    ccy = uni.set_index("ticker")["currency"]
     unknown = sorted({f"{t} ({ccy.get(t)})" for t in wide.columns if ccy.get(t) not in ("CAD", "USD")})
     if unknown:  # never leave a price unconverted: it would be read as CAD
         raise ValueError(f"no CAD conversion for: {', '.join(unknown)} (only CAD and USD are supported)")
@@ -162,9 +177,14 @@ def price_panel(tickers=None, cfg: Config | None = None) -> pd.DataFrame:
     return wide.copy()
 
 
-def _cash_returns(index: pd.DatetimeIndex) -> pd.Series:
+def _cash_returns(index: pd.DatetimeIndex, cfg: Config | None = None) -> pd.Series:
     """Daily return of cash at the Bank of Canada overnight target (V39079, % a year), on the given calendar."""
-    m = macro("V39079").set_index("date")["value"].sort_index()
+    if cfg is None or cfg.data_dir == load_config().data_dir:
+        m = macro("V39079")
+    else:
+        m = _read("macro_rates.csv", cfg, parse_dates=["date"])
+        m = m[m.series_id == "V39079"]
+    m = m.set_index("date")["value"].sort_index()
     rate = m.reindex(index.union(m.index)).ffill().reindex(index) / 100
     days = index.to_series().diff().dt.days.fillna(1).clip(lower=1)
     return (1 + rate) ** (days / 365.25) - 1
@@ -180,7 +200,7 @@ def _returns(cfg: Config) -> tuple[pd.DataFrame, tuple]:
         first = r[t].first_valid_index()
         before = r.index < first if first is not None else slice(None)
         try:
-            fill = _cash_returns(r.index) if src == "cash" else r[src] if src in r.columns else None
+            fill = _cash_returns(r.index, cfg) if src == "cash" else r[src] if src in r.columns else None
         except SystemExit:  # macro file missing: no cash stand-in
             fill = None
         if fill is None:

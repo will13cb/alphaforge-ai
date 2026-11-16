@@ -85,7 +85,7 @@ def test_french_recording_language_does_not_change_english_playback(monkeypatch)
     app.button(key="welcome_intro_read").click().run()
     assert not app.exception
     assert len(calls) == 1 and calls[0][1] == "en-CA"
-    assert "See how to invest" in calls[0][0]  # the actual visible introduction
+    assert "Invest within your own limits" in calls[0][0]  # the actual visible introduction
     assert "Answer a few questions" in calls[0][0]
     assert app.get("audio")[0].proto.autoplay is True
     app.toggle(key="large_text").set_value(True).run()

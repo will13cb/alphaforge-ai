@@ -8,6 +8,7 @@ import re
 import pandas as pd
 import streamlit as st
 
+from dh import i18n, stress
 from dh.agents.profiler import SCALE_NOTE
 from dh.data import period_label
 from interface.core import services
@@ -197,6 +198,71 @@ def request(res: dict) -> None:
     st.caption("The choice stays yours: this only shows what each version would have done.")
 
 
+def crash_2020(res: dict, profile: dict) -> None:
+    """“What if March 2020 happened again?”: the proposed options replayed through the COVID crash (decision #50).
+    The options and limits come from 2021-2026; the 2020 prices only replay them, as extra evidence."""
+    if not res.get("strategies"):
+        return
+    st.subheader("What if March 2020 happened again?")
+    st.markdown('<p class="af-muted">Your options were built on 2021-2026. Here, the same weights are replayed '
+                'through the COVID crash (S&P 500 peak to trough, February 19 to March 23, 2020): a sharper, faster '
+                'fall than anything in 2021-2026.</p>', unsafe_allow_html=True)
+    with st.spinner("Replaying March 2020…"):   # first visit on a host: downloads the 2020 prices once
+        out = services.stress_2020(res, profile)
+    rows = [r for r in out["rows"] if r.get("available")]
+    if not rows:
+        reason = out["note"] or next((r.get("reason") for r in out["rows"] if r.get("reason")), "")
+        ui.notice(("Le rejeu de 2020 n'est pas disponible ici" if i18n.lang() == "fr" else
+                   "The 2020 replay is not available here") + (f" : {reason}" if reason else "."), "info")
+        return
+    lang = i18n.lang()
+    first = rows[0]
+    ui.notice(stress.sentence(first, lang), "good" if first.get("within_limit") is not False else "bad")
+    fr = lang == "fr"
+    cols = st.columns(len(rows), gap="small")
+    for col, r in zip(cols, rows):
+        with col:
+            ok = r.get("within_limit")
+            text = f"{r['name']} : " + ("pire baisse en mars 2020" if fr else "worst drop in March 2020")
+            if r.get("deepest_drop_cad"):
+                text += (", environ " if fr else ", about ") + money(r["deepest_drop_cad"])
+            if ok is not None:
+                text += (" — sous votre limite" if ok else " — au-delà de votre limite") if fr else \
+                        (" — within your limit" if ok else " — beyond your limit")
+            ui.metric(col, pct(r["deepest_drop"], 1), text)
+            if r.get("worst_2021_2026") is not None:
+                col.caption((f"À comparer : pire baisse {period_label()} : " if fr else
+                             f"For comparison, worst drop {period_label()}: ") + pct(r["worst_2021_2026"], 1))
+    _crash_chart(rows, (res.get("limits") or {}).get("loss_limit"))
+    with st.expander("How this replay works"):
+        worst = first.get("worst_holdings") or []
+        if worst:
+            st.markdown(("**Ce qui a le plus tiré la première option vers le bas** (part de l'argent × sa propre "
+                         "baisse) : " if fr else
+                         "**What pulled the first option down most** (share of the money × its own fall): ")
+                        + ", ".join(f"{h['ticker']} {pct(h['contribution'], 1)}" for h in worst))
+        st.markdown("\n".join(f"- {a}" for a in first.get("assumptions_fr" if fr else "assumptions", [])))
+        st.caption(f"Source : {first.get('source', '')}. Passé, pas une prévision." if fr else
+                   f"Source: {first.get('source', '')}. Past, not a forecast.")
+
+
+def _crash_chart(rows: list[dict], loss_limit: float | None) -> None:
+    import altair as alt
+    df = pd.concat([pd.DataFrame(r["path"]).assign(option=i18n.tr(r["name"])) for r in rows], ignore_index=True)
+    df["date"] = pd.to_datetime(df["date"])
+    df["change"] = df["value"] - 1
+    base = alt.Chart(df).mark_line().encode(
+        x=alt.X("date:T", title=None),
+        y=alt.Y("change:Q", title=i18n.tr("Change since February 19, 2020"), axis=alt.Axis(format="%")),
+        color=alt.Color("option:N", title=None, legend=alt.Legend(orient="bottom")),
+        tooltip=[alt.Tooltip("date:T"), "option:N", alt.Tooltip("change:Q", format=".1%")])
+    layers = [base]
+    if loss_limit:
+        layers.append(alt.Chart(pd.DataFrame({"y": [-loss_limit], "label": [i18n.tr("your loss limit")]}))
+                      .mark_rule(strokeDash=[6, 4]).encode(y="y:Q", tooltip=["label:N"]))
+    ui.chart(alt.layer(*layers).properties(height=260))
+
+
 def existing(res: dict) -> None:
     """Branch portefeuille_existant: the portfolio the person already owns, reviewed, then rebuilt."""
     r = res.get("existing_review")
@@ -340,6 +406,7 @@ def render() -> None:
     with overview:
         essentials(res, profile)
         request(res)
+        crash_2020(res, profile)
         existing(res)
     with summary:
         explanation(res)

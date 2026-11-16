@@ -6,6 +6,18 @@ written by the engine or the agents (which stays in English) is never half-trans
 """
 
 EXACT = {
+    # ---- “What if March 2020 happened again?” (interface/views/results.py, decision #50) ---------------------
+    "What if March 2020 happened again?": "Et si mars 2020 se répétait ?",
+    "How this replay works": "Comment fonctionne ce rejeu",
+    "Change since February 19, 2020": "Variation depuis le 19 février 2020",
+    "your loss limit": "votre limite de perte",
+    "Replaying March 2020…": "Rejeu de mars 2020…",
+    ('<p class="af-muted">Your options were built on 2021-2026. Here, the same weights are replayed through the COVID '
+     'crash (S&P 500 peak to trough, February 19 to March 23, 2020): a sharper, faster fall than anything in '
+     '2021-2026.</p>'):
+        ('<p class="af-muted">Vos options ont été construites sur 2021-2026. Ici, les mêmes pondérations sont rejouées '
+         'dans le krach de la COVID (du sommet au creux du S&amp;P 500, du 19 février au 23 mars 2020) : une chute plus '
+         'brutale et plus rapide que tout ce qu’on voit en 2021-2026.</p>'),
     # ---- demo app (app/app.py) ----------------------------------------------------------------------------
     "What if I put 10% in Tesla?": "Et si je mettais 10 % dans Tesla ?",
     "How would my strategy have done in 2022?": "Comment ma stratégie se serait-elle comportée en 2022 ?",
@@ -102,7 +114,7 @@ EXACT = {
     "Your results": "Vos résultats",
     "Activity": "Activité",
     "Assistant": "Assistant",
-    "See how to invest, within limits you can explain": "Voyez comment investir, dans des limites que vous pouvez expliquer",
+    "Invest within your own limits, and understand why": "Investissez selon vos propres limites, et comprenez pourquoi",
     "Answer a few questions about your situation. We work out **how much risk you can carry**, propose **up to three simulated ways to invest** that respect it, and explain every number in plain words. Then you can ask questions.":
         "Répondez à quelques questions sur votre situation. Nous établissons **le risque que vous pouvez porter**, proposons **jusqu'à trois façons simulées d'investir** qui le respectent, et expliquons chaque nombre en mots simples. Ensuite, vous pouvez poser vos questions.",
     "Start": "Commencer",

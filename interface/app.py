@@ -37,7 +37,7 @@ SECTIONS = ["Welcome", "Your profile", "Your results", "Activity", "Assistant"]
 
 def welcome() -> None:
     st.markdown('<div class="af-eyebrow">AlphaForge AI &middot; Simulation</div>', unsafe_allow_html=True)
-    title = "See how to invest, within limits you can explain"
+    title = "Invest within your own limits, and understand why"
     introduction = ("Answer a few questions about your situation. We work out **how much risk you can carry**, propose "
                 "**up to three simulated ways to invest** that respect it, and explain every number in plain words. "
                 "Then you can ask questions.")
