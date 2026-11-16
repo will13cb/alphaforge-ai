@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from html import escape
 from pathlib import Path
+import math
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
-W, H = 1440, 900
+W, H = 1440, 1100
 
 C = dict(ink="#111827", mut="#4b5563", line="#9ca3af",
          aws="#ff9900", aws_bg="#fff7ed", aws_fill="#ffedd5", aws_stroke="#c2410c",
@@ -26,17 +28,18 @@ LABELS = {
         host="Streamlit Community Cloud · hébergement (hors AWS)",
         app=["Applications AlphaForge", "interface guidée · démo du jury", "orchestrateur pipeline.py"],
         agents=["4 agents Strands", "Extracteur · Critique", "Explicateur · Analyste"],
-        code=["Code déterministe", "Profileur · Portefeuille", "Gardien : 17 règles"],
+        code=["Code déterministe", "Profileur · Portefeuille · Gardien", "ou obligations à échéance (sans LLM)"],
+        modes=["Mode réellement utilisé", "Bedrock en direct · cache · secours", "Texte FR/EN : faits vérifiés", "S3 indisponible : trace locale tentée"],
         tools="outils = fonctions du code",
-        aws="AWS · us-east-1",
-        bedrock=["Amazon Bedrock", "Claude Opus 5.5", "API Converse + appels d'outils"],
+        aws="AWS · clients us-east-1 par défaut · profil modèle global",
+        bedrock=["Amazon Bedrock", "Claude Opus 5.5", "Converse / ConverseStream + outils"],
         reason="raisonnement + appels d'outils",
         s3="Amazon S3 · un compartiment",
         raw=["raw/", "données de marché, obligations"],
-        traces=["traces/", "un JSON par exécution (audit)"],
-        voice=["voice/", "audio chiffré, supprimé après"],
-        first="données au 1er démarrage",
-        every="trace de chaque exécution",
+        traces=["traces/", "JSON : analyses et suivis"],
+        voice=["voice/", "audio temporaire · nettoyage"],
+        first="au besoin · catalogue distinct",
+        every="trace · secours local si échec",
         transcribe=["Amazon Transcribe", "parole → texte · fr-CA, en-CA"],
         polly=["Amazon Polly", "texte → parole · voix neuronales"],
         speech="voix (facultative)",
@@ -57,17 +60,18 @@ LABELS = {
         host="Streamlit Community Cloud · hosting (outside AWS)",
         app=["AlphaForge apps", "guided interface · jury demo", "orchestrator pipeline.py"],
         agents=["4 Strands agents", "Extractor · Critic", "Explainer · Analyst"],
-        code=["Deterministic code", "Profiler · Portfolio", "Guardian: 17 rules"],
+        code=["Deterministic code", "Profiler · Portfolio · Guardian", "or held-to-maturity path (no LLM)"],
+        modes=["Actual execution mode", "Live Bedrock · cache · fallback", "French/English text: checked facts", "S3 unavailable: local trace attempted"],
         tools="tools = code functions",
-        aws="AWS · us-east-1",
-        bedrock=["Amazon Bedrock", "Claude Opus 5.5", "Converse API + tool calls"],
+        aws="AWS · us-east-1 clients by default · global model profile",
+        bedrock=["Amazon Bedrock", "Claude Opus 5.5", "Converse / ConverseStream + tools"],
         reason="reasoning + tool calls",
         s3="Amazon S3 · one bucket",
         raw=["raw/", "market data, bonds"],
-        traces=["traces/", "one JSON per run (audit)"],
-        voice=["voice/", "encrypted audio, deleted after"],
-        first="data on first start",
-        every="trace of every run",
+        traces=["traces/", "JSON: analyses and follow-ups"],
+        voice=["voice/", "temporary audio · cleanup"],
+        first="as needed · separate catalogue",
+        every="trace · local fallback on failure",
         transcribe=["Amazon Transcribe", "speech → text · fr-CA, en-CA"],
         polly=["Amazon Polly", "text → speech · neural voices"],
         speech="voice (optional)",
@@ -110,12 +114,22 @@ def zone(x, y, w, h, label, bg, stroke, dash=""):
 
 def arrow(d, label=None, lx=0, ly=0, width=2.0, color=None, both=False, dash="", anchor="middle"):
     color = color or C["mut"]
-    m = ' marker-end="url(#a)"' + (' marker-start="url(#as)"' if both else "")
-    out = (f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{width}"{m}'
+    out = (f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{width}"'
            f'{f" stroke-dasharray={chr(34)}{dash}{chr(34)}" if dash else ""}/>')
+    points = [float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", d)]
+    ends = [(points[-2:], points[-4:-2])]
+    if both:
+        ends.append((points[:2], points[2:4]))
+    for (tx, ty), (px, py) in ends:
+        angle = math.atan2(ty-py, tx-px)
+        bx, by = tx-10*math.cos(angle), ty-10*math.sin(angle)
+        coords = f"{tx},{ty} {bx+4*math.sin(angle):.1f},{by-4*math.cos(angle):.1f} {bx-4*math.sin(angle):.1f},{by+4*math.cos(angle):.1f}"
+        out += f'<polygon points="{coords}" fill="{color}"/>'
     if label:
-        out += (f'<text x="{lx}" y="{ly}" text-anchor="{anchor}" font-size="13.5" fill="{C["ink"]}" '
-                f'paint-order="stroke" stroke="#ffffff" stroke-width="5" stroke-linejoin="round">{escape(label)}</text>')
+        tw = len(label)*7 + 14
+        left = lx if anchor == "start" else lx-tw/2
+        out += f'<rect x="{left:.0f}" y="{ly-14}" width="{tw}" height="20" rx="3" fill="#ffffff"/>'
+        out += (f'<text x="{lx}" y="{ly}" text-anchor="{anchor}" font-size="13.5" fill="{C["ink"]}">{escape(label)}</text>')
     return out
 
 
@@ -138,16 +152,18 @@ def svg(lang: str) -> str:
     p.append(f'<text x="40" y="72" font-size="15.5" fill="{C["mut"]}">{escape(L["subtitle"])}</text>')
 
     # zones
-    p.append(zone(220, 100, 420, 530, L["host"], C["host_bg"], C["host_stroke"]))
-    p.append(zone(690, 100, 710, 530, L["aws"], C["aws_bg"], C["aws"]))
+    p.append(zone(220, 100, 420, 680, L["host"], C["host_bg"], C["host_stroke"]))
+    p.append(zone(690, 100, 710, 680, L["aws"], C["aws_bg"], C["aws"]))
     p.append(zone(1040, 140, 340, 330, L["s3"], C["s3_bg"], C["s3_stroke"]))
-    p.append(zone(220, 670, 1180, 150, L["team"], C["host_bg"], C["host_stroke"]))
+    p.append(zone(220, 870, 1180, 150, L["team"], C["host_bg"], C["host_stroke"]))
 
     # client + hosted app
     p.append(box(14, 330, 196, 76, L["client"], "plain", rx=38))
     p.append(box(260, 150, 340, 96, L["app"], "plain"))
     p.append(box(260, 300, 340, 96, L["agents"], "agent"))
     p.append(box(260, 470, 340, 96, L["code"], "code"))
+    p.append(box(260, 620, 340, 126, L["modes"], "plain", size=15))
+    p.append(arrow("M430,566 L430,614"))
     p.append(arrow("M210,368 L254,368", both=True))
     p.append(arrow("M430,246 L430,294"))
     p.append(arrow("M300,246 C240,300 240,420 300,464"))
@@ -155,7 +171,7 @@ def svg(lang: str) -> str:
 
     # AWS
     p.append(box(730, 290, 270, 116, L["bedrock"], "aws", size=17))
-    p.append(arrow("M600,348 L724,348", width=4, color=C["agent_stroke"]))
+    p.append(arrow("M600,348 L724,348", width=4, color=C["agent_stroke"], both=True))
     p.append(f'<text x="662" y="334" text-anchor="middle" font-size="13.5" font-weight="600" fill="{C["agent_stroke"]}">'
              f'{escape(L["reason"].split(" + ")[0])}</text>')
     p.append(f'<text x="662" y="372" text-anchor="middle" font-size="13.5" font-weight="600" fill="{C["agent_stroke"]}">'
@@ -173,20 +189,20 @@ def svg(lang: str) -> str:
     p.append(box(1060, 520, 300, 76, L["agentcore"], "planned"))
 
     # team
-    p.append(box(250, 720, 230, 72, L["up"], "plain", size=15))
-    p.append(box(510, 720, 270, 72, L["warm"], "plain", size=15))
-    p.append(box(810, 720, 230, 72, L["backup"], "plain", size=15))
-    p.append(box(1080, 720, 290, 72, L["repo"], "plain", size=15))
-    p.append(arrow("M1040,756 L1074,756"))
-    p.append(arrow("M1225,720 L1225,650 L630,650 L630,636", L["deploy"], 930, 643))
+    p.append(box(250, 920, 230, 72, L["up"], "plain", size=15))
+    p.append(box(510, 920, 270, 72, L["warm"], "plain", size=15))
+    p.append(box(810, 920, 230, 72, L["backup"], "plain", size=15))
+    p.append(box(1080, 920, 290, 72, L["repo"], "plain", size=15))
+    p.append(arrow("M1040,956 L1074,956"))
+    p.append(arrow("M1225,920 L1225,830 L630,830 L630,786", L["deploy"], 930, 823))
 
     # legend
     lx = 40
     for kind, text in L["legend"]:
         fill, stroke, dash = STYLE[kind]
-        p.append(f'<rect x="{lx}" y="848" width="18" height="14" rx="3" fill="{fill}" stroke="{stroke}" stroke-width="1.5"'
+        p.append(f'<rect x="{lx}" y="1048" width="18" height="14" rx="3" fill="{fill}" stroke="{stroke}" stroke-width="1.5"'
                  f'{f" stroke-dasharray={chr(34)}3 2{chr(34)}" if dash else ""}/>'
-                 f'<text x="{lx + 24}" y="860" font-size="13" fill="{C["mut"]}">{escape(text)}</text>')
+                 f'<text x="{lx + 24}" y="1060" font-size="13" fill="{C["mut"]}">{escape(text)}</text>')
         lx += 24 + 7.2 * len(text) + 22
 
     defs = (f'<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse">'
@@ -194,7 +210,7 @@ def svg(lang: str) -> str:
             f'<marker id="as" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto-start-reverse">'
             f'<path d="M0,0 L10,5 L0,10 z" fill="{C["mut"]}"/></marker></defs>')
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
-            f'font-family="Inter, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" '
+            f'font-family="DejaVu Sans" role="img" '
             f'aria-label="{escape(L["title"])}"><rect width="{W}" height="{H}" fill="#ffffff"/>{defs}'
             + "".join(p) + "</svg>\n")
 

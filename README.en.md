@@ -9,7 +9,7 @@ The tool shows him the rule, the number and the source, then leaves the decision
 
 > **▶ Try the app: https://alphaforge-ai-wj.streamlit.app/** · French by default, Français ⇄ English switch
 >
-> [One-pager](deliverables/ONE_PAGER.en.md) · [Technical doc](deliverables/TECHNICAL_DOC.en.md) ·
+> [One-pager (PDF)](deliverables/ONE_PAGER.en.pdf) · [Text](deliverables/ONE_PAGER.en.md) · [Technical doc](deliverables/TECHNICAL_DOC.en.md) ·
 > [Video script](deliverables/VIDEO_SCRIPT.en.md) · [AWS architecture](aws/AWS_ARCHITECTURE.en.md) ·
 > [Agent architecture](aws/architecture.en.md) ·
 > *Version française : [`README.md`](README.md)*

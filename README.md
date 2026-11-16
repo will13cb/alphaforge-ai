@@ -9,7 +9,7 @@ L'outil lui montre la règle, le nombre et la source, puis lui laisse la décisi
 
 > **▶ Essayer l'application : https://alphaforge-ai-wj.streamlit.app/** · français par défaut, bouton Français ⇄ English
 >
-> [Fiche d'une page](deliverables/ONE_PAGER.md) · [Documentation technique](deliverables/TECHNICAL_DOC.md) ·
+> [Fiche d'une page (PDF)](deliverables/ONE_PAGER.pdf) · [Texte](deliverables/ONE_PAGER.md) · [Documentation technique](deliverables/TECHNICAL_DOC.md) ·
 > [Évaluation chiffrée](deliverables/EVALUATION.md) · [Script de la vidéo](deliverables/VIDEO_SCRIPT.md) · [Architecture AWS](aws/AWS_ARCHITECTURE.md) ·
 > [Architecture des agents](aws/architecture.md) ·
 > *English: [`README.en.md`](README.en.md)*

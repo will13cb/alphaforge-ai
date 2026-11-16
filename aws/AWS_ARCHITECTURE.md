@@ -1,64 +1,81 @@
 # AlphaForge AI : architecture AWS
 
-**En une phrase :** quatre agents Strands raisonnent avec **Claude Opus 5.5 sur Amazon Bedrock**, le code
-déterministe décide des limites et des nombres, et **Amazon S3** garde la preuve de chaque exécution; **Amazon
-Transcribe** et **Amazon Polly** ajoutent la voix (facultative). Tout est dans la région **us-east-1**.
+L’application **Streamlit est hébergée hors AWS**. Son processus Python orchestre les agents avec le SDK
+**Strands**, appelle **Amazon Bedrock** pour les tâches de langage, et utilise **Amazon S3** pour les données et
+les traces. **Amazon Transcribe** et **Amazon Polly** ajoutent une assistance vocale facultative. Les calculs
+financiers et les règles restent dans le code déterministe de l’application.
 
-*Image : [SVG](AWS_ARCHITECTURE.svg) · [PNG](AWS_ARCHITECTURE.png) (générées par `scripts/build_aws_diagram.py`) ·
-architecture des agents : [`architecture.md`](architecture.md) · English: [`AWS_ARCHITECTURE.en.md`](AWS_ARCHITECTURE.en.md)*
+Les clients AWS utilisent `AWS_REGION`, avec **`us-east-1` par défaut**. Le modèle par défaut est le profil
+d’inférence **global** `global.anthropic.claude-opus-5-5` : la région du client ne garantit donc pas que toute
+l’inférence y reste. Le modèle peut être remplacé par configuration. **AgentCore Runtime n’est pas déployé** :
+`src/dh/agents/pipeline.py` orchestre les étapes dans l’hôte Streamlit.
 
-![Architecture AWS d'AlphaForge AI](AWS_ARCHITECTURE.svg)
+[SVG](AWS_ARCHITECTURE.svg) · [PNG](AWS_ARCHITECTURE.png) · [English](AWS_ARCHITECTURE.en.md) ·
+[Architecture des agents](architecture.md). Images générées par `scripts/build_aws_diagram.py`.
 
-## Ce que fait chaque service
+![Architecture AWS d’AlphaForge AI](AWS_ARCHITECTURE.svg)
 
-| Service | Rôle dans AlphaForge | Appel | Données | Quand |
-|---|---|---|---|---|
-| **Amazon Bedrock** | fait raisonner les 4 agents : l'**Extracteur** lit une description libre, le **Critique** enquête avant d'objecter (≤ 6 appels d'outils), l'**Explicateur** rédige la réponse, l'**Analyste** répond aux questions de suivi | `bedrock-runtime` Converse (via le `BedrockModel` du SDK Strands), modèle `global.anthropic.claude-opus-5-5` | entrée : faits préparés par le code (profil, limites, stratégies); sortie : texte et appels d'outils, vérifiés par le code | à chaque analyse et chaque question |
-| **Strands Agents SDK** (AWS, open source) | boucle d'agent : donne à chaque agent ses outils déterministes (corrélations, crise de 2022, part de risque, « et si »…), plafonne et trace les appels | bibliothèque Python dans l'application | outils JSON en entrée et en sortie | à chaque appel d'agent |
-| **Amazon S3** · `traces/` | **preuve d'audit** : la trace complète de chaque exécution (profil, limites, stratégies, verdicts du Gardien, appels d'outils, texte final), jamais le raisonnement brut du modèle | `PutObject` | un JSON par exécution, des deux applications et de la ligne de commande | à la fin de chaque analyse |
-| **Amazon S3** · `raw/` | **données** de l'application hébergée : prix des 31 actifs, change, taux, avoirs des FNB, catalogue d'obligations sourcé | `GetObject` (lecture), `PutObject` depuis `make data-up` | CSV publics documentés (`data/README.md`); les données ne vont jamais dans git | au premier démarrage de l'application |
-| **Amazon S3** · `voice/` | **tampon de la voix** : l'audio dicté, puis sa transcription | `PutObject`, `GetObject`, `DeleteObject` | audio WAV chiffré (AES-256), **supprimé** dès la transcription lue | seulement si la voix est activée |
-| **Amazon Transcribe** | dicter sa situation au lieu de la taper, en français ou en anglais du Canada | `StartTranscriptionJob`, `GetTranscriptionJob` | lit `voice/…/input.wav`, écrit `voice/…/transcript.json` | seulement si `AF_VOICE_ENABLED=1` |
-| **Amazon Polly** | lire la réponse à voix haute | `SynthesizeSpeech`, moteur neuronal (Gabrielle fr-CA, Joanna en) | texte de la réponse déjà vérifié par le Gardien | à la demande du client |
-| **AWS STS** | vérifier les identifiants avant une démonstration | `GetCallerIdentity` (`make bedrock-check`) | aucune | avant la démonstration |
-| **Bedrock AgentCore Runtime** | héberger le pipeline comme agent géré | — | — | **prévu, non déployé** : l'orchestration reste dans `pipeline.py` |
+## Services et échanges réels
 
-## Le parcours d'une analyse
+| Composant | Fonction et données | Opérations et déclenchement |
+|---|---|---|
+| **Amazon Bedrock** | Quatre agents Strands : **Extracteur** (texte → faits), **Critique** (outils et objections), **Explicateur** (texte à partir de faits vérifiés), **Analyste** (questions et simulations « et si »). Les outils déterministes exécutent les calculs. | `bedrock-runtime` **Converse / ConverseStream** via `BedrockModel`; mode `LLM_PROVIDER=bedrock` et absence de cache correspondant utilisable. Le formulaire guidé ne nécessite pas l’Extracteur. |
+| **Strands Agents SDK** | Bibliothèque Python dans l’application : boucle d’agent et outils structurés, pas un service d’hébergement. | Appels Bedrock et fonctions Python locales; outils propres à chaque agent. |
+| **S3 `raw/`** | Prix, change, taux, avoirs des FNB; catalogues et fondamentaux supplémentaires si configurés. Copie locale dans `data/raw/`. | `GetObject` via `download_file` si les fichiers requis manquent et `AF_AUTO_DATA=1`. `make data-up` publie les fichiers préparés via `upload_file`. |
+| **S3 `raw/fixed_income/`** | `instruments.csv`, `reference_snapshot.json`, `sources_metadata.csv`, `quality_report.csv` : instruments, contexte daté / change, sources et rejets. | `ensure_fixed_income()` tente un chargement indépendant si le catalogue local manque, avec `AF_AUTO_DATA=1` et `S3_BUCKET`; aucune reconstruction des prix historiques requise. |
+| **S3 `traces/YYYY-MM-DD/<run_id>.json`** | Profil, limites, stratégies ou scénario obligataire, contrôles, explication et échanges observables. Les suivis peuvent référencer l’exécution précédente; aucun raisonnement interne brut du modèle. | `PutObject` lors de l’enregistrement d’une analyse ou d’un suivi; repli local en cas d’échec. |
+| **S3 `voice/<uuid>/`** | `input.wav` et `transcript.json`, tampon temporaire de dictée. Le téléversement audio demande le chiffrement serveur `AES256`. | `PutObject`, `GetObject`, `DeleteObject` pour une dictée explicitement envoyée; nettoyage tenté après lecture, annulation ou erreur terminale. |
+| **Amazon Transcribe** | Transcription **par lot** d’un enregistrement court, `fr-CA` ou `en-CA`; texte à relire avant soumission au moteur financier. | `StartTranscriptionJob`, `GetTranscriptionJob`, `DeleteTranscriptionJob`; nécessite `AF_VOICE_ENABLED=1`, stockage et permissions. Ce n’est pas une conversation en continu. |
+| **Amazon Polly** | Lecture du texte affiché, sans réécriture financière; moteur **neural**, Gabrielle en français canadien et Joanna en anglais. Audio en mémoire de session. | `SynthesizeSpeech` à la demande : MP3 pour un passage court; passages PCM assemblés en WAV pour un texte long. Indépendant de `LLM_PROVIDER`. |
+| **AWS STS** | Diagnostic des identifiants configurés. | `GetCallerIdentity` dans `make bedrock-check`; pas une étape de chaque analyse. |
 
-1. Le client répond aux questions guidées, écrit sa situation ou la **dicte** (Amazon Transcribe, par `voice/`).
-2. L'**Extracteur** (Bedrock) transforme une description libre en profil; le code garde un nombre seulement s'il
-   figure dans le texte du client.
-3. Le **code** calcule les limites, construit jusqu'à 3 stratégies et les soumet au **Gardien** : aucun appel à AWS,
-   aucun nombre décidé par le modèle.
-4. Le **Critique** (Bedrock + outils Strands) vérifie les stratégies; une correction relance tout le calcul.
-5. L'**Explicateur** (Bedrock) écrit la réponse avec des repères que le code remplit; le Gardien vérifie le texte.
-6. La trace complète part dans **S3 `traces/`**. Le client peut écouter la réponse (Amazon Polly) ou poser une
-   question à l'**Analyste** (Bedrock), qui relance tout le pipeline.
+## Deux parcours financiers distincts
 
-## Sécurité et données
+**Portefeuille de marché.** Le formulaire fournit les faits; un texte libre peut passer par l’Extracteur. Le
+Profiler calcule les limites, les données de marché alimentent les mesures et Portfolio propose jusqu’à trois
+stratégies. Les contrôles déterministes et le Gardien filtrent les résultats. Le Critique peut demander des
+vérifications et une révision qui relance calculs et contrôles. L’Explicateur utilise les faits calculés et des
+repères numériques remplis par le code; les vérifications peuvent remplacer son texte par un gabarit. L’Analyste
+choisit des outils pour les suivis; seuls les outils de scénario relancent le pipeline.
 
-- **Aucun identifiant dans le dépôt :** les clés AWS vivent dans les secrets de Streamlit Community Cloud ou dans le
-  profil AWS local; `.env` n'est jamais versionné, et un garde-fou bloque leur lecture et leur publication.
-- **Profils fictifs seulement :** aucune donnée personnelle réelle; simulation, aucune transaction.
-- **Moindre conservation :** l'audio est chiffré au repos et supprimé dès la transcription lue; les traces ne
-  contiennent jamais le raisonnement brut du modèle.
-- **Données publiques documentées :** source, date, traitement et conditions de chaque fichier dans `data/README.md`.
+**Obligations détenues jusqu’à l’échéance (`fixed_rate`).** Une branche séparée recherche un instrument dans le
+catalogue Canada / États-Unis et calcule les flux sous les hypothèses affichées. Elle **ne passe pas par** les
+stratégies de marché, leur Gardien, le Critique ni l’Explicateur Bedrock. Le résultat est un scénario avec
+avertissement / devis à confirmer, ou une absence de correspondance, pas une approbation par les contrôles de
+portefeuille. L’explication est déterministe. Sans catalogue local, `bond_rates.py` consulte les sources publiques
+(Banque du Canada, TreasuryDirect); un instantané daté est utilisé si disponible lors d’un échec. Taux de référence
+et résultats d’enchères ne sont pas des offres exécutables.
 
-## Résilience : sans AWS, l'application répond encore
+## Modes et défaillances visibles
 
-| Si… | Alors |
-|---|---|
-| Bedrock ne répond pas | l'agent bascule vers sa version déterministe (gabarit vérifié, Critique à règles), et la trace le dit |
-| S3 est inaccessible | la trace est écrite localement (`outputs/traces/`); l'application le signale |
-| le compte AWS de l'événement ferme (lundi) | les réponses de Claude pour les clients de démonstration sont dans `cache/` (versionné) : l'application les **rejoue** et l'indique à l'écran; `make backup` a déjà copié les traces de S3 dans le dépôt |
-| la voix n'est pas configurée | le client tape; rien d'autre ne change |
+- `LLM_PROVIDER=mock` est le mode hors ligne par défaut. Des entrées correspondantes dans `cache/` et `.cache/`
+  peuvent aussi éviter Bedrock en mode connecté. Une réponse enregistrée ne prouve pas une connexion AWS actuelle.
+  `make warm` prépare des réponses; `make backup` peut exporter les traces. Ces commandes ne sont pas automatiques.
+- L’Extracteur accepte les faits explicites en français et en anglais, y compris les nombres français. Le quiz
+  facultatif est conservé seulement si les réponses sont écrites et valides. Une erreur Bedrock déclenche le parseur
+  local; des faits explicites peuvent compléter une extraction de modèle ou de cache. Le résultat expose `source`,
+  `failure_type` et `supplemented_fields`; l’écran du profil distingue modèle, cache et parseur.
+- Critique, Explicateur et Analyste ont des replis déterministes, aux capacités limitées pour les questions libres.
+  Leurs sources et notes figurent dans les résultats / traces; une configuration « live » seule ne décrit pas
+  l’origine réelle de chaque réponse.
+- Si S3 est absent ou inaccessible, `tracestore` tente `outputs/traces/`. Si l’écriture locale échoue aussi,
+  l’application peut continuer **sans trace persistée** : le chemin sûr marque `stored="none"`; le service de
+  l’interface intercepte et journalise aussi les erreurs d’enregistrement. La persistance n’est pas garantie.
+- Sans données de marché locales, le démarrage autorisé tente S3 puis une reconstruction depuis les sources
+  publiques. Un échec peut rendre l’analyse de marché indisponible; le mode obligataire a son propre chemin de données.
 
-## Pourquoi cette architecture
+## Conservation et configuration
 
-- **Bedrock pour juger, le code pour décider.** Un agent choisit quoi vérifier et comment l'expliquer; il ne fixe
-  jamais une limite ni un nombre. L'ordre des étapes est fixé par `pipeline.py`, pour que le Gardien ne puisse pas
-  être contourné (`notes/decisions.md` #14).
-- **S3 comme registre d'audit.** Chaque recommandation simulée peut être rejouée et expliquée après coup, comme le
-  dossier qu'un conseiller doit conserver.
-- **AgentCore reporté, assumé.** Héberger le pipeline comme agent géré était prévu; nous avons privilégié un pipeline
-  vérifiable et testé (16/16 profils de test, 400+ tests hors ligne) plutôt qu'un déploiement de dernière minute.
+Les identifiants sont configurés hors du dépôt, via les secrets de l’hôte ou la chaîne d’identifiants AWS; `.env`
+n’est pas versionné. `S3_BUCKET`, les permissions S3 / Bedrock / voix et, au besoin, un jeton de session valide
+restent des prérequis d’exploitation. Ce document décrit le code, pas la disponibilité actuelle de ces accès.
+
+L’application est destinée aux **profils fictifs**, sans transaction ni conseil financier personnalisé. Les textes
+et profils saisis peuvent figurer dans les traces; le code ne constitue pas un mécanisme d’anonymisation. Les
+sources et limites des fichiers publics figurent dans [`data/README.md`](../data/README.md).
+
+La suppression des objets vocaux et des métadonnées de tâche est **best effort**. Une tâche Transcribe en cours ne
+peut pas être arrêtée et peut écrire après une annulation. Configurer une règle S3 expirant **uniquement `voice/`
+après un jour** pour les sessions abandonnées, pannes et nettoyages échoués; le code ne l’installe pas. Des tâches
+terminées peuvent nécessiter un nettoyage opérateur. Les transcriptions confirmées suivent la conservation normale
+des textes et traces. Voir [`voice-accessibility.md`](voice-accessibility.md) pour les permissions et le parcours vocal.
