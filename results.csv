@@ -324,3 +324,13 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1115-210036-william-31ab,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_stress_2022,-0.0701,Income / dividends: less in stocks
 1115-210036-william-49e8,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_ann_vol,0.0341,Income / dividends: less in stocks
 1115-210036-william-11e5,2026-11-15T21:00:36+00:00,William Caron-Bastarache,9a2febb,persona-strategies,robert,income_prob_loss,0.0175,Income / dividends: less in stocks
+1116-000618-claude-17be,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,scenarios_rate,1,scripts/evaluate.py
+1116-000618-claude-811a,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,fidelity,1,scripts/evaluate.py
+1116-000618-claude-c89c,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,inject_caught_g12,1,scripts/evaluate.py
+1116-000618-claude-bf3c,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,inject_caught_strict,1,scripts/evaluate.py
+1116-000618-claude-fd81,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,traps_pass,10,scripts/evaluate.py
+1116-000618-claude-76ae,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_window_0_1_mean,0.618125,scripts/evaluate.py
+1116-000618-claude-9a11,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_bootstrap_alpha_10_0_1_mean,0.19,scripts/evaluate.py
+1116-000618-claude-6086,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_bootstrap_alpha_5_0_05_mean,0.143125,scripts/evaluate.py
+1116-000618-claude-1227,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_bootstrap_alpha_2_5_0_025_mean,0.138125,scripts/evaluate.py
+1116-000618-claude-6599,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_range_low_mean,0.105625,scripts/evaluate.py

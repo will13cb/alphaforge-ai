@@ -609,7 +609,7 @@ strategy:
 
 **Results on the starter data** (logged in `results.csv`, experiments `proposal-*` and `request-*`,
 `experiments/data/persona_numbers.py`):
-- **Robert, 25% TSLA as asked:** worst drop −26.5%, i.e. 106,121 $ against his 60,000 $ limit; 9 checks fail
+- **Robert, 25% TSLA as asked:** worst drop −26.5%, i.e. 106,121 $ against his 60,000 $ limit; 9 checks fail (7 since #46: C1, D2, F2, G4, G6, G7, G9; D1 and G17 no longer fail separately)
   (C1, D1, D2, F2, G4, G6, G7, G9, G17).
 - **Robert, TSLA at 3.1% (fits):** worst drop −9.6%, i.e. 38,241 $; nothing fails.
 - **Amira, NVDA 20%:** fits at 15.8%.
@@ -698,7 +698,7 @@ questions ("what if I put 10% in NVDA?", "what if my horizon were 8 years?", "wh
 what to check), and re-running the pipeline keeps "code enforces" true: the agent never computes a number.
 
 **Examples (starter data, mock analyst):**
-- **Robert, "25% in TSLA?"** → worst drop −26.5%, about 106,121 $ against his 60,000 $ limit; 9 rules fail; the version
+- **Robert, "25% in TSLA?"** → worst drop −26.5%, about 106,121 $ against his 60,000 $ limit; 9 rules fail (7 since #46); the version
   that fits holds 3.1%.
 - **Robert, "horizon 10 years?"** → stocks 15% → 60%.
 - **Robert, "lose 25%?"** → nothing moves, and the answer says why: his situation caps the loss limit, and his horizon

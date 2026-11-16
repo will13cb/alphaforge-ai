@@ -198,7 +198,7 @@ Chaque exécution est enregistrée dans S3.
 
 ## 5. Validation, limites, améliorations
 
-**Validation.**
+**Validation.** Évaluation chiffrée complète sur une page : [`EVALUATION.md`](EVALUATION.md) (`scripts/evaluate.py`, `results.csv`, expérience `evaluation`) : 16/16 profils, 217/217 nombres du texte client vérifiés, 200/200 faux nombres détectés, 10/10 cas pièges, et le calibrage honnête du modèle de perte.
 - 16 profils de test avec verdicts attendus (`make scenarios`) : 16/16 (`results.csv`). Ils comprennent des échecs
   voulus (une stratégie qui applique Tesla en douce, une explication avec un nombre inventé, un avertissement absent)
   pour montrer que le Gardien les attrape. Ils testent les règles, pas de vrais portefeuilles (#7).
