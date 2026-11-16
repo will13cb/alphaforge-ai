@@ -6,6 +6,7 @@ from html import escape
 
 import streamlit as st
 
+from dh.i18n import tr
 from interface.ui import components as ui
 from interface.ui import flow
 
@@ -38,16 +39,16 @@ def live_run():
             events.append(step)
             graph.markdown(flow.svg(events, caption=_short(step.get("summary", ""))), unsafe_allow_html=True)
             feed.markdown("".join(event_html(s) for s in events), unsafe_allow_html=True)
-            status.update(label=f"{step['agent']} completed a hand-off · {len(events)} recorded")
+            status.update(label=tr(f"{step['agent']} completed a hand-off · {len(events)} recorded"))
 
         try:
             yield on_step
         except BaseException:
-            status.update(label="Analysis interrupted · completed steps are shown below", state="error", expanded=True)
+            status.update(label=tr("Analysis interrupted · completed steps are shown below"), state="error", expanded=True)
             raise
         else:
             graph.markdown(flow.svg(events, finished=True), unsafe_allow_html=True)
-            status.update(label=f"Analysis complete · {len(events)} hand-offs recorded", state="complete", expanded=False)
+            status.update(label=tr(f"Analysis complete · {len(events)} hand-offs recorded"), state="complete", expanded=False)
 
 
 def summary(res: dict) -> None:
@@ -111,3 +112,4 @@ def render() -> None:
         st.dataframe(universe, hide_index=True, width="stretch")
     except (services.UserError, services.InternalError) as e:
         ui.notice(str(e), "warn")
+

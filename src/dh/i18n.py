@@ -27,7 +27,8 @@ STATE_KEY = "af_lang"
 _PHRASE_RE = re.compile("|".join(re.escape(k) for k in sorted(PHRASES, key=len, reverse=True))) if PHRASES else None
 _EXACT_STRIPPED = {k.strip(): v for k, v in EXACT.items()}
 _SENTENCES = [(re.compile(p), r) for p, r in SENTENCES]
-_ALL_WORDS = {**WORDS, **PHRASES}
+_INLINE_FIELDS = {"name", "ticker", "weight", "share", "value", "date", "text", "status", "rule", "detail", "asset_class"}
+_ALL_WORDS = {**{k: v for k, v in EXACT.items() if k not in _INLINE_FIELDS}, **WORDS, **PHRASES}
 _WORDS_RE = re.compile("|".join(
     (r"\b" if k[:1].isalnum() else "") + re.escape(k) + (r"\b" if k[-1:].isalnum() else "")
     for k in sorted(_ALL_WORDS, key=len, reverse=True)))
@@ -71,6 +72,14 @@ def _fr_text(t: str) -> str:
     """French for text outside HTML tags: engine sentences, then known phrases and words, then French number style."""
     if not t.strip():
         return t
+    if "`" in t:
+        return "".join(part if part.startswith("`") else _fr_text(part)
+                       for part in re.split(r"(`[^`]*`)", t))
+    core = t.strip()
+    if core in _EXACT_STRIPPED:
+        return t.replace(core, french_numbers(_EXACT_STRIPPED[core]), 1)
+    t = re.sub(r"\bOption (\d+) of (\d+)", r"Option \1 sur \2", t)
+    t = re.sub(r"\b(\d+) ways? to invest within these limits", r"\1 façons d’investir selon vos limites", t)
     for rx, rep in _SENTENCES:
         t = rx.sub(rep, t)
     t = _WORDS_RE.sub(lambda m: _ALL_WORDS[m.group(0)], t)
@@ -154,6 +163,89 @@ def _wrap_write(fn):
     return w
 
 
+def chart_spec(spec: dict) -> dict:
+    """French chart labels/locale in a display copy; field names and numeric data stay intact."""
+    if lang() != "fr":
+        return spec
+    def text(value):
+        if isinstance(value, str):
+            return tr(value)
+        if isinstance(value, list):
+            return [text(v) for v in value]
+        if isinstance(value, dict):
+            return {k: text(v) if k in ("text", "subtitle") else v for k, v in value.items()}
+        return value
+    def records(rows):
+        return [{k: tr(v) if isinstance(v, str) else v for k, v in row.items()}
+                if isinstance(row, dict) else row for row in rows]
+    def walk(value):
+        if isinstance(value, dict):
+            out = {}
+            for k, v in value.items():
+                if k in ("title", "subtitle", "text"):
+                    out[k] = text(v)
+                elif k == "datasets" and isinstance(v, dict):
+                    out[k] = {name: records(rows) for name, rows in v.items()}
+                elif k == "values" and isinstance(v, list):
+                    out[k] = records(v)
+                elif k in ("sort", "domain") and isinstance(v, list):
+                    out[k] = [tr(x) if isinstance(x, str) else x for x in v]
+                else:
+                    out[k] = walk(v)
+            return out
+        return [walk(v) for v in value] if isinstance(value, list) else value
+    out = walk(spec)
+    out.setdefault("config", {})["locale"] = {
+        "number": {"decimal": ",", "thousands": "\u202f", "grouping": [3], "currency": ["", " $"], "percent": "\u202f%"},
+        "time": {"dateTime": "%A, le %e %B %Y, %X", "date": "%d/%m/%Y", "time": "%H:%M:%S", "periods": ["AM", "PM"],
+                 "days": ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+                 "shortDays": ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+                 "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+                 "shortMonths": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "août", "sept.", "oct.", "nov.", "déc."]}}
+    return out
+
+
+def _table_text(value):
+    """Translate displayed headings/cells without changing the caller's data or numbers."""
+    if lang() != "fr":
+        return value
+    import pandas as pd
+    if isinstance(value, pd.DataFrame):
+        shown = value.copy().map(lambda v: tr(v) if isinstance(v, str) else v)
+        shown.columns = [tr(c) for c in shown.columns]
+        shown.index = [tr(v) if isinstance(v, str) else v for v in shown.index]
+        return shown
+    if isinstance(value, list) and value and all(isinstance(row, dict) for row in value):
+        return _table_text(pd.DataFrame(value))
+    if isinstance(value, pd.Series):
+        shown = value.copy().map(lambda v: tr(v) if isinstance(v, str) else v)
+        shown.name = tr(shown.name)
+        return shown
+    return value
+
+
+def _wrap_table(fn):
+    @functools.wraps(fn)
+    def w(self, *args, **kwargs):
+        if args:
+            args = (_table_text(args[0]),) + args[1:]
+        if "data" in kwargs:
+            kwargs["data"] = _table_text(kwargs["data"])
+        return fn(self, *args, **kwargs)
+    return w
+
+
+def _wrap_metric(fn):
+    @functools.wraps(fn)
+    def w(self, *args, **kwargs):
+        args = tuple(tr(v) if i < 3 else v for i, v in enumerate(args))
+        for key in ("label", "value", "delta", "help"):
+            if key in kwargs:
+                kwargs[key] = tr(kwargs[key])
+        return fn(self, *args, **kwargs)
+    return w
+
+
 def install() -> None:
     """Wrap Streamlit once per process (idempotent)."""
     import streamlit as st
@@ -171,10 +263,14 @@ def install() -> None:
         DG.tabs = _wrap_tabs(DG.tabs)
     if hasattr(DG, "write"):
         DG.write = _wrap_write(DG.write)
+    for name in ("table", "dataframe"):
+        if hasattr(DG, name):
+            setattr(DG, name, _wrap_table(getattr(DG, name)))
+    DG.metric = _wrap_metric(DG.metric)
     DG._af_i18n = True
     main = getattr(st, "_main", None)
     if main is not None:  # st.button etc. are bound methods of the main container, captured at import time
-        for name in (*TEXT_FIRST, *WIDGETS, "tabs", "write"):
+        for name in (*TEXT_FIRST, *WIDGETS, "tabs", "write", "table", "dataframe", "metric"):
             cur = getattr(st, name, None)
             if isinstance(cur, types.MethodType) and cur.__self__ is main:
                 setattr(st, name, getattr(main, name))
@@ -189,3 +285,4 @@ def language_selector(where=None) -> str:
         st.session_state[STATE_KEY] = default_lang()
     box.radio("Langue · Language", list(LANGS), format_func=LANGS.get, key=STATE_KEY, horizontal=True)
     return lang()
+

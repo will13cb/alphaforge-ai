@@ -83,6 +83,10 @@ def read_aloud(text: str, key: str, language_code: str = "en-CA", label: str = "
     """Read displayed text, independently of the microphone language selector."""
     if not active() or not text:
         return
+    from dh import i18n
+    if i18n.lang() == "fr":
+        text = i18n.tr(text)
+        language_code = "fr-CA"
     fingerprint = hashlib.sha256(("neural-v2" + text + language_code).encode()).hexdigest()
     cache_key = key + "_speech"
     requested = st.button(label, key=key + "_read", icon=":material/volume_up:")
@@ -101,3 +105,4 @@ def read_aloud(text: str, key: str, language_code: str = "en-CA", label: str = "
         # and reruns never restart speech. Native controls provide pause/seek/replay.
         st.audio(cached[1], format=cached[2], autoplay=requested)
         st.caption("Pause or replay with the player. If your browser blocks playback, press Play.")
+

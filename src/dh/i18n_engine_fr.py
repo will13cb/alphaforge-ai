@@ -13,6 +13,9 @@ LEVEL_FR = {"Preserve": "Préservation", "Cautious": "Prudent", "Balanced": "Éq
             "Aggressive": "Audacieux"}
 
 SENTENCES = [
+    (r"(\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})", r"\1 au \2"),
+    (rf"simulated chance of a drop deeper than {N} over {N} years?",
+     r"probabilité simulée d’une baisse dépassant \1 sur \2 ans"),
     # ---- the client's limits, in their words (profiler reasons)
     (rf"The largest drop you would accept is {N}: risk tolerance {N} \({LEVELS}\)\.",
      r"La plus forte baisse que vous accepteriez est de \1 : tolérance au risque \2 (\3)."),
@@ -48,7 +51,7 @@ SENTENCES = [
     (rf"{T}'s worst drop in ([\d\-–]+) was {N}; at {N} that alone would be {N} of the portfolio, more than the {N} of your {N} loss limit one asset may use",
      r"La pire baisse de \1 en \2 a été de \3; à \4, cela seul représenterait \5 du portefeuille, plus que les \6 de votre limite de perte de \7 qu'un seul actif peut utiliser"),
     (rf"you can hold about {N} in stocks, and one company is kept to 1/5 of that", r"vous pouvez détenir environ \1 en actions, et une société est limitée au cinquième de cela"),
-    (rf"it fits up to {N}", r"il entre dans vos limites jusqu'à \1"),
+    (rf"it fits up to {N}", r"il respecte vos limites jusqu'à \1"),
     (rf"request {T} {N}:", r"demande \1 \2 :"),
     # ---- splits and options
     (rf"split {N} growth, set by ", r"répartition \1 en croissance, fixée par "),
@@ -105,9 +108,9 @@ WORDS = {
     "rebuilt: ": "reconstruit : ", "Existing portfolio": "Portefeuille existant",
     # holds / why
     "holds: broad Canadian and U.S. stock ETFs, short and aggregate bonds":
-        "détient : de grands FNB d'actions canadiennes et américaines, des obligations à court terme et globales",
+        "détient : des FNB diversifiés d’actions canadiennes et américaines, des fonds obligataires à court terme et diversifiés",
     "holds: dividend-paying established companies plus the TSX 60, aggregate bonds":
-        "détient : des sociétés établies qui versent des dividendes plus le TSX 60, des obligations globales",
+        "détient : des sociétés établies qui versent des dividendes plus le TSX 60, des fonds obligataires diversifiés",
     "holds: U.S. growth/tech ETFs and a few large tech names (+ crypto only if asked, allowed and it earns its place), short bonds and gold":
         "détient : des FNB américains de croissance et de technologie et quelques grandes sociétés technologiques (+ crypto seulement si demandée, permise et justifiée), des obligations à court terme et de l'or",
     "offered: always offered: broad and simple": "proposée : toujours proposée, large et simple",
@@ -138,7 +141,7 @@ WORDS = {
     "Loss rule: chance of a drop deeper than the loss limit over the horizon ≤ 10% (simulated, final weights; in % and $)":
         "Règle de perte : probabilité d'une baisse plus forte que la limite de perte sur l'horizon ≤ 10 % (simulée, pondérations finales; en % et en $)",
     "Volatility within target (warning only)": "Volatilité dans la cible (avertissement seulement)",
-    "Requests that break a limit are refused, not quietly applied": "Une demande qui enfreint une limite est refusée, jamais appliquée en douce",
+    "Requests that break a limit are refused, not quietly applied": "Une demande qui enfreint une limite est refusée, jamais appliquée sans vous avertir",
     "Exclusions respected through ETFs too (warning: disclose)": "Exclusions respectées aussi à travers les FNB (avertissement : à divulguer)",
     "Geography: no country above 70% of the equities (warning: disclose)": "Géographie : aucun pays au-delà de 70 % des actions (avertissement : à divulguer)",
     "Sector ≤ 30% (warning) and ≤ 40% (blocks); the client's own job sector ≤ 15% (blocks)":
@@ -171,7 +174,7 @@ WORDS = {
     "over their cap: ": "au-delà de leur plafond : ",
     " vs ": " contre ",
     "(close to it or above)": "(près de la limite ou au-delà)",
-    "no sector known (broad ETFs without holdings data)": "aucun secteur connu (FNB larges sans données d'avoirs)",
+    "no sector known (broad ETFs without holdings data)": "aucun secteur connu (FNB diversifiés dont la composition est inconnue)",
     "lower bound, ": "borne inférieure, ",
     " of equity ETFs looked through": " des FNB d'actions examinés en transparence",
     "effective holdings not fully assessed: issuer holdings missing or incomplete for ":
@@ -197,14 +200,14 @@ WORDS = {
         "API Valet de la Banque du Canada (FRED DEXCAUS pour USD/CAD avant le début de la série de la Banque du Canada, si l'historique long est utilisé)",
     "Yahoo Finance netExpenseRatio (copy of the issuer's figure)": "Yahoo Finance netExpenseRatio (copie du chiffre de l'émetteur)",
     "bet with mean": "pari de moyenne", "guaranteed": "garanti", "chosen": "choisi",
-    "and": "et", "ai": "IA", "tech": "techno",
+    "ai": "IA", "tech": "technologie",
     # trace and terse lines
     "risk level": "niveau de risque", "tolerance": "tolérance", "capacity": "capacité", "knowledge": "connaissances",
     "Limits:": "Limites :", "max drawdown": "baisse maximale", "defensive floor": "plancher défensif",
     "defensive": "défensif", "one company": "une société", "at most": "au plus", "in stocks": "en actions",
-    "same for all: the stock room binds": "le même pour toutes : la place en actions limite",
+    "same for all: the stock room binds": "le même pour toutes : la part maximale en actions est déterminante",
     "depending on its worst drop": "selon sa pire baisse", "e.g.": "p. ex.", "Flags:": "Signalements :",
-    "loss test": "test de perte", "data": "données", "horizon": "horizon", "growth": "croissance",
+    "loss test": "test de perte", "horizon": "horizon", "growth": "croissance",
     "Cautious": "Prudent", "Balanced": "Équilibré", "Aggressive": "Audacieux", "Preserve": "Préservation",
     "safety net, never 100% growth": "filet de sécurité, jamais 100 % en croissance",
     "may be withdrawn within 3 years": "pourrait être retiré d'ici 3 ans",
@@ -227,7 +230,7 @@ WORDS = {
     "set by liquidity": "fixée par la liquidité", "set by safety": "fixée par le filet de sécurité",
     "stationary block bootstrap of": "bootstrap par blocs stationnaire de", "daily returns": "rendements quotidiens",
     "average = cash + 3% a year on the growth part": "moyenne = encaisse + 3 % par année sur la partie croissance",
-    "fixed seed": "graine fixe", "the strategy's": "de la stratégie",
+    "fixed seed": "initialisation aléatoire fixe", "the strategy's": "de la stratégie",
     "Replays past days only: no crisis worse than": "Rejoue seulement des jours passés : aucune crise pire que",
     "no fees or taxes": "ni frais ni impôts", "Not a forecast": "Pas une prévision",
     "assets, ": "actifs, ", "Per asset:": "Par actif :", "return": "rendement", "volatility": "volatilité",
@@ -240,8 +243,8 @@ WORDS = {
     "average investor": "investisseur moyen", "above-average risk tolerance": "tolérance au risque supérieure à la moyenne",
     "cautious (below-average risk tolerance)": "prudent (tolérance au risque inférieure à la moyenne)",
     "KYC bets: ": "Choix KYC : ", "they agree with tolerance": "ils concordent avec la tolérance",
-    "expected-value question right": "question d'espérance réussie", "expected-value question wrong": "question d'espérance ratée",
-    "cross-check only, limits unchanged": "contre-vérification seulement, limites inchangées",
+    "expected-value question right": "question sur le rendement moyen : réponse correcte", "expected-value question wrong": "question sur le rendement moyen : réponse incorrecte",
+    "cross-check only, limits unchanged": "vérification de cohérence seulement, limites inchangées",
     "A used = median of the three bets = ": "A retenu = médiane des trois choix = ",
     # levels and misc labels
     "(Cautious)": "(Prudent)", "(Balanced)": "(Équilibré)", "(Growth)": "(Croissance)", "(Aggressive)": "(Audacieux)",
@@ -261,3 +264,4 @@ WORDS = {
     "USD/CAD, Canadian rates and CPI": "USD/CAD, taux canadiens et IPC",
     "(organizers' build script)": "(script de construction des organisateurs)",
 }
+

@@ -289,7 +289,8 @@ def style_chart(chart, mode: str = "light"):
         return x
 
     try:
-        spec = walk(chart.to_dict())
+        from dh import i18n
+        spec = i18n.chart_spec(walk(chart.to_dict()))
         cfg = spec.setdefault("config", {})
         cfg["background"] = "transparent"
         cfg["font"] = SANS
@@ -318,3 +319,4 @@ def apply_theme() -> str:
     current = mode(st.session_state)
     st.markdown(css(current, st.session_state.get("large_text", False)), unsafe_allow_html=True)
     return current
+

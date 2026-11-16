@@ -430,16 +430,16 @@ def template_fr(f: dict) -> str:
         if ex.get("rebuilt"):
             out.append(f"Reconstruit en **{w(ex['rebuilt_as'])}** avec le même argent, sa pire baisse aurait été de "
                        f"{ex['rebuilt']['worst_drop']}.")
-    out += ["", "**Les stratégies.** Jusqu'à trois options, du plus de croissance que vos limites permettent au moins "
-                "d'actions; moins d'actions ne veut pas toujours dire une plus petite baisse passée, alors comparez les "
-                "baisses. Le choix vous appartient."]
+    out += ["", "**Les stratégies.** Jusqu’à trois options, de la part maximale en actifs de croissance permise par vos limites "
+                "à une part plus faible en actions. Une part plus faible en actions ne garantit pas une baisse historique "
+                "moins importante : comparez les résultats. Le choix vous appartient."]
     for s in f["strategies"]:
-        line = f"- **{w(s['name'])}** : {s['growth']} en croissance, {s['defensive']} en défensif"
+        line = f"- **{w(s['name'])}** : {s['growth']} en croissance, {s['defensive']} dans la partie défensive"
         if s.get("split_set_by"):
             line += f", fixée par {w(s['split_set_by'])}"
         line += f". Pire baisse passée {s['worst_drop']} (votre limite : {lim['loss_limit']})"
         if s["return_2022"]:
-            line += f"; en {f['stress_year']}, elle a rendu {s['return_2022']}"
+            line += f"; en {f['stress_year']}, son rendement a été de {s['return_2022']}"
         if s["chance_of_loss_risk_only"]:
             line += (f"; probabilité de finir sous votre mise de départ, sans supposer que les rendements passés se "
                      f"répètent : {s['chance_of_loss_risk_only']}")
@@ -607,3 +607,4 @@ def add_to_trace(res: dict, profile: dict, provider: str | None = None) -> dict:
                       describe_checks("Explainer", e["checks"], e["verdict"]), checks=e["checks"])
     res["explanation"] = e
     return e
+

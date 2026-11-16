@@ -135,7 +135,7 @@ def card(s: dict, i: int, n: int, capital: float | None = None, names: dict | No
     tag = " · most growth" if i == 1 and n > 1 else " · least in stocks" if i == n and n > 1 else ""
     st.markdown(
         f'<div class="af-opt">Option {i} of {n}{tag}</div><div class="af-opt-name">{ui.esc(s["name"].split(":", 1)[0])}</div>'
-        f'<div class="af-split" role="img" aria-label="{gp}% stocks, {100 - gp}% safer investments">'
+        f'<div class="af-split" role="img" aria-label="{ui.esc(str(gp) + '% stocks, ' + str(100 - gp) + '% safer investments')}">'
         f'<div class="g" style="width:{gp}%"></div><div class="d" style="width:{100 - gp}%"></div></div>'
         f'<div class="af-split-l"><span><b>{gp}%</b> stocks</span><span><b>{100 - gp}%</b> safer</span></div>'
         + "".join(f'<div class="af-row"><span class="k">{ui.esc(k)}</span><span class="v">{ui.esc(v)}</span></div>'
@@ -415,4 +415,5 @@ def render() -> None:
     if res.get("strategies") and st.button("Ask the assistant about these results →", type="primary"):
         S.goto = "Assistant"
         st.rerun()
+
 

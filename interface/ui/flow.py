@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from html import escape
 
-from dh.i18n import lang
+from dh.i18n import lang, tr
 
 # Main row, in pipeline order (pipeline.py), and the Guardian below it, linked to the steps it checks.
 NODES = [("Client", "your answers"), ("Profiler", "rules"), ("Market data", "deterministic"),
@@ -74,8 +74,8 @@ def _node(name: str, sub: str, pos: dict, runs: dict, working: str | None) -> st
     tick = (f'<path d="M{x + 10:.0f},{y + 14:.0f} l4,4 l8,-9" class="af-tick"/>' if cls == "done" else
             f'<circle cx="{x + 15:.0f}" cy="{y + 13:.0f}" r="4" class="af-dot"/>' if cls == "work" else "")
     return (f'<g class="af-n {cls}"><rect x="{x:.0f}" y="{y:.0f}" width="{NW}" height="{NH}" rx="12"/>{tick}{badge}'
-            f'<text x="{x + NW / 2:.0f}" y="{y + 34:.0f}" text-anchor="middle" class="af-t">{escape(name)}</text>'
-            f'<text x="{x + NW / 2:.0f}" y="{y + 50:.0f}" text-anchor="middle" class="af-s">{escape(sub)}</text></g>')
+            f'<text x="{x + NW / 2:.0f}" y="{y + 34:.0f}" text-anchor="middle" class="af-t">{escape(tr(name))}</text>'
+            f'<text x="{x + NW / 2:.0f}" y="{y + 50:.0f}" text-anchor="middle" class="af-s">{escape(tr(sub))}</text></g>')
 
 
 CSS = """<style>
@@ -109,7 +109,7 @@ def svg(steps: list[dict], finished: bool = False, caption: str | None = None) -
     edges += [_edge(n, GUARDIAN[0], pos, used) for n in GUARDS]
     nodes = [_node(n, s, pos, runs, working) for n, s in [*NODES, GUARDIAN]]
     done = sum(1 for n in [*names, GUARDIAN[0]] if n in runs)
-    label = ((f"Pipeline : {done} agents sur {len(names) + 1} terminés" + (f", {working} en cours" if working else ""))
+    label = ((f"Pipeline : {done} agents sur {len(names) + 1} terminés" + (f", {tr(working)} en cours" if working else ""))
              if lang() == "fr" else
              (f"Pipeline: {done} of {len(names) + 1} agents done" + (f", {working} working" if working else "")))
     arrows = "".join(
@@ -121,4 +121,5 @@ def svg(steps: list[dict], finished: bool = False, caption: str | None = None) -
     return (f'{CSS}<div class="af-flowgraph" role="img" aria-label="{escape(label)}">'
             f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg"><defs>{arrows}</defs>'
             + "".join(edges) + "".join(nodes) + "</svg>"
-            + (f'<div class="af-legend">{escape(legend)}</div>' if legend else "") + "</div>")
+            + (f'<div class="af-legend">{escape(tr(legend))}</div>' if legend else "") + "</div>")
+
