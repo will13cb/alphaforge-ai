@@ -168,24 +168,62 @@ make setup        # environnement virtuel + dépendances + .env (à remplir)
 make data         # données du jeu de départ dans data/raw/
 make ui           # interface guidée (vue client) : http://localhost:8502
 make app          # démonstration (vue du jury) : http://localhost:8501
-make scenarios    # 16 profils de test, chaque relais affiché
+make check        # rendement / volatilité / Sharpe / pire baisse par actif
+make scenarios    # 16 profils de test passés par le Profileur et le Gardien, chaque relais affiché
 make test         # tests hors ligne
-make explain P=robert   # pipeline complet sur un persona (amira, mateo, robert); trace dans S3
-make warm         # avec Bedrock : enregistre les réponses de démonstration
+make explain P=robert   # pipeline complet + Explicateur sur un persona (amira, mateo, robert); trace dans S3
+make extract T="J'ai 59 ans, ..."   # texte libre → profil + questions de suivi
+make bedrock-check  # test AWS : région, identifiants, Bedrock texte + outils, S3 (exige .env)
+make warm         # avec Bedrock : remplit tous les caches de démonstration en une passe (DRY=1 liste les appels)
 ```
+
+**Les deux vues ont un bouton d'apparence Clair / Sombre et affichent les relais de l'analyse en direct.** Le client
+peut consulter son exécution terminée dans Activité; le jury peut consulter Activité et preuves, y compris les
+contrôles, les sources, l'origine de l'explication et le résultat réel de l'enregistrement (S3 ou local). Activité
+liste aussi, avec recherche, l'univers de produits actuellement activé.
+
+**Modèle de risque (intégration de la version finale).** Le plafond de croissance utilise un bootstrap par blocs
+stationnaire sur l'horizon du client, avec une prime annuelle déclarée de 3 % des actifs de croissance sur
+l'encaisse et un seuil de dépassement du modèle de 10 %. Une nouvelle simulation vérifie les pondérations finales. Ce
+sont des hypothèses de scénario, pas une garantie calibrée des pertes futures. G17 est intégrée à G7; G18 vérifie la
+cohérence des résultats; les avertissements de dividendes du mode recherche utilisent G19. Voir
+`notes/risk-architecture.md`.
+
+**Deux interfaces, un seul moteur.** `make app` est la démonstration : elle montre tout ce que les agents ont fait
+(limites et leurs raisons, stratégies et ce qui a fixé chaque répartition, contrôles du Gardien, texte de
+l'Explicateur, questions de suivi, trace complète) et enregistre la trace de chaque exécution dans Amazon S3.
+`make ui` est ce qu'utiliserait un client : une question à la fois, résultats essentiels d'abord, l'Analyste en
+conversation. Les deux appellent le même `pipeline.run`; aucune ne calcule de nombre.
 
 Windows sans `make` :
 
 ```bash
 python -m venv .venv && .venv\Scripts\python -m pip install -e ".[dev,agents]"
 copy Datathon2026Infos\alphaforge_starter\build_dataset.py data\raw\ && .venv\Scripts\python data\raw\build_dataset.py
+.venv\Scripts\python -m dh check
+.venv\Scripts\python -m dh scenarios -v
+.venv\Scripts\python -m dh explain robert
 set LLM_PROVIDER=mock && .venv\Scripts\python -m pytest -q
 .venv\Scripts\python -m streamlit run interface/app.py
+.venv\Scripts\python -m streamlit run app/app.py
 ```
 
-Configuration (`.env`, jamais versionné) : `LLM_PROVIDER` (`mock` hors ligne ou `bedrock`), `BEDROCK_MODEL_ID`
-(`global.anthropic.claude-opus-5-5`), `AWS_REGION`, `S3_BUCKET`, `AF_LANG` (`fr` ou `en`). Les identifiants AWS
-viennent de votre profil AWS, jamais de ce dépôt.
+**Configuration (`.env`, jamais versionné)**
+
+| Variable | Usage |
+|---|---|
+| `LLM_PROVIDER` | `mock` (hors ligne, par défaut) ou `bedrock` |
+| `BEDROCK_MODEL_ID` | modèle Bedrock des agents LLM (vérifié sur le compte de l'événement : `global.anthropic.claude-opus-5-5`) |
+| `BEDROCK_EXPLAINER_MODEL_ID` | remplacement facultatif pour l'Explicateur (par défaut `global.anthropic.claude-opus-5-5`) |
+| `AWS_REGION` | p. ex. `us-east-1` |
+| `S3_BUCKET` | compartiment des traces d'exécution (`traces/`) et des données (`raw/`, `make data` peut s'y synchroniser) |
+| `AF_LANG` | langue au démarrage : `fr` (par défaut) ou `en` |
+
+Les identifiants AWS viennent de votre profil AWS (`aws configure`), jamais de ce dépôt. Les appels LLM passent par
+`dh.llm.ask` (cache dans `.cache/llm/`), sauf l'Explicateur Strands, qui met ses propres réponses en cache; les textes
+Opus des trois personas sont versionnés dans `cache/explainer/` et sont rejoués sans AWS si les faits correspondent;
+sinon, le mode hors ligne utilise un gabarit déterministe clairement identifié. Lancer `make warm` sur le code et les
+données finaux avant d'enregistrer la vidéo.
 </details>
 
 <details>
@@ -196,8 +234,8 @@ sinon les reconstruit avec le script des organisateurs, sur la période du jeu d
 
 1. Une fois, depuis un ordinateur qui a les données : `make data-up` (téléverse `data/raw/` dans `s3://$S3_BUCKET/raw/`).
 2. Sur https://share.streamlit.io : **New app** → ce dépôt, branche `main`, fichier `interface/app.py` (ou `app/app.py`
-   pour la démonstration); Python 3.12.
-3. **Secrets** :
+   pour la démonstration); **Advanced settings** → Python 3.12. Déployer chaque application séparément si on veut les deux.
+3. **Secrets** (la même boîte pour chaque application; jamais dans git) :
    ```toml
    AF_AUTO_DATA = "1"
    S3_BUCKET = "…"
@@ -206,11 +244,11 @@ sinon les reconstruit avec le script des organisateurs, sur la période du jeu d
    AWS_SECRET_ACCESS_KEY = "…"
    AWS_SESSION_TOKEN = "…"
    LLM_PROVIDER = "bedrock"
-   AF_LANG = "fr"
-   AF_VOICE_ENABLED = "0"   # "1" active la voix (Amazon Transcribe + Polly)
+   AF_LANG = "fr"           # langue au démarrage : "fr" (par défaut) ou "en"; un bouton dans la barre latérale la change
+   AF_VOICE_ENABLED = "0"   # "1" active la voix dans l'interface guidée (Amazon Transcribe + Polly, audio via S3 voice/)
    ```
-   Après la fermeture du compte AWS : `LLM_PROVIDER = "mock"` et retirer les clés; l'application rejoue les réponses
-   enregistrées de Claude.
+   Après la fermeture du compte AWS : `LLM_PROVIDER = "mock"` et retirer les clés; l'application reconstruit elle-même
+   les données et rejoue les réponses enregistrées de Claude (mode hors ligne, indiqué à l'écran).
 </details>
 
 <details>
@@ -219,11 +257,14 @@ sinon les reconstruit avec le script des organisateurs, sur la période du jeu d
 | Source | Contenu | Provenance |
 |---|---|---|
 | Jeu de départ (organisateurs) | 31 actifs, prix quotidiens 2021-11-12 → 2026-11-12, dividendes, USD/CAD, taux, IPC | Yahoo Finance, Banque du Canada, FRED (`Datathon2026Infos/alphaforge_starter/build_dataset.py`) |
-| Avoirs des FNB | ce que les FNB détiennent réellement, pour compter une société une seule fois | fichiers des émetteurs (SPY au 2026-11-12) |
+| Avoirs des FNB | ce que les FNB détiennent réellement, pour compter une société une seule fois | fichiers des émetteurs (State Street, Invesco, Vanguard, iShares; `scripts/build_holdings.py`) : SPY chargé (au 2026-11-12), QQQ, ESGV et XIU encore à télécharger |
 | Obligations | titres gouvernementaux canadiens et américains, détenus jusqu'à l'échéance | sources publiques datées (`data/README.md`) |
 
-Tout est converti en CAD; rendements sur le cours ajusté. Limites : biais du survivant dans l'univers, avoirs = un
-instantané. Sources, dates, traitement et conditions : [`data/README.md`](data/README.md).
+Prix dans la devise de chaque actif, convertis en CAD (`harness.toml`); rendements sur le cours ajusté. Limites
+connues : biais du survivant dans l'univers, données macro mensuelles datées par mois de référence (décalées avant
+usage), avoirs = un instantané utilisé seulement pour l'exposition. Les nombres historiques décrivent le passé; ce ne
+sont pas des prévisions. Sources, dates, traitement et conditions : [`data/README.md`](data/README.md). Les fichiers
+de données ne sont jamais versionnés.
 </details>
 
 <details>
@@ -234,14 +275,31 @@ interface/         interface guidée (vue client)
 app/app.py         démonstration (vue du jury)
 src/dh/agents/     profiler · market · portfolio · checks · guardian · critic · explainer · analyst · extractor
                    existing (portefeuille déjà détenu) · fixed_income · pipeline · trace · rules · scenarios
-src/dh/            données, statistiques de risque, traces S3, Français ⇄ English (i18n)
+src/dh/            data.py (chargement, change, calendrier) · metrics.py (statistiques de risque, transparence, journal
+                   des résultats) · quant_toolkit.py (risque, stress, bootstrap) · holdings.py (avoirs des FNB)
+                   tracestore.py (traces S3) · llm.py (mock | Bedrock, en cache) · personas.py · i18n (Français ⇄ English)
 aws/               architecture (français; anglais : *.en.md)
 deliverables/      fiche d'une page, documentation technique, script vidéo (français; anglais : *.en.md)
 cache/             réponses enregistrées de Claude (démonstration sans AWS)
-notes/             conception, contrat entre agents, journal des décisions (notes de l'équipe, en anglais)
+outputs/traces/    traces d'exécution rapatriées de S3 par `make backup`
+scripts/           get-data, build_holdings, bedrock_check, backup, scan-secrets, worktrees
+notes/             conception, contrat entre agents, journal des décisions, notes de branche, formulaire d'accueil
+                   (notes de l'équipe, en anglais)
+Datathon2026Infos/ énoncé officiel, diapositives, script du jeu de départ
 tests/             tests hors ligne
 ```
 </details>
+
+## Travailler sur ce dépôt
+
+Règles de l'équipe (couloirs, chemin de données unique, journal des résultats, documents de branche, secrets) :
+[`CLAUDE.md`](CLAUDE.md). Faits, vérifiés ou supposés : [`CONTEXT.md`](CONTEXT.md). Agents de code : lire les deux
+avant toute chose.
+
+Un hook de garde (`.claude/hooks/guard_bash.py`) empêche les agents de code de lire les secrets, de forcer un push ou de
+supprimer des ressources infonuagiques. C'est un ralentisseur, pas une frontière de sécurité. Lancer `make scan` avant
+de rendre le dépôt public, et `make backup` avant le gel du dimanche 23 h 59 (plus rien ne peut être poussé ensuite; le
+compte AWS ferme le lundi à 13 h 59).
 
 ## Licence
 

@@ -150,3 +150,24 @@ def test_conversation_context_and_new_abilities(robert_run, rets):
     assert a["status"] == "valid" and a["tool_calls"][0]["tool"] == "results_overview" and "|" in a["answer"]
     a = analyst.ask("blablabla", robert_run, ROBERT, provider="mock", rets=rets, holdings={})
     assert "not sure I understood" in a["answer"]
+
+
+def test_text_not_phrased_as_a_question_is_answered_about_what_it_names(robert_run, rets, monkeypatch):
+    """"Growth tilt", "volatility" or "Tesla" typed alone is a question about that subject, in the app's language;
+    only a text that names nothing we know gets "not sure I understood"."""
+    from dh import i18n
+    ask = lambda q: analyst.ask(q, robert_run, ROBERT, provider="mock", rets=rets, holdings={})
+    name = robert_run["strategies"][0]["name"]
+    a = ask(name)
+    assert a["status"] == "valid" and a["tool_calls"][0]["tool"] == "results_overview"
+    assert "not sure I understood" not in a["answer"] and name in a["answer"] and "Your loss limit" in a["answer"]
+    assert sum(s["name"] in a["answer"] for s in robert_run["strategies"]) == 1 or len(robert_run["strategies"]) == 1
+    a = ask("volatility")
+    assert a["status"] == "valid" and "up and down" in a["answer"]
+    a = ask("Tesla")
+    assert a["status"] == "valid" and a["tool_calls"][0]["tool"] == "asset_facts"
+    monkeypatch.setenv("AF_LANG", "fr")                              # French app: same text, French answer
+    assert analyst.language(name) == "fr" and analyst.language("What if I put 10% in Tesla?") == "en"
+    a = ask(i18n.tr_words(name))
+    assert a["status"] == "valid" and "Votre limite de perte" in a["answer"] and "compris" not in a["answer"]
+    assert "Je ne suis pas sûr d'avoir compris" in ask("blablabla")["answer"]

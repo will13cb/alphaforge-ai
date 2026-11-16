@@ -202,6 +202,60 @@ def growth_df(strategies: dict[str, dict[str, float]]) -> pd.DataFrame:
 
 
 # ---- data present? --------------------------------------------------------------------------------------
+CONTRAST_LABEL = "Same request, three clients: 25% in Tesla"
+
+
+def contrast_page() -> None:
+    """Amira, Mateo and Robert ask for the same 25% in TSLA: three limits, three verdicts, three reasons. Every number
+    comes from each client's own pipeline run (`dh.agents.contrast`), nothing is computed on this screen."""
+    from dh.agents.contrast import contrast
+
+    st.markdown('<div class="af-eyebrow">AlphaForge AI · simulation</div>'
+                '<div class="af-h1">Same request, three clients</div>', unsafe_allow_html=True)
+    st.markdown("Amira, Mateo and Robert each ask for **25% in Tesla**. The same rules run on three different "
+                "profiles, so the answer and its reason change with the client.")
+    rows = st.session_state.get("contrast_rows")
+    if rows is None:
+        with st.spinner("Running the pipeline three times (Profiler, Portfolio, Guardian)…"):
+            rows = st.session_state["contrast_rows"] = contrast("TSLA", 0.25)
+    if rows and rows[0].get("worst_drop") is not None:
+        st.caption(f"TSLA's worst drop in the data ({LABEL_PERIOD()}): {pct(rows[0]['worst_drop'])}. "
+                   f"At 25%, that alone would be {pct(rows[0]['loss_at_asked'])} of the portfolio.")
+    cols = st.columns(len(rows))
+    for col, r in zip(cols, rows):
+        with col:
+            st.subheader(DEMO_LABELS.get(r["persona"], PERSONAS[r["persona"]]["name"]))
+            m = st.columns(2)
+            m[0].metric(i18n.tr("Loss limit"), i18n.tr(pct(r["loss_limit"], 0)),
+                        help=f"{r['loss_limit_cad']:,} $" if r.get("loss_limit_cad") else None)
+            m[1].metric(i18n.tr("TSLA fits up to"), i18n.tr(pct(r["cap"])) if r.get("cap") is not None else "–")
+            a, c = r["as_asked"], r["at_cap"]
+            money = lambda d: f" ({d['drawdown_cad']:,} $)" if d.get("drawdown_cad") else ""
+            st.markdown(f"**As asked (25%)**: worst drop {pct(a['max_drawdown'])}{money(a)}")
+            if a["fails"]:
+                st.error("✘ " + ", ".join(a["fails"]))
+            else:
+                st.success("✔ all checks pass")
+            if c:
+                st.markdown(f"**At {pct(r['cap'])}**: worst drop {pct(c['max_drawdown'])}{money(c)}")
+                if c["fails"]:
+                    st.error("✘ " + ", ".join(c["fails"]))
+                    st.caption(c["fail_reasons"][0])
+                else:
+                    st.success("✔ all checks pass")
+            st.markdown(f"**Answer:** {r['answer']}")
+            st.caption(r["reason"])
+    st.caption("Checks: C1 and G4 one company under its cap, counted through ETFs · D2 and G7 chance of a drop "
+               "deeper than the loss limit over the horizon (simulated, at most 10%) · F2 stock share allowed by the "
+               "horizon · G6 defensive floor · G9 a request that breaks a limit is shown, never quietly applied.")
+    st.caption("The client decides; the system shows the numbers.")
+    st.caption(DISCLAIMER)
+
+
+def LABEL_PERIOD() -> str:
+    return data.period_label()
+
+
 # Hosted copy (Streamlit Cloud, AF_AUTO_DATA=1): build data/raw/ with the organizers' script on the first start.
 if not bootstrap.data_present() and os.getenv("AF_AUTO_DATA") == "1":
     with st.spinner("First start: downloading the market data with the organizers' script (1-2 minutes)…"):
@@ -220,8 +274,9 @@ except SystemExit as e:
 with st.sidebar:
     st.markdown('<div class="af-brand"><span class="mark"></span>AlphaForge AI</div>', unsafe_allow_html=True)
     st.caption("Fictional clients · simulation only")
-    key = st.radio("Fictional client", [*DEMO_PROFILES, "free_text"],
-                   format_func=lambda k: DEMO_LABELS.get(k, "Describe yourself (free text)"))
+    key = st.radio("Fictional client", [*DEMO_PROFILES, "contrast", "free_text"],
+                   format_func=lambda k: DEMO_LABELS.get(k, CONTRAST_LABEL if k == "contrast"
+                                                         else "Describe yourself (free text)"))
     pkey = key.split("_")[0]
     if pkey in PERSONAS:
         st.markdown(describe(pkey).replace("\n", "  \n"))
@@ -234,6 +289,9 @@ with st.sidebar:
     st.caption("Run traces: Amazon S3" if os.getenv("S3_BUCKET") else "Run traces: local copy (S3_BUCKET not set)")
     st.caption(DISCLAIMER)
 
+if key == "contrast":
+    contrast_page()
+    st.stop()
 if key == "free_text":
     args = free_text_client()
     if args is None:

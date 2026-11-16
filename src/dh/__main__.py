@@ -152,6 +152,29 @@ def cmd_log_personas(a):
                 if v is not None:
                     log_run(v, "persona-strategies", f"{s['key']}_{k}", persona=name, notes=s["name"]); n += 1
     print(f"logged {n} rows to results.csv (commit it)")
+def cmd_contrast(a):
+    """Same request, three clients (Amira, Mateo, Robert): three limits, three verdicts, three reasons."""
+    from .agents.contrast import contrast, markdown
+
+    rows = contrast(a.ticker, a.weight)
+    print(markdown(rows))
+    if a.log:
+        from .metrics import log_run
+        n = 0
+        for r in rows:
+            vals = {"cap": r["cap"], "loss_limit": r["loss_limit"],
+                    "as_asked_drawdown_cad": r["as_asked"]["drawdown_cad"],
+                    "as_asked_fails": len(r["as_asked"]["fails"]),
+                    "at_cap_drawdown_cad": (r["at_cap"] or {}).get("drawdown_cad"),
+                    "at_cap_chance_beyond_limit": (r["at_cap"] or {}).get("chance_beyond_limit"),
+                    "at_cap_fails": len((r["at_cap"] or {}).get("fails", [])) if r["at_cap"] else None}
+            for k, v in vals.items():
+                if v is not None:
+                    log_run(v, "persona-contrast", f"{r['ticker']}{round(r['asked'] * 100)}_{k}", persona=r["persona"],
+                            notes=f"{r['answer']}; base {r['base']}"); n += 1
+        print(f"logged {n} rows to results.csv (commit it)")
+
+
 def cmd_extract(a):
     import json
 
@@ -191,6 +214,11 @@ def main(argv=None):
     ak.set_defaults(fn=cmd_ask)
     sub.add_parser("log-personas", help="log persona limits, requests and strategies to results.csv (rule 3)"
                    ).set_defaults(fn=cmd_log_personas)
+    ct = sub.add_parser("contrast", help="same request (default 25%% TSLA) for Amira, Mateo and Robert side by side")
+    ct.add_argument("--ticker", default="TSLA")
+    ct.add_argument("--weight", type=float, default=0.25)
+    ct.add_argument("--log", action="store_true", help="log the numbers to results.csv (rule 3)")
+    ct.set_defaults(fn=cmd_contrast)
     xt = sub.add_parser("extract", help="free text → profile facts + follow-up questions (LLM_PROVIDER=bedrock for Opus)")
     xt.add_argument("text")
     xt.add_argument("--save-demo", action="store_true", help="save the Bedrock answer to cache/extractor/ (commit it)")

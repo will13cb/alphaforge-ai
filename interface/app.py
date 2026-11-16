@@ -100,6 +100,8 @@ def sidebar() -> str:
         st.markdown('<div class="af-brand"><span class="mark"></span>AlphaForge AI</div>', unsafe_allow_html=True)
         i18n.language_selector(st)
         sec = st.radio("Go to", SECTIONS, key="section", label_visibility="collapsed")
+        if sec not in SECTIONS:          # never a page we do not have (a stale or unknown value): back to the start
+            sec = SECTIONS[0]
         if S.get("res"):
             st.caption("Analysis ready")
         st.divider()

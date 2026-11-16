@@ -95,8 +95,22 @@ div[data-baseweb="popover"] ul, div[data-baseweb="popover"] li, div[data-baseweb
     background: var(--panel) !important; color: var(--ink) !important; }}
 div[data-baseweb="popover"] li:hover, div[data-baseweb="popover"] li[aria-selected="true"] {{
     background: var(--soft) !important; }}
-.stApp span[data-baseweb="tag"] {{ background: var(--sel_bg) !important; }}
-.stApp span[data-baseweb="tag"] * {{ color: var(--sel_fg) !important; }}
+/* Select boxes on Streamlit 1.5x and later (react-aria, no Base Web attributes): field, arrows and the option list. */
+.stApp [data-testid="stSelectbox"] div[role="group"], .stApp [data-testid="stMultiSelect"] div[role="group"] {{
+    background: var(--field) !important; color: var(--ink) !important; border-color: var(--line) !important; }}
+.stApp [data-testid="stSelectbox"] div[role="group"] button svg,
+.stApp [data-testid="stMultiSelect"] div[role="group"] > button svg {{ fill: var(--mut); color: var(--mut); }}
+[data-testid$="VirtualDropdown"], [data-testid$="VirtualDropdown"] [role="listbox"] {{
+    background: var(--panel) !important; color: var(--ink) !important; border-color: var(--line) !important; }}
+[data-testid$="VirtualDropdown"] [role="option"] {{ color: var(--ink) !important; }}
+[data-testid$="VirtualDropdown"] [role="option"][data-focused], [data-testid$="VirtualDropdown"] [role="option"][data-hovered],
+[data-testid$="VirtualDropdown"] [role="option"][aria-selected="true"] {{ background: var(--soft) !important; }}
+/* Chosen items of a multiselect. Streamlit 1.5x and later draws them as span[data-tag] (no Base Web tag any more):
+   without the second selector they kept the primary colour as background under ink text, black on black. */
+.stApp span[data-baseweb="tag"], .stApp [data-testid="stMultiSelect"] span[data-tag] {{
+    background: var(--sel_bg) !important; }}
+.stApp span[data-baseweb="tag"] *, .stApp [data-testid="stMultiSelect"] span[data-tag],
+.stApp [data-testid="stMultiSelect"] span[data-tag] * {{ color: var(--sel_fg) !important; }}
 .stApp label[data-testid="stRadioOption"] > div > div:first-child {{ background: var(--field) !important;
     border: 1px solid var(--mut) !important; }}
 .stApp label[data-testid="stRadioOption"][data-selected="true"] > div > div:first-child {{
@@ -179,8 +193,12 @@ div[data-testid="stChatMessage"]:has(div[data-testid="stChatMessageAvatarAssista
     background: var(--panel); border: 1px solid var(--line); margin-right: 6%; }}
 div[data-testid="stChatMessageAvatarUser"], div[data-testid="stChatMessageAvatarAssistant"] {{
     background: var(--acc) !important; }}
+/* The avatar is an svg on older Streamlit and an icon-font span on newer ones: colour both, or the icon is drawn
+   in ink on the accent square and disappears. */
 div[data-testid="stChatMessageAvatarUser"] svg, div[data-testid="stChatMessageAvatarAssistant"] svg {{
     fill: var(--accfg); color: var(--accfg); }}
+div[data-testid="stChatMessageAvatarUser"] span, div[data-testid="stChatMessageAvatarAssistant"] span {{
+    color: var(--accfg) !important; fill: var(--accfg) !important; }}
 div[data-testid="stBottom"], div[data-testid="stBottom"] > div {{ background: var(--bg) !important; }}
 div[data-testid="stChatInput"] {{ background: var(--field) !important; border: 1px solid var(--line);
     border-radius: 14px; }}

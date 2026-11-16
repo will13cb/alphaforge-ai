@@ -1056,3 +1056,19 @@ the weaker CAD in March 2020 softened U.S. holdings (stated when the data shows 
 Robert −9.2% (≈ 36 989 $, limit 15% / 60 000 $; 2021-2026 worst −8.6%), Mateo −19.6% (limit 25%; 2021-2026
 −13.3%), Amira −11.0% (limit 40%; 2021-2026 −14.8%).
 
+## 51. Same request, three clients: one screen for the persona contrast (Sun Nov 15, evening)
+
+**Decision:** `dh.agents.contrast` runs the real pipeline (no Critic) on Amira, Mateo and Robert, each with the same
+request added (default 25% TSLA), and lays out per client: loss limit, the asset's cap for that client (#24), the
+request "as asked" and "at the cap" (`requests.compare`, #28) with their failing checks, and the Profiler's reason.
+Shown in the demo app (sidebar "Same request, three clients: 25% in Tesla"), `make contrast` (`LOG=1` logs
+`persona-contrast` to results.csv). The video script is not changed here (the team has its own).
+
+**Why:** the brief asks for contrasting personas (p.15); the same request makes the contrast one glance: three limits,
+three verdicts, three reasons, from the same rules. Nothing is computed on the screen.
+
+**What it shows (starter data, direct-only look-through):** Amira level 5, loss limit 40%, TSLA fits up to 14.1%;
+Mateo level 3, 25%, cap 8.8%, but on his most-growth strategy 8.8% still gives a 33% chance of a drop deeper than his
+limit (allowed 10%, D2/G7 ✘), so the answer is "not on this strategy"; Robert level 2, 15%, 3.1% (106,121 $ vs
+60,000 $ as asked, 38,241 $ at the cap, as in #28). Mateo's answer is kept as the engine gives it: the per-company cap
+is not the only limit, and saying so is the point.

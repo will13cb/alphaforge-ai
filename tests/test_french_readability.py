@@ -54,7 +54,10 @@ def test_chart_labels_and_locale_preserve_field_names_and_numeric_data():
 
 def test_pipeline_graph_translates_labels_without_changing_node_ids():
     svg=flow.svg([],finished=True)
-    assert 'Profileur' in svg and 'Données de marché' in svg and 'vos réponses' in svg
+    from xml.etree import ElementTree
+    start, end = svg.index('<svg'), svg.index('</svg>') + len('</svg>')
+    labels = ' '.join(ElementTree.fromstring(svg[start:end]).itertext())
+    assert 'Profileur' in labels and 'Données de marché' in labels and 'vos réponses' in labels
     assert flow.NODES[1][0]=='Profiler'
 
 

@@ -322,10 +322,25 @@ def find_assets(q: str) -> list[tuple[int, str]]:
     return sorted(found.items())
 
 
+_EN = re.compile(r"\b(what|what's|how|why|which|when|who|if|is|are|do|does|did|can|could|should|would|will|the|my|"
+                 r"me|i|in|of|to|and|with|about|explain|tell|show|put|much|risky|please)\b", re.I)
+
+
+def language(text: str) -> str:
+    """'fr' or 'en': French words win, then English words; a text with neither (a strategy name, a ticker, one
+    word) is answered in the language the app is shown in, not in English by default."""
+    if _FR.search(text or ""):
+        return "fr"
+    if _EN.search(text or ""):
+        return "en"
+    from .. import i18n
+    return i18n.lang()
+
+
 def parse(question: str, profile: dict) -> dict:
     """What the question asks, read with simple patterns (the Bedrock agent reads anything; this is the fallback)."""
     q = question or ""
-    lang = "fr" if _FR.search(q) else "en"
+    lang = language(q)
     loss = _LOSS.search(q)
     assets = find_assets(q)
     pcts = [(m.start(), _num(m.group(1)) / 100) for m in _PCT.finditer(q) if not (loss and loss.start() <= m.start() <= loss.end())]
@@ -635,6 +650,21 @@ _RESULTS_Q = re.compile(r"my result|my strateg|my portfolio|mes résultats|mes s
 _FOLLOW_ON = re.compile(r"^\s*(and|et|what about|how about|same|même|pareil|instead|plutôt|ok|then|alors|with|avec)\b", re.I)
 
 
+def _plain(text: str) -> str:
+    """Lower case, no accents, single spaces: 'Orientation Croissance ' → 'orientation croissance'."""
+    import unicodedata
+    t = unicodedata.normalize("NFKD", text or "")
+    return " ".join("".join(c for c in t if not unicodedata.combining(c)).lower().split())
+
+
+def strategies_named(question: str, strategies: list[dict] | None) -> list[str]:
+    """Keys of the client's strategies whose name the text contains, in English or as the app shows it in French."""
+    from .. import i18n
+    q = _plain(question)
+    return [s["key"] for s in strategies or []
+            if any(n and n in q for n in {_plain(s.get("name", "")), _plain(i18n.tr_words(s.get("name", "")))})]
+
+
 def concept(question: str) -> str | None:
     if not _CONCEPT_Q.search(question or ""):
         return None
@@ -742,6 +772,18 @@ def _mock(question: str, rec: critic.Recorder, tools: dict, profile: dict | None
         parts.append(_part_why(call("limit_reason", {"name": name}), lang))
     if not parts and _RESULTS_Q.search(question) and strategies:
         parts.append(_part_results(call("results_overview", {}), lang))
+    if not parts:  # not phrased as a question ("Growth tilt", "volatility", "Tesla"): the question is that subject
+        named = strategies_named(question, strategies)
+        bare = len(question.split()) <= 3 and "?" not in question      # a name on its own, not an unclear question
+        term = bare and next((k for k, (pat, _) in GLOSSARY.items() if re.search(pat, question, re.I)), None)
+        known = [t for t in dict.fromkeys(q["assets"]) if t in UNIVERSE] if bare else []
+        if named and "results_overview" in tools:
+            r = call("results_overview", {})
+            parts.append(_part_results({**r, "strategies": [x for x in r.get("strategies", []) if x["key"] in named]}, lang))
+        elif term:
+            return {"answer": GLOSSARY[term][1], "evidence": []}
+        elif known and "asset_facts" in tools:
+            parts.append(_part_facts(call("asset_facts", {"tickers": known[:5]}), lang))
     if not parts:
         return {"answer": (("Je ne suis pas sûr d'avoir compris. " if lang == "fr" else "I'm not sure I understood. ")
                            + "\n\n" + HELP[lang]), "evidence": []}
@@ -1004,11 +1046,19 @@ def _run_agent(question: str, f: dict, rec: critic.Recorder, tools: list, histor
     convo = _conversation(history)
     text = str(agent("FACTS:\n" + json.dumps(f, ensure_ascii=False, default=str)
                      + (f"\n\nCONVERSATION SO FAR (oldest first):\n{convo}" if convo else "")
-                     + "\n\nQUESTION:\n" + question))
+                     + "\n\nQUESTION (always a question, even when it is a few words and not phrased as one: a strategy"
+                       " name, an asset or a notion means \"tell me about it\"; answer about that subject with the tools,"
+                       " in the language of CONVERSATION SO FAR when the words alone do not show it):\n" + question))
     a, b = text.find("{"), text.rfind("}")
-    if a < 0 or b <= a:
+    try:
+        out = json.loads(text[a:b + 1]) if 0 <= a < b else None
+    except ValueError:
+        out = None
+    if isinstance(out, dict) and isinstance(out.get("answer"), str):
+        return out
+    if a >= 0 or not text.strip():
         raise ValueError("no JSON object in the answer")
-    return json.loads(text[a:b + 1])
+    return {"answer": text.strip(), "evidence": []}   # plain text instead of JSON: kept, and its numbers still checked
 
 
 def _hash(question: str, f: dict, history: list[dict] | None = None) -> str:

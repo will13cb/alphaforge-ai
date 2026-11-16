@@ -496,6 +496,12 @@ EXACT = {
     "Critic": "Critique",
     "Explainer": "Explicateur",
     "Trace store": "Stockage des traces",
+    "your answers": "vos réponses",
+    "rules": "règles",
+    "deterministic": "calculs déterministes",
+    "up to 3 strategies": "jusqu'à 3 stratégies",
+    "code-enforced rules": "règles imposées par le code",
+    "All steps recorded.": "Toutes les étapes sont enregistrées.",
     "Live Bedrock": "Bedrock en direct",
     "Saved Bedrock answer": "Réponse Bedrock enregistrée",
     "Offline template": "Gabarit hors ligne",
@@ -690,6 +696,15 @@ EXACT = {
     "Explanation addresses each refused request": "L’explication répond à chaque demande refusée",
     "no invented number": "aucun chiffre inventé",
     "all numbers traced": "tous les chiffres sont vérifiés",
+    "Same request, three clients: 25% in Tesla": "Même demande, trois clients : 25 % dans Tesla",
+    "Amira, Mateo and Robert each ask for **25% in Tesla**. The same rules run on three different profiles, so the answer and its reason change with the client.":
+        "Amira, Mateo et Robert demandent chacun **25 % dans Tesla**. Les mêmes règles s'appliquent à trois profils différents : la réponse et sa raison changent avec le client.",
+    "Running the pipeline three times (Profiler, Portfolio, Guardian)…": "Le pipeline tourne trois fois (Profileur, Portefeuille, Gardien)…",
+    "TSLA fits up to": "TSLA entre jusqu'à",
+    "✔ all checks pass": "✔ tous les contrôles passent",
+    "Checks: C1 and G4 one company under its cap, counted through ETFs · D2 and G7 chance of a drop deeper than the loss limit over the horizon (simulated, at most 10%) · F2 stock share allowed by the horizon · G6 defensive floor · G9 a request that breaks a limit is shown, never quietly applied.":
+        "Contrôles : C1 et G4 une société sous son plafond, comptée à travers les FNB · D2 et G7 chance d'une baisse plus profonde que la limite de perte sur l'horizon (simulée, au plus 10 %) · F2 part en actions permise par l'horizon · G6 plancher défensif · G9 une demande qui dépasse une limite est montrée, jamais appliquée en silence.",
+
 }
 
 PHRASES = {
@@ -804,6 +819,17 @@ PHRASES = {
     "safer investments": "en placements défensifs",
     " is working…": " est en cours…",
     " recorded": " échanges enregistrés",
+    "Same request, three clients": "Même demande, trois clients",
+    "TSLA's worst drop in the data (": "Pire baisse de TSLA dans les données (",
+    "At 25%, that alone would be ": "À 25 %, elle seule représenterait ",
+    " of the portfolio.": " du portefeuille.",
+    "**As asked (25%)**: worst drop": "**Tel que demandé (25 %)** : pire baisse",
+    "**: worst drop": "** : pire baisse",
+    "**At ": "**À ",
+    "**Answer:** up to ": "**Réponse :** jusqu'à ",
+    "**Answer:** not on this strategy, even at ": "**Réponse :** pas sur cette stratégie, même à ",
+    "**Answer:** as asked": "**Réponse :** telle que demandée",
+    "The client decides; the system shows the numbers.": "Le client décide; le système montre les chiffres.",
 
 }
 

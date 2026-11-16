@@ -132,20 +132,68 @@ def _wrap_text_first(fn):
     return w
 
 
+def _is_label(value, options: list) -> bool:
+    if isinstance(value, (list, tuple)):
+        return any(_is_label(v, options) for v in value)
+    return isinstance(value, str) and value not in options
+
+
+def _to_option(value, options: list, ff):
+    """The option behind a choice that came back as its displayed label.
+
+    Recent Streamlit sends a choice back as the label it showed. After a language switch that label is in the other
+    language, matches nothing and is returned as plain text ("Accueil" for "Welcome"), which crashed the pages that
+    look the choice up. Any other value is returned as it is."""
+    if not _is_label(value, options):
+        return value
+    labels = {}
+    for o in options:
+        try:
+            base = ff(o) if ff else str(o)
+        except Exception:  # noqa: BLE001 — a format function that cannot show this option
+            continue
+        for code in LANGS:
+            labels.setdefault(tr(base, to=code) if isinstance(base, str) else str(base), o)
+    if isinstance(value, (list, tuple)):
+        return type(value)(labels.get(v, v) if isinstance(v, str) and v not in options else v for v in value)
+    return labels.get(value, value)
+
+
 def _wrap_widget(name, fn):
     @functools.wraps(fn)
     def w(self, *args, **kwargs):
         if "key" not in kwargs and name not in NO_KEY:
             kwargs["key"] = _stable_key(name, args, kwargs)
+        options = ff = None
         if name in CHOICE:
             ff = kwargs.get("format_func")
+            try:
+                options = list(kwargs["options"] if "options" in kwargs else args[1])
+            except Exception:  # noqa: BLE001 — options given in a form we do not read: the widget handles them
+                options = None
+            if options:
+                try:
+                    import streamlit as st
+                    key, now = kwargs.get("key"), lang()
+                    drawn = st.session_state.setdefault("_af_choice_lang", {})    # {widget key: language last drawn in}
+                    if key in st.session_state:
+                        cur = st.session_state[key]
+                        # Writing the choice back makes the browser redraw it with this language's label; without
+                        # it the browser keeps the other language's label, shows nothing selected and sends that
+                        # label back as the answer.
+                        if drawn.get(key, now) != now or _is_label(cur, options):
+                            st.session_state[key] = _to_option(cur, options, ff)
+                    drawn[key] = now
+                except Exception:  # noqa: BLE001 — outside a run, or a key that cannot be written: fixed on return
+                    pass
             kwargs["format_func"] = (lambda v, ff=ff: tr(ff(v))) if ff else (lambda v: tr(str(v)))
         if args:
             args = (tr(args[0]),) + args[1:]
         for k in TEXT_KWARGS:
             if k in kwargs:
                 kwargs[k] = tr(kwargs[k])
-        return fn(self, *args, **kwargs)
+        out = fn(self, *args, **kwargs)
+        return _to_option(out, options, ff) if options else out
     return w
 
 

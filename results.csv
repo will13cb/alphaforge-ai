@@ -343,3 +343,24 @@ run_id,timestamp,author,commit,experiment,persona,metric,value,notes
 1116-000618-claude-6086,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_bootstrap_alpha_5_0_05_mean,0.143125,scripts/evaluate.py
 1116-000618-claude-1227,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_bootstrap_alpha_2_5_0_025_mean,0.138125,scripts/evaluate.py
 1116-000618-claude-6599,2026-11-16T00:06:18+00:00,Claude,3c38684-dirty,evaluation,,risk_range_low_mean,0.105625,scripts/evaluate.py
+1116-002839-claude-add8,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_cap,0.1411,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-607b,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_loss_limit,0.4,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-f556,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_as_asked_drawdown_cad,6892,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-bead,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_as_asked_fails,5,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-479e,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_at_cap_drawdown_cad,4290,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-0883,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_at_cap_chance_beyond_limit,0.1125,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-e4a6,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,amira,TSLA25_at_cap_fails,0,up to 14.1%; base Broad core: less in stocks
+1116-002839-claude-cd24,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_cap,0.0882,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-b02b,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_loss_limit,0.25,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-0f49,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_as_asked_drawdown_cad,42546,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-d15c,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_as_asked_fails,5,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-9a81,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_at_cap_drawdown_cad,24793,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-cebb,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_at_cap_chance_beyond_limit,0.331,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-739b,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,mateo,TSLA25_at_cap_fails,2,"not on this strategy, even at 8.8%; base Broad core: most growth your limits allow"
+1116-002839-claude-a05c,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_cap,0.0308,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-93c7,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_loss_limit,0.15,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-39c6,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_as_asked_drawdown_cad,106121,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-10f8,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_as_asked_fails,7,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-68ee,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_at_cap_drawdown_cad,38241,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-706d,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_at_cap_chance_beyond_limit,0.006,up to 3.1%; base Broad core: most growth your limits allow
+1116-002839-claude-88b7,2026-11-16T00:28:39+00:00,Claude,4a0934d,persona-contrast,robert,TSLA25_at_cap_fails,0,up to 3.1%; base Broad core: most growth your limits allow

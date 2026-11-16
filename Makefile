@@ -42,6 +42,9 @@ scenarios: ## Test profiles vs Profiler + Guardian (LOG=1 to log the pass rate)
 
 bedrock-check: ## Smoke test of AWS: region, credentials, Bedrock text + tool use, S3 (needs .env)
 	@$(ENV) $(PY) scripts/bedrock_check.py
+contrast: ## Same request (T=TSLA W=0.25) for Amira, Mateo, Robert side by side (LOG=1 logs to results.csv)
+	@$(PY) -m dh contrast $(if $(T),--ticker $(T)) $(if $(W),--weight $(W)) $(if $(LOG),--log)
+
 explain: ## Pipeline + Critic + Explainer on P=amira|mateo|robert (SAVE=1 caches the Bedrock review and text for the demo)
 	@$(ENV) $(PY) -m dh explain $(P) $(if $(SAVE),--save-demo)
 
