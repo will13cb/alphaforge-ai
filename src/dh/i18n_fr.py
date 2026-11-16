@@ -6,6 +6,11 @@ written by the engine or the agents (which stays in English) is never half-trans
 """
 
 EXACT = {
+    "Additional fields were filled from details explicitly written in your text.": "Des champs ont été complétés à partir des renseignements explicitement écrits dans votre texte.",
+    "AI extraction was unavailable; your text was read with the local parser.": "La lecture par l’IA n’a pas abouti; votre texte a été lu avec le parseur local.",
+    "Your text was read with the local parser.": "Votre texte a été lu avec le parseur local.",
+    "Your text was read by Claude on Amazon Bedrock.": "Votre texte a été lu par Claude sur Amazon Bedrock.",
+    "Your text was read using a saved extraction; stated facts were checked again.": "Une lecture enregistrée a été utilisée; les renseignements fournis ont été vérifiés à nouveau.",
     # ---- “What if March 2020 happened again?” (interface/views/results.py, decision #50) ---------------------
     "What if March 2020 happened again?": "Et si mars 2020 se répétait ?",
     "How this replay works": "Comment fonctionne cette simulation historique",

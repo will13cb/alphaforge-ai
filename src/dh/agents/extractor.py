@@ -49,7 +49,7 @@ ENUMS = {
     "fixed_income_market": ["both", "canada", "us"],
 }
 NUMBERS = {  # field → (min, max); all must be grounded in the text
-    "fixed_rate_pct": (0, 100),
+    "fixed_rate_pct": (0, 100), "ev_answer_pct": (-100, 100),
     "age": (16, 100), "horizon_years": (0.5, 60), "capital": (0, 1e9), "monthly_contribution": (0, 1e7),
     "target_amount": (1, 1e10), "emergency_fund_months": (0, 120), "max_loss_pct": (0, 100),
     "years_experience": (0, 80), "withdrawal_share_3y": (0, 1),
@@ -105,11 +105,12 @@ def normalize(text: str) -> str:
         if m.group(3):
             return str(_UNITS[m.group(3).lower()])
         return "50%"
-    return _WORDNUM.sub(sub, text)
+    from .french_profile import numeric_text
+    return _WORDNUM.sub(sub, numeric_text(text))
 
 
-_NUM = re.compile(r"(?<![\w.])(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k\b|m\b|thousand|million|mil\b)?", re.I)
-_MULT = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6, "mil": 1e6}
+_NUM = re.compile(r"(?<![\w.])(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k\b|m\b|thousand|millions?|mille\b|mil\b)?", re.I)
+_MULT = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6, "mil": 1e6, "mille": 1e3, "millions": 1e6}
 
 
 def numbers_in(text: str) -> set[float]:
@@ -161,6 +162,8 @@ def validate(raw: dict, text: str) -> tuple[dict, list[str]]:
             grounded = _in(x * 100, nums) if k == "withdrawal_share_3y" else _in(x, nums)
             if k == "withdrawal_share_3y" and not grounded and raw.get("capital"):
                 grounded = _in(round(x * float(raw["capital"])), nums)
+            if k == "withdrawal_share_3y" and x == 0 and re.search(r"aucun retrait|pas de retrait|no withdrawals?", text, re.I):
+                grounded = True
             if not lo <= x <= hi:
                 notes.append(f"{k}: {x:g} is outside {lo:g}-{hi:g}, dropped")
             elif k == "capital" and x == 0 and not _in(0, nums):
@@ -178,6 +181,21 @@ def validate(raw: dict, text: str) -> tuple[dict, list[str]]:
                 notes.append(f"{k}: dropped {', '.join(i for i in items if i not in ok)} (not a known value)")
             if ok:
                 out[k] = sorted(set(ok))
+        elif k == "kyc_bets":
+            from .. import kyc
+            bets = {}
+            for key, value in (v.items() if isinstance(v, dict) else []):
+                try:
+                    bet = kyc.BY_ID[key]
+                    ce = float(value)
+                    kyc.rank(bet, ce)
+                    if not (_in(ce * 100, nums) or _in(round(bet.amount * (1 + ce)), nums)):
+                        raise ValueError("answer not written in the client's words")
+                    bets[key] = ce
+                except (KeyError, ValueError, TypeError):
+                    notes.append(f"kyc_bets.{key}: invalid or unsupported answer, dropped")
+            if bets:
+                out[k] = bets
         elif k == "employment_sector":
             m = next((s for s in SECTORS if s.lower() == str(v).strip().lower()), None)
             if m:
@@ -223,7 +241,7 @@ def validate(raw: dict, text: str) -> tuple[dict, list[str]]:
             notes.append(f"{k}: not a profile field, dropped")
     rate = re.search(r"(?:fixed(?:[- ]rate| return| interest| coupon)?|coupon|taux fixe)(?:\s+(?:of|at|de|à))?\s*(\d+(?:[.,]\d+)?)\s*%", text, re.I)
     rate = rate or re.search(r"(?:bonds?|obligations?|gic|cpg)(?:\s+(?:at|à|a|de|paying|with|fixed|a fixed))*\s+(\d+(?:[.,]\d+)?)\s*%", text, re.I)
-    if rate and re.search(r"\bbonds?\b|obligations?|\bgic\b|\bcpg\b", text, re.I):
+    if out.get("investment_mode") != "market" and rate and re.search(r"\bbonds?\b|obligations?|\bgic\b|\bcpg\b", text, re.I):
         value = float(rate[1].replace(",", "."))
         if 0 <= value <= 100:
             out["investment_mode"] = "fixed_rate"
@@ -386,13 +404,17 @@ def rule_parse(text: str) -> dict:
     m = re.search(r"\b(?:my name is|call me)\s+([a-z]+)", t)
     if m:
         p["name"] = m.group(1).title()
+    from .french_profile import parse as french_parse
+    p.update(french_parse(text))
     return {k: v for k, v in p.items() if v not in (None, [], {})}
 
 
 # ---- Strands agent on Bedrock -----------------------------------------------------------------------------------
 
 SYSTEM_PROMPT = f"""You turn a fictional investor's own words into a JSON profile for an investment-analysis
-simulation. You only EXTRACT what the client said; you never judge risk, never advise, never set limits.
+simulation. Read French and English, including French number words, decimal commas and space-grouped CAD amounts.
+Return the schema keys and enum values below in English, regardless of input language.
+You only EXTRACT what the client said; you never judge risk, never advise, never set limits.
 
 Fields (omit any the client did not state or clearly imply):
 - investment_mode: market or fixed_rate (only for explicit fixed-rate bonds/deposits held to maturity); fixed_rate_pct: requested annual percentage; fixed_income_market: both, canada or us. A loss-limit percentage is not a requested interest rate.
@@ -404,6 +426,8 @@ Fields (omit any the client did not state or clearly imply):
 - loss_reaction (to a 20% drop): one of {ENUMS['loss_reaction']}
 - max_loss_pct (0-100: largest drop they say they could accept)
 - knowledge_level: one of {ENUMS['knowledge_level']}, years_experience (number)
+- ev_answer_pct: the explicitly stated answer to the expected-return quiz, in percentage points (not an investment-return target)
+- kyc_bets: optional object with bet_small, bet_large, bet_savings: the client's explicitly selected guaranteed returns as fractions (8.3% = 0.083); never infer from risk tolerance
 - products_held: subset of {sorted(LISTS['products_held'])}
 - interests: subset of {sorted(LISTS['interests'])}
 - exclusions: subset of {sorted(EXCLUSIONS)} (or tickers)
@@ -478,6 +502,7 @@ def extract(text: str, provider: str | None = None) -> dict:
     mid = model_id()
     h = text_hash(text, mid)
     raw, source, calls, note = None, "", 0, ""
+    failure_type = ""
     for p in _cache_paths(h):
         if p.exists():
             c = json.loads(p.read_text())
@@ -492,16 +517,24 @@ def extract(text: str, provider: str | None = None) -> dict:
                 {"model": mid, "prompt_version": PROMPT_VERSION, "text": text, "raw": raw, "check_calls": calls,
                  "created": datetime.now(timezone.utc).isoformat(timespec="seconds")}, ensure_ascii=False, indent=1))
         except Exception as e:  # noqa: BLE001 — any AWS/Strands/JSON error → rules, reported in the trace
-            note = f"agent unavailable ({type(e).__name__}: {e})"[:300]
+            failure_type = type(e).__name__
+            note = f"agent unavailable ({failure_type}: {e})"[:300]
     if raw is None:
         raw, source = rule_parse(text), "rules"
         note = note or "mock mode: rule-based parser"
     profile, notes = validate(raw, text)
+    # Complete explicit facts omitted by a model/cache, using the same grounding
+    # checks as model outputs. Never replace a valid model answer with a guess.
+    explicit, _ = validate(rule_parse(text), text)
+    supplemented = [key for key in explicit if key not in profile]
+    for key in supplemented:
+        profile[key] = explicit[key]
     profile.setdefault("name", "Client")
     profile.setdefault("request", text.strip()[:300])
     miss = missing(profile)
     return {"profile": profile, "missing": miss, "questions": questions(miss), "notes": notes, "source": source,
-            "model": mid if source != "rules" else "", "check_calls": calls, "hash": h, "note": note}
+            "model": mid if source != "rules" else "", "check_calls": calls, "hash": h, "note": note,
+            "supplemented_fields": supplemented, "failure_type": failure_type}
 
 
 def save_demo(ex: dict, text: str) -> str:

@@ -48,7 +48,9 @@ def test_agent_answer_is_checked_by_code(monkeypatch):
                                                      "requested_positions": {"TSLA": 0.25}}, 2))
     ex = x.extract(ROBERT_TEXT, provider="bedrock")
     assert ex["source"] == "bedrock" and ex["check_calls"] == 2
-    assert "capital" not in ex["profile"] and ex["profile"]["requested_positions"] == {"TSLA": 0.25}
+    assert ex["profile"]["capital"] == 400_000  # reject invented 450k, retain the explicit 400k via rules
+    assert "capital" in ex["supplemented_fields"] and any("capital" in n for n in ex["notes"])
+    assert ex["profile"]["requested_positions"] == {"TSLA": 0.25}
     assert x.extract(ROBERT_TEXT, provider="mock")["source"].startswith("cache")   # cached for the next run
 
 

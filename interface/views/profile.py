@@ -82,6 +82,15 @@ def quick_start() -> None:
                 ui.error(str(e))
     ex = S.get("free_text_notes")
     if ex:
+        if ex.get("source") == "rules":
+            st.caption("AI extraction was unavailable; your text was read with the local parser."
+                       if ex.get("failure_type") else "Your text was read with the local parser.")
+        elif ex.get("source") == "bedrock":
+            st.caption("Your text was read by Claude on Amazon Bedrock.")
+        else:
+            st.caption("Your text was read using a saved extraction; stated facts were checked again.")
+        if ex.get("supplemented_fields") and ex.get("source") != "rules":
+            st.caption("Additional fields were filled from details explicitly written in your text.")
         miss = [BY_ID[m].label for m in ex.get("missing", []) if m in BY_ID]
         ui.notice("We filled in what your text said. Please check each step"
                   + (" and answer what was missing: " + "; ".join(miss) if miss else "") + ".", "info")
