@@ -10,7 +10,8 @@ L'outil lui montre la règle, le nombre et la source, puis lui laisse la décisi
 > **▶ Essayer l'application : https://alphaforge-ai-wj.streamlit.app/** · français par défaut, bouton Français ⇄ English
 >
 > [Fiche d'une page](deliverables/ONE_PAGER.md) · [Documentation technique](deliverables/TECHNICAL_DOC.md) ·
-> [Script de la vidéo](deliverables/VIDEO_SCRIPT.md) · [Architecture complète](aws/architecture.md) ·
+> [Script de la vidéo](deliverables/VIDEO_SCRIPT.md) · [Architecture AWS](aws/AWS_ARCHITECTURE.md) ·
+> [Architecture des agents](aws/architecture.md) ·
 > *English: [`README.en.md`](README.en.md)*
 
 Datathon PolyFinances 2026 (Polytechnique Montréal) · défi **AlphaForge AI**, **Banque Nationale × AWS** ·
@@ -112,6 +113,10 @@ Dans l'[application](https://alphaforge-ai-wj.streamlit.app/) :
 | **Honnête sur ses choix** | Nous avons testé un optimiseur de Markowitz et une stratégie protégée (CPPI), puis les avons écartés, preuves à l'appui : les pondérations « optimales » changeaient avec la période et ne battaient pas l'équipondération hors échantillon. Aucun rendement passé n'est présenté comme une prévision. |
 
 ## AWS : un vrai rôle pour chaque service
+
+[![Architecture AWS](aws/AWS_ARCHITECTURE.svg)](aws/AWS_ARCHITECTURE.md)
+
+*Détails, appels et données de chaque service : [`aws/AWS_ARCHITECTURE.md`](aws/AWS_ARCHITECTURE.md).*
 
 | Service | Ce qu'il fait dans AlphaForge |
 |---|---|

@@ -10,7 +10,8 @@ The tool shows him the rule, the number and the source, then leaves the decision
 > **▶ Try the app: https://alphaforge-ai-wj.streamlit.app/** · French by default, Français ⇄ English switch
 >
 > [One-pager](deliverables/ONE_PAGER.en.md) · [Technical doc](deliverables/TECHNICAL_DOC.en.md) ·
-> [Video script](deliverables/VIDEO_SCRIPT.en.md) · [Full architecture](aws/architecture.en.md) ·
+> [Video script](deliverables/VIDEO_SCRIPT.en.md) · [AWS architecture](aws/AWS_ARCHITECTURE.en.md) ·
+> [Agent architecture](aws/architecture.en.md) ·
 > *Version française : [`README.md`](README.md)*
 
 PolyFinances Datathon 2026 (Polytechnique Montréal) · challenge **AlphaForge AI**, **National Bank × AWS** ·
@@ -111,6 +112,10 @@ In the [app](https://alphaforge-ai-wj.streamlit.app/) (switch to English at the 
 | **Honest about its choices** | We tested a Markowitz optimiser and a protected strategy (CPPI), then set them aside with evidence: the "optimal" weights changed with the period and did not beat equal weights out of sample. No past return is presented as a forecast. |
 
 ## AWS: a real job for every service
+
+[![AWS architecture](aws/AWS_ARCHITECTURE.en.svg)](aws/AWS_ARCHITECTURE.en.md)
+
+*Each service's calls and data: [`aws/AWS_ARCHITECTURE.en.md`](aws/AWS_ARCHITECTURE.en.md).*
 
 | Service | What it does in AlphaForge |
 |---|---|
